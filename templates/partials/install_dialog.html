@@ -15,6 +15,7 @@
       </div>
     </div>
 
+    <p class="install-dialog__lead" data-install-confirmed hidden></p>
     <div class="install-dialog__panel" data-install-panel="ios" hidden>
       <p class="install-dialog__lead">No iPhone ou iPad, o app é instalado pelo Safari:</p>
       <ol class="install-steps">
@@ -45,13 +46,17 @@
     </div>
 
     <p class="install-dialog__hint" data-install-insecure hidden>
-      Este endereço é local (HTTP). No Android, a instalação completa exige um endereço HTTPS.
-      No iPhone, o “Adicionar à Tela de Início” do Safari funciona mesmo assim.
+      A instalação exige uma conexão segura. Abra o site por HTTPS antes de continuar.
     </p>
 
     <button class="btn btn--primary btn--block install-dialog__native" type="button" data-install-native hidden>
       <svg class="icon"><use href="#i-download"></use></svg> Instalar agora
     </button>
+
+    <p class="install-dialog__hint" data-install-feedback role="status" aria-live="polite"></p>
+    <button class="btn btn--ghost btn--block" type="button" data-install-remember>Já adicionei o atalho</button>
+    <p class="install-dialog__hint" data-install-manual-hint>Se você adicionou manualmente, podemos lembrar sua escolha neste navegador. Abra pelo ícone para confirmar o modo app.</p>
+    <button class="install-dialog__later" type="button" data-install-reset hidden>Não está instalado? Ver instruções novamente</button>
 
     <div class="install-dialog__copy">
       <button class="btn btn--ghost btn--sm btn--block" type="button" data-copy-link>

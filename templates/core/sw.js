@@ -8,6 +8,7 @@ const PRECACHE = [
   "{% static 'css/app.css' %}",
   "{% static 'css/dashboard.css' %}",
   "{% static 'js/app.js' %}",
+  "{% static 'js/install.js' %}",
   "{% static 'js/dashboard.js' %}",
   "{% static 'js/vendor/htmx.min.js' %}",
   "{% static 'img/logo-sm.webp' %}",

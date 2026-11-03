@@ -14,4 +14,5 @@ urlpatterns = [
     path("privacidade/", views.privacy, name="privacy"),
     path("offline/", views.offline, name="offline"),
     path("health/", views.health, name="health"),
+    path("manifest.webmanifest", views.manifest, name="manifest"),
 ]

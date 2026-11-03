@@ -137,6 +137,37 @@ Login: `/entrar/`. Configurações: `/painel/configuracoes/`. Administração av
 Troque a senha inicial em `/admin/password_change/` depois do primeiro login.
 Os formulários têm CSRF; HTML autenticado não é cacheado. Login possui limite de requisições no Nginx.
 
+## Proteções no navegador e instalação
+
+As respostas HTML usam Content-Security-Policy: scripts e conexões somente da própria origem,
+sem eval, objetos ou frames. Imagens HTTPS externas continuam permitidas para a logo configurável;
+estilos inline são necessários para a cor da marca e os indicadores. Em HTTPS, URLs de recursos HTTP
+são promovidas para HTTPS. Isso complementa o certificado e o HSTS; não substitui nenhum deles.
+HTMX não executa scripts recebidos nem expressões eval. Permissões de câmera, microfone,
+geolocalização e pagamento ficam desativadas, pois esta versão não utiliza essas APIs.
+
+O manifesto estável está em `/manifest.webmanifest`, mantendo o ID `/app/` das instalações
+anteriores. O service worker v7 preserva a regra de não armazenar páginas com sessão/CSRF.
+O convite aparece a cada visita; instalações reconhecidas substituem o convite pelo status.
+`appinstalled`, modo standalone e `getInstalledRelatedApps` são usados quando disponíveis.
+Apenas aceitar a janela de instalação não grava uma instalação concluída. Um atalho declarado
+manualmente aparece como “Atalho informado”, sem fingir confirmação do navegador. O registro
+é local a cada navegador/perfil e pode não estar disponível em modo privado ou com armazenamento
+bloqueado. No iOS, a aba do Safari nem sempre pode detectar o app instalado; abrir pelo ícone
+confirma o modo app. Um novo `beforeinstallprompt` corrige um registro confirmado desatualizado.
+
+Validação: `python manage.py test --noinput` e `node --test scripts/test-install.cjs`.
+Os testes JavaScript simulam os eventos; não instalam um aplicativo no dispositivo de quem executa.
+
+Quando o Chrome mostra certificado válido e ainda exibe “Não seguro”, confira o painel de
+segurança e os recursos da aba afetada. Não ignore avisos nem desative proteções para instalar.
+Uma nova aba HTTPS permite comparar com o estado anterior; o servidor sozinho não consegue
+inspecionar extensões, exceções ou conteúdo injetado naquele perfil do navegador.
+
+Referências: [CSP e HTTPS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/upgrade-insecure-requests),
+[configuração HTMX](https://htmx.org/docs/#config),
+[reconhecimento de PWA](https://developer.chrome.com/docs/capabilities/get-installed-related-apps).
+
 Em falha, leia apenas logs do Team Farias, compare `current/REVISION` com o commit publicado,
 verifique PostgreSQL e restaure a release anterior quando compatível. Não interrompa processos alheios
 para liberar recursos. Um erro de Nginx deve ser corrigido somente no vhost Team Farias.

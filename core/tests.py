@@ -209,6 +209,31 @@ class ConfigurationTests(TestCase):
 
 
 class DeploymentSettingsTests(TestCase):
+    def test_https_security_headers_block_external_scripts_and_upgrade_http(self):
+        response = self.client.get("/", secure=True)
+        policy = response["Content-Security-Policy"]
+        self.assertIn("script-src 'self'", policy)
+        self.assertNotIn("'unsafe-eval'", policy)
+        self.assertIn("form-action 'self'", policy)
+        self.assertIn("object-src 'none'", policy)
+        self.assertIn("upgrade-insecure-requests", policy)
+        self.assertIn("camera=()", response["Permissions-Policy"])
+        self.assertNotContains(response, "<script>")
+        self.assertContains(response, '"allowEval": false')
+
+    def test_local_http_does_not_force_resource_upgrade(self):
+        response = self.client.get("/")
+        self.assertNotIn("upgrade-insecure-requests", response["Content-Security-Policy"])
+
+    def test_manifest_keeps_app_identity_and_declares_own_installation(self):
+        response = self.client.get("/manifest.webmanifest", secure=True)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data["id"], "/app/")
+        self.assertEqual(data["scope"], "/")
+        self.assertEqual(data["related_applications"], [{"platform": "webapp", "url": "/manifest.webmanifest", "id": "https://testserver/app/"}])
+        self.assertIn("no-store", response["Cache-Control"])
+
     def test_shared_paths_and_hsts_can_be_configured(self):
         import json
         import os

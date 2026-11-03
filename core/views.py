@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
+
 from django.contrib import messages
 from django.conf import settings
 from django.db import connection, DatabaseError
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -91,10 +93,21 @@ def offline(request):
 
 
 @never_cache
+def manifest(request):
+    """URL estável e identidade preservada para reconhecer instalações anteriores."""
+    data = json.loads((settings.BASE_DIR / "static/manifest.webmanifest").read_text(encoding="utf-8"))
+    data["related_applications"] = [{
+        "platform": "webapp", "url": reverse("core:manifest"),
+        "id": request.build_absolute_uri(data["id"]),
+    }]
+    return JsonResponse(data, content_type="application/manifest+json")
+
+
+@never_cache
 def service_worker(request):
     """Service worker na raiz para controlar todo o escopo do site."""
     response = HttpResponse(
-        render_to_string("core/sw.js", {"version": "v6", "development": settings.DEBUG}),
+        render_to_string("core/sw.js", {"version": "v7", "development": settings.DEBUG}),
         content_type="application/javascript",
     )
     response["Service-Worker-Allowed"] = "/"

@@ -1,19 +1,7 @@
 (() => {
   "use strict";
 
-  const ua = navigator.userAgent || "";
-  const isIOS =
-    /iphone|ipad|ipod/i.test(ua) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const isAndroid = /android/i.test(ua);
-  const isInApp = /(Instagram|FBAN|FBAV|FB_IAB|Line\/|WhatsApp)/i.test(ua);
-  const isStandalone =
-    window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
-  const platform = isIOS ? "ios" : isAndroid ? "android" : "desktop";
-
   const state = {
-    installDeferred: null,
-    autoTimer: null,
     observer: null,
     htmxBound: false,
     loading: 0,
@@ -55,106 +43,6 @@
 
   function closeOverlays() {
     closeSiteNav();
-  }
-
-  /* ----------------------------------------------------------- PWA */
-  const INSTALL_KEY = "tf_install_prompt_until";
-  const markInstallDismissed = () =>
-    window.localStorage.setItem(INSTALL_KEY, String(Date.now() + 7 * 24 * 60 * 60 * 1000));
-  const installDismissed = () => Number(window.localStorage.getItem(INSTALL_KEY) || 0) > Date.now();
-  const hideInstallCta = () => $$(".install-cta").forEach((el) => (el.hidden = true));
-
-  function openInstallDialog() {
-    const dialog = $("[data-install-dialog]");
-    if (!dialog) return;
-    dialog.querySelectorAll("[data-install-panel]").forEach((panel) => {
-      panel.hidden = panel.dataset.installPanel !== platform;
-    });
-    const inApp = dialog.querySelector("[data-install-inapp]");
-    if (inApp) inApp.hidden = !isInApp;
-    const insecure = dialog.querySelector("[data-install-insecure]");
-    if (insecure) insecure.hidden = window.isSecureContext || isIOS;
-    dialog.showModal();
-  }
-
-  function bindInstall() {
-    if (isStandalone) {
-      document.documentElement.classList.add("is-standalone");
-      hideInstallCta();
-    }
-
-    $$("[data-install-open]").forEach((button) => {
-      if (button.dataset.bound) return;
-      button.dataset.bound = "1";
-      button.addEventListener("click", openInstallDialog);
-    });
-
-    $$("[data-install-later]").forEach((button) => {
-      if (button.dataset.bound) return;
-      button.dataset.bound = "1";
-      button.addEventListener("click", () => {
-        markInstallDismissed();
-        $("[data-install-dialog]")?.close();
-      });
-    });
-
-    $$("[data-copy-link]").forEach((button) => {
-      if (button.dataset.bound) return;
-      button.dataset.bound = "1";
-      button.addEventListener("click", async () => {
-        const label = button.querySelector("[data-copy-link-label]");
-        const original = label?.textContent;
-        try {
-          await navigator.clipboard.writeText(`${window.location.origin}/entrar/`);
-          if (label) label.textContent = "Link copiado!";
-        } catch {
-          window.prompt("Copie o link para abrir no celular:", `${window.location.origin}/entrar/`);
-        }
-        setTimeout(() => {
-          if (label && original) label.textContent = original;
-        }, 2200);
-      });
-    });
-
-    const dialog = $("[data-install-dialog]");
-    if (dialog && !dialog.dataset.bound) {
-      dialog.dataset.bound = "1";
-      dialog.querySelectorAll("[data-dialog-close]").forEach((button) => {
-        button.addEventListener("click", () => dialog.close());
-      });
-      dialog.addEventListener("click", (event) => {
-        if (event.target === dialog) dialog.close();
-      });
-      dialog.addEventListener("close", markInstallDismissed);
-    }
-
-    $$("[data-install-native]").forEach((button) => {
-      if (state.installDeferred) button.hidden = false;
-      if (button.dataset.bound) return;
-      button.dataset.bound = "1";
-      button.addEventListener("click", async () => {
-        if (!state.installDeferred) {
-          openInstallDialog();
-          return;
-        }
-        state.installDeferred.prompt();
-        const choice = await state.installDeferred.userChoice;
-        if (choice.outcome === "accepted") hideInstallCta();
-        state.installDeferred = null;
-        $$("[data-install-native]").forEach((b) => (b.hidden = true));
-        $("[data-install-dialog]")?.close();
-      });
-    });
-  }
-
-  function maybeAutoInstall() {
-    if (!document.querySelector("[data-install-auto]")) return;
-    if (isStandalone || installDismissed()) return;
-    clearTimeout(state.autoTimer);
-    state.autoTimer = window.setTimeout(() => {
-      const dialog = $("[data-install-dialog]");
-      if (dialog && !dialog.open) openInstallDialog();
-    }, 1400);
   }
 
   /* ----------------------------------------------------------- page bindings */
@@ -317,10 +205,9 @@
     bindCopy();
     bindAttendance();
     bindPasswordToggles();
-    bindInstall();
+    window.TeamFariasInstall?.refresh();
     disableBoostOnHashLinks();
     duplicateMarquee();
-    if (initial) maybeAutoInstall();
   }
 
   /* ----------------------------------------------------------- HTMX */
@@ -370,6 +257,8 @@
     state.htmxBound = true;
 
     htmx.config.allowScriptTags = false;
+    htmx.config.allowEval = false;
+    htmx.config.selfRequestsOnly = true;
     htmx.config.globalViewTransitions = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     htmx.config.historyCacheSize = 0;
     htmx.config.historyRestoreAsHxRequest = false;
@@ -384,7 +273,6 @@
     body.addEventListener("htmx:beforeRequest", (event) => {
       setLoading(1);
       closeOverlays();
-      clearTimeout(state.autoTimer);
       const form = event.detail.elt?.closest?.("form");
       if (form) {
         form.querySelectorAll('button[type="submit"]').forEach((button) => (button.disabled = true));
@@ -462,28 +350,6 @@
     // Esc fecha menu/drawer
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") closeOverlays();
-    });
-
-    window.addEventListener("beforeinstallprompt", (event) => {
-      event.preventDefault();
-      state.installDeferred = event;
-      $$("[data-install-native]").forEach((button) => (button.hidden = false));
-    });
-
-    window.addEventListener("appinstalled", () => {
-      hideInstallCta();
-      $$("[data-install-native]").forEach((button) => (button.hidden = true));
-      $("[data-install-dialog]")?.close();
-      const wrapper = $("[data-toasts]");
-      if (wrapper) {
-        const node = document.createElement("div");
-        node.className = "toast toast--success";
-        node.innerHTML =
-          '<span class="toast__icon"><svg class="icon"><use href="#i-check"></use></svg></span>' +
-          "<p>Team Farias instalado. Procure o ícone na tela inicial.</p>";
-        wrapper.appendChild(node);
-        setTimeout(() => node.remove(), 6000);
-      }
     });
 
     if ("serviceWorker" in navigator && window.isSecureContext) {

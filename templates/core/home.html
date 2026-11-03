@@ -3,6 +3,7 @@
 
 {% block title %}{{ site.name }} — Escolinha de Vôlei de Praia em {{ site.city }}{% endblock %}
 {% block description %}{{ site.meta_description }}{% endblock %}
+{% block main_class %}site-main beach-home{% endblock %}
 
 {% block content %}
 {% if site.auto_install_prompt %}<div data-install-auto hidden></div>{% endif %}
@@ -81,6 +82,8 @@
   </div>
 </div>
 
+{% include "partials/beach_interlude.html" %}
+
 {% if site.show_about %}
 <section class="section section--about" id="escolinha">
   <div class="shell about">
@@ -88,6 +91,10 @@
       <p class="eyebrow">A escolinha</p>
       <h2 class="section-title">{{ site.about_title }}</h2>
       <p class="section-lead">{{ site.about_text|linebreaksbr }}</p>
+      <figure class="court-study">
+        <img src="{% static 'img/beach-court.svg' %}" width="640" height="440" alt="Ilustração de uma quadra de areia com rede, cones e trajetória de uma bola" loading="lazy" decoding="async">
+        <figcaption>O próximo movimento começa aqui.</figcaption>
+      </figure>
     </div>
 
     <div class="pillars">
@@ -242,6 +249,17 @@
   </div>
 </section>
 {% endif %}
+
+<div class="rally-divider" aria-hidden="true">
+  <div class="shell rally-divider__inner">
+    <span class="rally-divider__word">AREIA.</span>
+    <svg class="rally-divider__path" viewBox="0 0 1100 150" fill="none" preserveAspectRatio="none"><path d="M-20 128C180-35 330 175 540 70S880-10 1120 100" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 10"/></svg>
+    <span class="rally-divider__label rally-divider__label--one">01 / Saque</span>
+    <span class="rally-divider__label rally-divider__label--two">02 / Manchete</span>
+    <span class="rally-divider__label rally-divider__label--three">03 / Levantamento</span>
+    <img src="{% static 'img/beach-ball.svg' %}" width="220" height="220" alt="" loading="lazy" decoding="async">
+  </div>
+</div>
 
 {% if site.show_groups %}
 <section class="section section--groups" id="turmas">
