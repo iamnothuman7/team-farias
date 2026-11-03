@@ -1,0 +1,2 @@
+# Scripts e configurações de deploy precisam de LF também em checkouts Windows.
+deploy/* text eol=lf
