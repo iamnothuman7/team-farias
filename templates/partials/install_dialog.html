@@ -1,0 +1,63 @@
+{% load static %}
+<dialog id="install-dialog" class="install-dialog" data-install-dialog aria-labelledby="install-title">
+  <div class="dialog__head">
+    <h2 id="install-title">Instalar o Team Farias</h2>
+    <button class="icon-btn" type="button" data-dialog-close aria-label="Fechar">
+      <svg class="icon"><use href="#i-x"></use></svg>
+    </button>
+  </div>
+  <div class="dialog__body">
+    <div class="install-dialog__brand">
+      <img src="{% static 'img/icon-192.png' %}" width="56" height="56" alt="">
+      <div>
+        <strong>Team Farias</strong>
+        <span>Vôlei de Praia · app do aluno e da equipe</span>
+      </div>
+    </div>
+
+    <div class="install-dialog__panel" data-install-panel="ios" hidden>
+      <p class="install-dialog__lead">No iPhone ou iPad, o app é instalado pelo Safari:</p>
+      <ol class="install-steps">
+        <li><span>1</span><p>Toque no botão <strong>Compartilhar</strong> <svg class="icon"><use href="#i-arrow-up-right"></use></svg> na barra do Safari.</p></li>
+        <li><span>2</span><p>Escolha <strong>Adicionar à Tela de Início</strong>.</p></li>
+        <li><span>3</span><p>Confirme em <strong>Adicionar</strong>. O ícone do Team Farias aparece na sua tela.</p></li>
+      </ol>
+      <p class="install-dialog__hint" data-install-inapp hidden>
+        Você está em um navegador interno (Instagram/WhatsApp). Toque em “Abrir no Safari” e repita os passos.
+      </p>
+    </div>
+
+    <div class="install-dialog__panel" data-install-panel="android" hidden>
+      <p class="install-dialog__lead">No Android, use o Chrome:</p>
+      <ol class="install-steps">
+        <li><span>1</span><p>Abra o menu <strong>⋮</strong> no canto superior direito.</p></li>
+        <li><span>2</span><p>Toque em <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.</p></li>
+        <li><span>3</span><p>Confirme. O Team Farias abre em tela cheia, como um app.</p></li>
+      </ol>
+    </div>
+
+    <div class="install-dialog__panel" data-install-panel="desktop" hidden>
+      <p class="install-dialog__lead">No computador, instale pelo Chrome ou Edge:</p>
+      <ol class="install-steps">
+        <li><span>1</span><p>Clique no ícone de <strong>instalação</strong> na barra de endereço.</p></li>
+        <li><span>2</span><p>Confirme em <strong>Instalar</strong>.</p></li>
+      </ol>
+    </div>
+
+    <p class="install-dialog__hint" data-install-insecure hidden>
+      Este endereço é local (HTTP). No Android, a instalação completa exige um endereço HTTPS.
+      No iPhone, o “Adicionar à Tela de Início” do Safari funciona mesmo assim.
+    </p>
+
+    <button class="btn btn--primary btn--block install-dialog__native" type="button" data-install-native hidden>
+      <svg class="icon"><use href="#i-download"></use></svg> Instalar agora
+    </button>
+
+    <div class="install-dialog__copy">
+      <button class="btn btn--ghost btn--sm btn--block" type="button" data-copy-link>
+        <svg class="icon"><use href="#i-clipboard"></use></svg> <span data-copy-link-label>Copiar link do site</span>
+      </button>
+      <button class="install-dialog__later" type="button" data-install-later>Agora não</button>
+    </div>
+  </div>
+</dialog>

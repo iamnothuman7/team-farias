@@ -1,0 +1,44 @@
+{% extends "base_app.html" %}
+
+{% block title %}{% if announcement %}Editar comunicado{% else %}Novo comunicado{% endif %} — Team Farias{% endblock %}
+{% block topbar_title %}Comunicados{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{% url 'dashboard:announcements_admin' %}">
+  <svg class="icon"><use href="#i-chevron-left"></use></svg> Comunicados
+</a>
+
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">Mural</p>
+    <h1>{% if announcement %}Editar comunicado{% else %}Novo comunicado{% endif %}</h1>
+    <p class="page-head-app__lead">Publicado no site e/ou na área do aluno, conforme o público escolhido.</p>
+  </div>
+</header>
+
+<form method="post" class="card">
+  {% csrf_token %}
+  <div class="card__body">
+    {% if form.non_field_errors %}
+      <div class="form-errors">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+    {% endif %}
+    <div class="form-grid">
+      {% include "partials/field.html" with field=form.title wide=True %}
+      {% include "partials/field.html" with field=form.summary wide=True %}
+      {% include "partials/field.html" with field=form.body wide=True %}
+      {% include "partials/field.html" with field=form.kind %}
+      {% include "partials/field.html" with field=form.audience %}
+      {% include "partials/field.html" with field=form.published_at %}
+      <div class="field">
+        <label>Visibilidade</label>
+        <label class="checkbox mt-8">{{ form.is_published }} <span>Publicado (visível para o público escolhido)</span></label>
+        <label class="checkbox mt-8">{{ form.is_pinned }} <span>Fixar no topo da lista</span></label>
+      </div>
+    </div>
+  </div>
+  <div class="card__foot row" style="justify-content:flex-end;gap:8px">
+    <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:announcements_admin' %}">Cancelar</a>
+    <button class="btn btn--primary" type="submit">Salvar comunicado</button>
+  </div>
+</form>
+{% endblock %}

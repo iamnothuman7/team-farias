@@ -1,0 +1,66 @@
+{% extends "base_app.html" %}
+
+{% block title %}Turmas — Painel Team Farias{% endblock %}
+{% block topbar_title %}Turmas{% endblock %}
+
+{% block content %}
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">Estrutura</p>
+    <h1>Turmas e horários</h1>
+    <p class="page-head-app__lead">Capacidade, ocupação e grade de horários. Alunos ativos: {{ total_students }} · vagas: {{ total_seats }}.</p>
+  </div>
+  <div class="page-head-app__actions">
+    {% if user.is_admin_role %}
+      <a class="btn btn--primary btn--sm" href="{% url 'dashboard:class_create' %}"><svg class="icon"><use href="#i-plus"></use></svg> Nova turma</a>
+    {% endif %}
+  </div>
+</header>
+
+<div class="grid-3">
+  {% for group in groups %}
+    <article class="card">
+      <div class="card__body">
+        <div class="row row--between">
+          <div class="row wrap" style="gap:6px">
+            <span class="badge badge--violet">{{ group.get_category_display }}</span>
+            <span class="badge badge--outline">{{ group.get_level_display }}</span>
+            {% if not group.is_active %}<span class="badge badge--red">Inativa</span>{% endif %}
+          </div>
+        </div>
+        <h2 style="font-size:1.12rem;margin-top:12px">{{ group.name }}</h2>
+        <p class="faint" style="font-size:.76rem;margin-top:2px">{{ group.venue.name|default:"Local a definir" }} · {{ group.schedule_label }}</p>
+
+        <div class="mt-24">
+          <div class="row row--between" style="font-size:.75rem;color:var(--muted)">
+            <span>{{ group.active_count }} de {{ group.capacity }} alunos</span>
+            <span>{{ group.free_spots }} vaga{{ group.free_spots|pluralize }}</span>
+          </div>
+          <div class="progress mt-8"><i style="width:{{ group.occupancy_pct }}%"></i></div>
+        </div>
+
+        <div class="row row--between mt-24">
+          <div class="row" style="gap:8px">
+            <span class="avatar avatar--sm">{{ group.professor.initials|default:"TF" }}</span>
+            <div style="line-height:1.3">
+              <strong style="font-size:.78rem">{{ group.professor.first_name_display|default:"Equipe" }}</strong>
+              <p class="faint" style="font-size:.68rem">Professor(a)</p>
+            </div>
+          </div>
+          <div class="row" style="gap:6px">
+            <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:students' %}?turma={{ group.pk }}">Alunos</a>
+            {% if user.is_admin_role %}
+              <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:class_edit' group.pk %}">Editar</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </article>
+  {% empty %}
+    <div class="empty-state">
+      <p>Nenhuma turma cadastrada.</p>
+      <a class="btn btn--primary btn--sm" href="{% url 'dashboard:class_create' %}">Criar primeira turma</a>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base_app.html" %}
+
+{% block title %}Comunicados — Painel Team Farias{% endblock %}
+{% block topbar_title %}Comunicados{% endblock %}
+
+{% block content %}
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">Mural</p>
+    <h1>Comunicados</h1>
+    <p class="page-head-app__lead">{{ counts.publico }} publicados no site e {{ counts.alunos }} exclusivos para alunos.</p>
+  </div>
+  <div class="page-head-app__actions">
+    <a class="btn btn--primary btn--sm" href="{% url 'dashboard:announcement_create' %}"><svg class="icon"><use href="#i-plus"></use></svg> Novo comunicado</a>
+  </div>
+</header>
+
+<section class="card">
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Tipo</th>
+          <th>Público</th>
+          <th>Publicado em</th>
+          <th>Status</th>
+          <th class="is-right">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in announcements %}
+          <tr>
+            <td>
+              <strong style="font-size:.86rem;display:block">{{ item.title }}</strong>
+              <span class="table__muted">{{ item.summary|default:item.body|truncatechars:60 }}</span>
+            </td>
+            <td><span class="badge badge--{{ item.kind }}">{{ item.get_kind_display }}</span></td>
+            <td class="table__muted">{{ item.get_audience_display }}</td>
+            <td class="table__muted nowrap">{{ item.published_at|date:"d/m/Y H:i" }}</td>
+            <td>
+              {% if item.is_published %}<span class="badge badge--green">Publicado</span>{% else %}<span class="badge badge--outline">Rascunho</span>{% endif %}
+              {% if item.is_pinned %}<span class="badge badge--violet">Fixado</span>{% endif %}
+            </td>
+            <td>
+              <div class="table__actions">
+                <form method="post" action="{% url 'dashboard:announcement_toggle' item.pk %}">
+                  {% csrf_token %}
+                  <button class="btn btn--ghost btn--sm" type="submit">{% if item.is_published %}Despublicar{% else %}Publicar{% endif %}</button>
+                </form>
+                <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:announcement_edit' item.pk %}">Editar</a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6"><div class="empty-state"><p>Nenhum comunicado criado.</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

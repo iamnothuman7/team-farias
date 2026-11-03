@@ -1,0 +1,12 @@
+{% if field %}
+  <div class="field {% if wide %}span-2{% endif %} {% if field.errors %}field--error{% endif %}">
+    <label for="{{ field.id_for_label }}">
+      {{ field.label }}{% if field.field.required %}<span class="req" aria-hidden="true">*</span>{% endif %}
+    </label>
+    {{ field }}
+    {% if field.help_text %}<span class="help">{{ field.help_text|safe }}</span>{% endif %}
+    {% for error in field.errors %}
+      <span class="error"><svg class="icon" aria-hidden="true"><use href="#i-alert"></use></svg>{{ error }}</span>
+    {% endfor %}
+  </div>
+{% endif %}

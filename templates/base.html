@@ -1,0 +1,39 @@
+{% load static %}<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}Team Farias — Escolinha de Vôlei de Praia{% endblock %}</title>
+  <meta name="description" content="{% block description %}Escolinha de vôlei de praia em {{ site.city }}/{{ site.state }}. Treinos por turma, matrícula feita pela equipe, pontos, ranking e mensalidades em um só lugar.{% endblock %}">
+  <meta name="theme-color" content="#07010E">
+  <meta name="color-scheme" content="dark">
+  <link rel="canonical" href="{{ request.build_absolute_uri }}">
+  {% include "partials/pwa_head.html" %}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Team Farias">
+  <meta property="og:title" content="{% block og_title %}Team Farias — Vôlei de Praia{% endblock %}">
+  <meta property="og:description" content="A escolinha organizada. O time mais conectado.">
+  <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'img/og-image.png' %}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'img/og-image.png' %}">
+  <link rel="preload" href="{% static 'fonts/archivo-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{% static 'fonts/jakarta-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script>document.documentElement.classList.remove('no-js');</script>
+</head>
+<body class="{% block body_class %}site-body{% endblock %}">
+  <a class="skip-link" href="#main">Ir para o conteúdo</a>
+  {% include "partials/icons.html" %}
+  {% include "partials/nav.html" %}
+  <main id="main" class="{% block main_class %}site-main{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+  {% include "partials/footer.html" %}
+  {% include "partials/messages.html" %}
+  {% include "partials/install_dialog.html" %}
+  <script src="{% static 'js/app.js' %}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

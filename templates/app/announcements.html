@@ -1,0 +1,38 @@
+{% extends "base_app.html" %}
+
+{% block title %}Comunicados — Team Farias{% endblock %}
+{% block topbar_title %}Comunicados{% endblock %}
+
+{% block content %}
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">Mural</p>
+    <h1>Comunicados</h1>
+    <p class="page-head-app__lead">Avisos, notícias e eventos publicados pela equipe do Team Farias.</p>
+  </div>
+</header>
+
+<div class="stack-12">
+  {% for item in announcements %}
+    <a class="card" href="{% url 'dashboard:announcement_detail' item.pk %}">
+      <div class="card__body">
+        <div class="row row--between wrap" style="gap:10px">
+          <div class="row" style="gap:8px">
+            <span class="badge badge--{% if item.kind == 'noticia' %}blue{% elif item.kind == 'evento' %}green{% else %}amber{% endif %}">{{ item.get_kind_display }}</span>
+            {% if item.is_pinned %}<span class="badge badge--violet">Fixado</span>{% endif %}
+          </div>
+          <time class="faint" style="font-size:.74rem">{{ item.published_at|date:"d/m/Y" }}</time>
+        </div>
+        <h2 style="font-size:1.15rem;margin-top:12px">{{ item.title }}</h2>
+        <p class="muted" style="font-size:.87rem;margin-top:6px">{{ item.summary|default:item.body|truncatewords:26 }}</p>
+        <span class="card__link" style="margin-top:12px">Ler comunicado <svg class="icon"><use href="#i-arrow-right"></use></svg></span>
+      </div>
+    </a>
+  {% empty %}
+    <div class="empty-state">
+      <p>Nenhum comunicado publicado ainda.</p>
+      <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:home' %}">Voltar ao início</a>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

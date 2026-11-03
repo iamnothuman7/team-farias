@@ -1,0 +1,117 @@
+{% extends "base_app.html" %}
+
+{% block title %}Agenda de treinos — Team Farias{% endblock %}
+{% block topbar_title %}Agenda de treinos{% endblock %}
+
+{% block content %}
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">Calendário</p>
+    <h1>Agenda de treinos</h1>
+    <p class="page-head-app__lead">
+      {% if group %}Turma {{ group.name }} · {{ group.schedule_label }}{% else %}Sua turma será exibida após a aprovação da matrícula.{% endif %}
+    </p>
+  </div>
+  <div class="page-head-app__actions">
+    <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:agenda' %}">Hoje</a>
+  </div>
+</header>
+
+<section class="calendar">
+  <div class="calendar__head">
+    <h2 class="calendar__title">{{ calendar.label }}</h2>
+    <div class="calendar__nav">
+      <a class="icon-btn" href="?ano={{ calendar.prev.year }}&mes={{ calendar.prev.month }}" aria-label="Mês anterior">
+        <svg class="icon"><use href="#i-chevron-left"></use></svg>
+      </a>
+      <a class="icon-btn" href="?ano={{ calendar.next.year }}&mes={{ calendar.next.month }}" aria-label="Próximo mês">
+        <svg class="icon"><use href="#i-chevron-right"></use></svg>
+      </a>
+    </div>
+  </div>
+  <div class="calendar__weekdays">
+    {% for name in calendar.weekday_names %}<span>{{ name }}</span>{% endfor %}
+  </div>
+  <div class="calendar__grid">
+    {% for week in calendar.weeks %}
+      {% for day in week %}
+        <div class="calendar__cell {% if not day.in_month %}is-out{% endif %} {% if day.is_today %}is-today{% endif %}">
+          <span class="calendar__day">{{ day.date|date:"d" }}</span>
+          {% for session in day.sessions %}
+            <span class="cal-event {% if session.status == 'cancelado' %}cal-event--cancelado{% endif %}" title="{{ session.class_group.name }} · {{ session.start_time|time:'H:i' }}">
+              {{ session.start_time|time:"H\hi" }} {{ session.class_group.name|truncatechars:16 }}
+            </span>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+</section>
+
+<div class="grid-2 mt-24">
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Próximos treinos</h2>
+        <p class="card__subtitle">{{ upcoming|length }} agendado{{ upcoming|length|pluralize }}</p>
+      </div>
+    </div>
+    <div class="card__body">
+      {% if upcoming %}
+        <div class="session-list">
+          {% for session in upcoming %}
+            <div class="session-item">
+              <div class="session-date"><strong>{{ session.date|date:"d" }}</strong><span>{{ session.date|date:"M" }}</span></div>
+              <div class="session-info">
+                <strong>{{ session.theme|default:session.class_group.name }}</strong>
+                <span>
+                  <svg class="icon"><use href="#i-clock"></use></svg> {{ session.start_time|time:"H\hi" }}–{{ session.end_time|time:"H\hi" }}
+                  {% if session.venue %}<svg class="icon"><use href="#i-pin"></use></svg> {{ session.venue.name }}{% endif %}
+                </span>
+              </div>
+              {% if session.date == today %}<span class="badge badge--violet">Hoje</span>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state"><p>Nenhum treino futuro agendado.</p></div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Minhas presenças</h2>
+        <p class="card__subtitle">Últimos 12 registros</p>
+      </div>
+      <span class="badge badge--green">{{ attendance.rate }}% de presença</span>
+    </div>
+    <div class="card__body card__body--tight">
+      {% if history %}
+        <div class="stack-12">
+          {% for record in history %}
+            <div class="row row--between">
+              <div class="row">
+                <span class="session-date" style="width:42px;padding:4px 0">
+                  <strong style="font-size:.9rem">{{ record.session.date|date:"d" }}</strong>
+                  <span>{{ record.session.date|date:"M" }}</span>
+                </span>
+                <div>
+                  <strong style="font-size:.82rem">{{ record.session.theme|default:record.session.class_group.name|truncatechars:26 }}</strong>
+                  <p class="faint" style="font-size:.7rem">{{ record.session.start_time|time:"H\hi" }} · {{ record.session.class_group.name }}</p>
+                </div>
+              </div>
+              <span class="badge badge--{% if record.status == 'presente' %}green{% elif record.status == 'atraso' %}amber{% elif record.status == 'justificada' %}blue{% else %}red{% endif %}">
+                {{ record.get_status_display }}
+              </span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state"><p>Nenhuma presença registrada ainda.</p></div>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}

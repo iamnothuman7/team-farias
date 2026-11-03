@@ -1,0 +1,443 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Team Farias — Escolinha de Vôlei de Praia em {{ site.city }}{% endblock %}
+{% block description %}A escolinha organizada, o time mais conectado. Turmas de vôlei de praia em {{ site.city }}/{{ site.state }}, com matrícula feita pela equipe, treinos, pontos, ranking e mensalidades no celular.{% endblock %}
+
+{% block content %}
+<div data-install-auto hidden></div>
+<section class="hero">
+  <div class="hero__bg" aria-hidden="true">
+    <span class="hero__orb hero__orb--a"></span>
+    <span class="hero__orb hero__orb--b"></span>
+    <span class="hero__grid-lines"></span>
+  </div>
+
+  <div class="shell hero__inner">
+    <div class="hero__copy">
+      <p class="eyebrow"><span class="dot dot--live"></span> Escolinha de vôlei de praia · {{ site.city }}/{{ site.state }}</p>
+      <h1 class="hero__title">
+        A escolinha organizada.<br>
+        <em>O time mais conectado.</em>
+      </h1>
+      <p class="hero__lead">
+        Matrícula, treinos, pontos e mensalidades em um só lugar. O aluno acompanha a rotina pelo celular;
+        a equipe administra tudo com clareza e menos trabalho manual.
+      </p>
+
+      <div class="hero__actions">
+        <a class="btn btn--primary btn--lg" href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">
+          <svg class="icon"><use href="#i-whatsapp"></use></svg>
+          Falar com a equipe
+        </a>
+        <a class="btn btn--ghost btn--lg" href="#sistema">
+          Ver o sistema
+        </a>
+      </div>
+
+      <ul class="hero__tags">
+        <li><svg class="icon"><use href="#i-ball"></use></svg> Site + versão instalável</li>
+        <li><svg class="icon"><use href="#i-lock"></use></svg> Acesso individual</li>
+        <li><svg class="icon"><use href="#i-check"></use></svg> Matrícula com a equipe</li>
+      </ul>
+
+      <dl class="hero__stats">
+        <div>
+          <dt>alunos na areia</dt>
+          <dd>{{ stats.students|stringformat:"02d" }}</dd>
+        </div>
+        <div>
+          <dt>turmas ativas</dt>
+          <dd>{{ stats.groups|stringformat:"02d" }}</dd>
+        </div>
+        <div>
+          <dt>treinos por semana</dt>
+          <dd>{{ stats.weekly_sessions|stringformat:"02d" }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="hero__visual">
+      <div class="crest">
+        <div class="crest__glow" aria-hidden="true"></div>
+        <div class="crest__grain" aria-hidden="true"></div>
+        <div class="crest__lines" aria-hidden="true"></div>
+        <img class="crest__logo" src="{% static 'img/logo.webp' %}" width="1000" height="750" alt="Emblema Team Farias Vôlei de Praia" fetchpriority="high">
+        <div class="crest__ring" aria-hidden="true"></div>
+      </div>
+
+      <div class="float-card float-card--next">
+        <span class="float-card__label"><svg class="icon"><use href="#i-calendar"></use></svg> Próximo treino</span>
+        {% if next_session %}
+          <strong>{{ next_session.date|date:"D"|capfirst }} · {{ next_session.start_time|time:"H\hi" }}</strong>
+          <span>{{ next_session.class_group.name }}{% if next_session.venue %} · {{ next_session.venue.name }}{% endif %}</span>
+        {% else %}
+          <strong>Turmas abertas</strong>
+          <span>Iniciante ao avançado</span>
+        {% endif %}
+      </div>
+
+      <div class="float-card float-card--rank">
+        <span class="float-card__label"><svg class="icon"><use href="#i-trophy"></use></svg> Ranking</span>
+        {% if leader %}
+          <strong>1º {{ leader.student.display_name }}</strong>
+          <span>{{ leader.points }} pontos</span>
+        {% else %}
+          <strong>Pontuação em jogo</strong>
+          <span>A cada treino</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="marquee" aria-hidden="true">
+  <div class="marquee__track">
+    {% for i in "1234" %}
+      <span>Team Farias</span><svg class="icon"><use href="#i-ball"></use></svg>
+      <span>Vôlei de praia</span><svg class="icon"><use href="#i-ball"></use></svg>
+      <span>Treinos</span><svg class="icon"><use href="#i-ball"></use></svg>
+      <span>Ranking</span><svg class="icon"><use href="#i-ball"></use></svg>
+    {% endfor %}
+  </div>
+</div>
+
+<section class="section section--about" id="escolinha">
+  <div class="shell about">
+    <div class="about__intro">
+      <p class="eyebrow">A escolinha</p>
+      <h2 class="section-title">Vôlei de praia com método,<br>não só com vontade.</h2>
+      <p class="section-lead">
+        O Team Farias organiza a rotina de quem treina e de quem ensina. Cada turma tem horário fixo,
+        professor responsável e acompanhamento de presença. A evolução fica registrada — e visível.
+      </p>
+      <div class="about__signature">
+        <div class="about__court" aria-hidden="true">
+          <span class="court__net"></span>
+          <span class="court__line court__line--a"></span>
+          <span class="court__line court__line--b"></span>
+          <span class="court__ball"></span>
+        </div>
+        <p>
+          "A areia ensina a jogar em time. O sistema entra para o time não perder o fio da meada."
+        </p>
+      </div>
+    </div>
+
+    <div class="pillars">
+      <article class="pillar">
+        <span class="pillar__icon"><svg class="icon"><use href="#i-users"></use></svg></span>
+        <h3>Turmas por nível</h3>
+        <p>Do primeiro saque ao time de competição, com progressão clara e grupos do mesmo momento.</p>
+      </article>
+      <article class="pillar">
+        <span class="pillar__icon"><svg class="icon"><use href="#i-clipboard"></use></svg></span>
+        <h3>Acompanhamento real</h3>
+        <p>Presença, pontos e histórico de cada atleta registrados treino a treino, sem planilha solta.</p>
+      </article>
+      <article class="pillar">
+        <span class="pillar__icon"><svg class="icon"><use href="#i-ball"></use></svg></span>
+        <h3>Areia de verdade</h3>
+        <p>Treino em quadra de areia, com horários fixos e estrutura para evoluir com segurança.</p>
+      </article>
+      <article class="pillar">
+        <span class="pillar__icon"><svg class="icon"><use href="#i-megaphone"></use></svg></span>
+        <h3>Comunidade</h3>
+        <p>Comunicados, eventos e ranking que mantêm alunos e responsáveis dentro do jogo.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section section--system" id="sistema">
+  <div class="shell">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">O sistema</p>
+        <h2 class="section-title">Um sistema completo,<br>fácil de usar.</h2>
+      </div>
+      <p class="section-lead section-lead--right">
+        Site, aplicativo instalável e painel de gestão no mesmo lugar. Cada pessoa vê apenas o que precisa,
+        com acesso protegido por login.
+      </p>
+    </div>
+
+    <div class="system-grid">
+      <div class="student-panel">
+        <div class="student-panel__copy">
+          <span class="badge badge--violet">Área do aluno</span>
+          <h3>O celular na mão,<br>o treino na cabeça.</h3>
+          <p>Uma experiência personalizada do primeiro cadastro ao próximo treino.</p>
+          <ul class="feature-list">
+            <li><span>01</span><div><strong>Matrícula com a equipe</strong><p>A administração cadastra o atleta, a turma e o plano, e libera o acesso.</p></div></li>
+            <li><span>02</span><div><strong>Meu perfil</strong><p>Turma, informações de matrícula, avisos e atalhos do dia a dia.</p></div></li>
+            <li><span>03</span><div><strong>Pontos e ranking</strong><p>Consulta da pontuação, histórico de ganhos e classificação.</p></div></li>
+            <li><span>04</span><div><strong>Calendário de treinos</strong><p>Dias, horários, turmas, eventos e atualizações da programação.</p></div></li>
+            <li><span>05</span><div><strong>Mensalidades</strong><p>Valor, vencimento, status de pagamento e histórico financeiro.</p></div></li>
+            <li><span>06</span><div><strong>Notícias e recados</strong><p>Comunicados da escolinha e informações relevantes para os alunos.</p></div></li>
+          </ul>
+        </div>
+
+        <div class="student-panel__device">
+          <div class="phone" aria-hidden="true">
+            <div class="phone__frame">
+              <div class="phone__screen">
+                <div class="phone__status"><span>9:41</span><span class="phone__dots"><i></i><i></i><i></i></span></div>
+                <div class="mini-top">
+                  <span class="avatar avatar--sm">AS</span>
+                  <div><small>Bom treino,</small><strong>Ana Sofia</strong></div>
+                  <span class="mini-bell"><svg class="icon"><use href="#i-bell"></use></svg><i></i></span>
+                </div>
+                <div class="mini-hero">
+                  <span class="mini-tag">PRÓXIMO TREINO</span>
+                  <strong>Terça, 07h00</strong>
+                  <span>Arena Beira-Mar · Iniciante Manhã</span>
+                  <div class="mini-avatars"><i>JS</i><i>MC</i><i>+4</i></div>
+                </div>
+                <div class="mini-stats">
+                  <div><span>Pontos</span><strong>1.240</strong></div>
+                  <div><span>Ranking</span><strong>3º</strong></div>
+                </div>
+                <div class="mini-row">
+                  <span class="mini-icon"><svg class="icon"><use href="#i-wallet"></use></svg></span>
+                  <div><strong>Mensalidade de outubro</strong><small>Vence 10/10 · R$ 180,00</small></div>
+                  <span class="mini-badge">EM ABERTO</span>
+                </div>
+                <div class="mini-row">
+                  <span class="mini-icon"><svg class="icon"><use href="#i-megaphone"></use></svg></span>
+                  <div><strong>Treino de sábado confirmado</strong><small>Comunicado · hoje</small></div>
+                  <span class="mini-dot-mini"></span>
+                </div>
+                <div class="mini-tabbar">
+                  <span class="is-active"><svg class="icon"><use href="#i-home"></use></svg></span>
+                  <span><svg class="icon"><use href="#i-calendar"></use></svg></span>
+                  <span><svg class="icon"><use href="#i-star"></use></svg></span>
+                  <span><svg class="icon"><use href="#i-user"></use></svg></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="device-note">
+            <svg class="icon"><use href="#i-download"></use></svg>
+            <p><strong>Instalável</strong><br>Adicione à tela inicial e abra como app.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="team-panel">
+        <div class="team-panel__head">
+          <div>
+            <span class="badge badge--outline">Painel da equipe</span>
+            <h3>Controle de verdade<br>para quem organiza o time.</h3>
+          </div>
+          <p>Operação diária organizada, com níveis de acesso para administração e professores.</p>
+        </div>
+
+        <div class="team-grid">
+          <article class="team-card">
+            <span class="team-card__num">01</span>
+            <h4>Cadastro e turmas</h4>
+            <p>Aprovação de matrículas, responsáveis, turmas e alunos ativos.</p>
+          </article>
+          <article class="team-card">
+            <span class="team-card__num">02</span>
+            <h4>Treinos e presença</h4>
+            <p>Agenda de aulas, mudanças de horário e registro de participação.</p>
+          </article>
+          <article class="team-card">
+            <span class="team-card__num">03</span>
+            <h4>Pontuação dos atletas</h4>
+            <p>Lançamento e ajuste de pontos, regras definidas e histórico.</p>
+          </article>
+          <article class="team-card">
+            <span class="team-card__num">04</span>
+            <h4>Mensalidades</h4>
+            <p>Valores, vencimentos, pagamentos registrados e pendências.</p>
+          </article>
+          <article class="team-card">
+            <span class="team-card__num">05</span>
+            <h4>Comunicados</h4>
+            <p>Avisos publicados para alunos e responsáveis, na hora certa.</p>
+          </article>
+          <article class="team-card">
+            <span class="team-card__num">06</span>
+            <h4>Resumo gerencial</h4>
+            <p>Alunos, treinos, presenças, pontuação e situação financeira.</p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section--steps" id="como-funciona">
+  <div class="shell">
+    <div class="section-head section-head--center">
+      <p class="eyebrow">Como funciona</p>
+      <h2 class="section-title">Da inscrição ao primeiro saque.</h2>
+      <p class="section-lead">Quatro passos simples para entrar na areia e manter tudo em dia.</p>
+    </div>
+
+    <ol class="steps">
+      <li class="step">
+        <span class="step__num">01</span>
+        <div class="step__body">
+          <h3>Você fala com a equipe</h3>
+          <p>Fala com a equipe pelo WhatsApp e acerta turma, horário e plano.</p>
+        </div>
+        <span class="step__icon"><svg class="icon"><use href="#i-pencil"></use></svg></span>
+      </li>
+      <li class="step">
+        <span class="step__num">02</span>
+        <div class="step__body">
+          <h3>Equipe valida</h3>
+          <p>A administração confere as informações, aprova e libera o acesso.</p>
+        </div>
+        <span class="step__icon"><svg class="icon"><use href="#i-check"></use></svg></span>
+      </li>
+      <li class="step">
+        <span class="step__num">03</span>
+        <div class="step__body">
+          <h3>Treinos e pontos</h3>
+          <p>Presença registrada em cada treino e pontos lançados pela equipe.</p>
+        </div>
+        <span class="step__icon"><svg class="icon"><use href="#i-star"></use></svg></span>
+      </li>
+      <li class="step">
+        <span class="step__num">04</span>
+        <div class="step__body">
+          <h3>Financeiro em dia</h3>
+          <p>Mensalidade com vencimento claro e status acompanhado pelo aluno.</p>
+        </div>
+        <span class="step__icon"><svg class="icon"><use href="#i-wallet"></use></svg></span>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="section section--groups" id="turmas">
+  <div class="shell">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Turmas e horários</p>
+        <h2 class="section-title">Escolha a sua areia.</h2>
+      </div>
+      <p class="section-lead section-lead--right">
+        Turmas pequenas, horários fixos e professor responsável. As vagas são atualizadas em tempo real.
+      </p>
+    </div>
+
+    <div class="groups-grid">
+      {% for group in groups %}
+        <article class="group-card">
+          <div class="group-card__head">
+            <span class="badge badge--violet">{{ group.get_category_display }}</span>
+            <span class="badge badge--outline">{{ group.get_level_display }}</span>
+          </div>
+          <h3>{{ group.name }}</h3>
+          <p class="group-card__desc">{{ group.description|default:"Treino em quadra de areia com foco em fundamento, leitura de jogo e ritmo de time." }}</p>
+          <ul class="group-card__meta">
+            <li><svg class="icon"><use href="#i-calendar"></use></svg> {{ group.schedule_label }}</li>
+            <li><svg class="icon"><use href="#i-pin"></use></svg> {{ group.venue.name|default:"Arena Beira-Mar" }}</li>
+            <li><svg class="icon"><use href="#i-user"></use></svg> {{ group.professor.first_name_display|default:"Equipe Team Farias" }}</li>
+          </ul>
+          <div class="group-card__foot">
+            <div class="spots">
+              <span><strong>{{ group.free_spots }}</strong> vaga{{ group.free_spots|pluralize }} livre{{ group.free_spots|pluralize }}</span>
+              <span class="meter"><i style="width: {{ group.occupancy_pct }}%"></i></span>
+            </div>
+            {% if group.free_spots %}
+              <a class="btn btn--ghost btn--sm" href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">Falar com a equipe</a>
+            {% else %}
+              <span class="badge badge--amber">Turma lotada</span>
+            {% endif %}
+          </div>
+        </article>
+      {% empty %}
+        <div class="empty-state">
+          <p>As turmas estão sendo organizadas. Fale com a equipe para saber as próximas aberturas.</p>
+          <a class="btn btn--primary" href="https://wa.me/{{ site.whatsapp }}">Falar no WhatsApp</a>
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if plans %}
+      <div class="plans">
+        <div class="plans__head">
+          <h3>Planos mensais</h3>
+          <p>Mensalidade definida por plano. O pagamento é registrado pela equipe, sem cobrança automática.</p>
+        </div>
+        <div class="plans__grid">
+          {% for plan in plans %}
+            <article class="plan-card {% if forloop.counter == 2 %}plan-card--featured{% endif %}">
+              {% if forloop.counter == 2 %}<span class="plan-card__flag">Mais escolhido</span>{% endif %}
+              <h4>{{ plan.name }}</h4>
+              <p class="plan-card__price"><small>R$</small> {{ plan.monthly_fee|floatformat:"-2" }}<span>/mês</span></p>
+              <p class="plan-card__sessions">{{ plan.sessions_per_week }} treino{{ plan.sessions_per_week|pluralize }} por semana</p>
+              <p class="plan-card__desc">{{ plan.description }}</p>
+              <a class="btn {% if forloop.counter == 2 %}btn--primary{% else %}btn--ghost{% endif %} btn--block btn--sm"
+                 href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">Falar com a equipe</a>
+            </article>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="section section--news" id="noticias">
+  <div class="shell">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Notícias e recados</p>
+        <h2 class="section-title">O que rola na areia.</h2>
+      </div>
+      <a class="btn btn--ghost btn--sm" href="{% url 'core:news_list' %}">
+        Ver todas
+        <svg class="icon"><use href="#i-arrow-right"></use></svg>
+      </a>
+    </div>
+
+    <div class="news-grid">
+      {% for item in news %}
+        <a class="news-card" href="{{ item.get_absolute_url }}">
+          <div class="news-card__top">
+            <span class="badge badge--{{ item.kind }}">{{ item.get_kind_display }}</span>
+            <time datetime="{{ item.published_at|date:'c' }}">{{ item.published_at|date:"d M Y" }}</time>
+          </div>
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.summary|default:item.body|truncatewords:22 }}</p>
+          <span class="news-card__more">Ler notícia <svg class="icon"><use href="#i-arrow-up-right"></use></svg></span>
+        </a>
+      {% empty %}
+        <div class="empty-state">
+          <p>Nenhuma notícia publicada ainda. Os comunicados da escolinha aparecem aqui.</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section section--cta">
+  <div class="shell">
+    <div class="cta-panel">
+      <div class="cta-panel__glow" aria-hidden="true"></div>
+      <div class="cta-panel__copy">
+        <p class="eyebrow">Matrícula com a equipe</p>
+        <h2>Comece hoje.<br><em>A areia espera.</em></h2>
+        <p>Fale com a equipe, acerte turma e plano, e receba seu acesso ao sistema no mesmo dia. A matrícula é feita pela administração do Team Farias.</p>
+        <div class="cta-panel__actions">
+          <a class="btn btn--primary btn--lg" href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener"><svg class="icon"><use href="#i-whatsapp"></use></svg> Falar com a equipe</a>
+          <a class="btn btn--ghost btn--lg" href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">Tirar dúvidas</a>
+        </div>
+      </div>
+      <ul class="cta-panel__list">
+        <li><svg class="icon"><use href="#i-check"></use></svg> Turmas por nível e horário fixo</li>
+        <li><svg class="icon"><use href="#i-check"></use></svg> Acompanhamento de presença e pontos</li>
+        <li><svg class="icon"><use href="#i-check"></use></svg> Mensalidade e histórico no celular</li>
+        <li><svg class="icon"><use href="#i-check"></use></svg> Comunicados direto na área do aluno</li>
+      </ul>
+    </div>
+  </div>
+</section>
+{% endblock %}

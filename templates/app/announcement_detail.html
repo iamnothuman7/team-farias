@@ -1,0 +1,24 @@
+{% extends "base_app.html" %}
+
+{% block title %}{{ announcement.title }} — Team Farias{% endblock %}
+{% block topbar_title %}Comunicado{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{% url 'dashboard:announcements' %}">
+  <svg class="icon"><use href="#i-chevron-left"></use></svg> Todos os comunicados
+</a>
+
+<article class="card">
+  <div class="card__body" style="padding:clamp(22px,3vw,36px)">
+    <div class="row wrap" style="gap:8px">
+      <span class="badge badge--{% if announcement.kind == 'noticia' %}blue{% elif announcement.kind == 'evento' %}green{% else %}amber{% endif %}">{{ announcement.get_kind_display }}</span>
+      <time class="faint" style="font-size:.76rem">{{ announcement.published_at|date:"d \d\e F \d\e Y" }}</time>
+    </div>
+    <h1 style="font-size:clamp(1.6rem,2.8vw,2.2rem);margin-top:14px">{{ announcement.title }}</h1>
+    {% if announcement.summary %}<p style="color:var(--violet-300);font-size:1rem;margin-top:12px">{{ announcement.summary }}</p>{% endif %}
+    <div class="prose" style="margin-top:26px;padding-top:24px;border-top:1px solid var(--line)">
+      {{ announcement.body|linebreaks }}
+    </div>
+  </div>
+</article>
+{% endblock %}

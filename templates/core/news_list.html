@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Notícias e recados — Team Farias{% endblock %}
+{% block description %}Notícias, avisos e eventos da escolinha Team Farias de vôlei de praia.{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div class="shell">
+    <p class="eyebrow">Notícias e recados</p>
+    <h1 class="page-head__title">O que rola na areia.</h1>
+    <p class="page-head__lead">Comunicados da escolinha, eventos e novidades das turmas do Team Farias.</p>
+  </div>
+</section>
+
+<section class="section section--list">
+  <div class="shell">
+    <div class="filter-row">
+      <a class="chip {% if not active_kind %}is-active{% endif %}" href="{% url 'core:news_list' %}">Tudo</a>
+      {% for key, label in kinds %}
+        <a class="chip {% if active_kind == key %}is-active{% endif %}" href="{% url 'core:news_list' %}?tipo={{ key }}">{{ label }}</a>
+      {% endfor %}
+    </div>
+
+    <div class="news-grid news-grid--wide">
+      {% for item in announcements %}
+        <a class="news-card" href="{{ item.get_absolute_url }}">
+          <div class="news-card__top">
+            <span class="badge badge--{{ item.kind }}">{{ item.get_kind_display }}</span>
+            <time datetime="{{ item.published_at|date:'c' }}">{{ item.published_at|date:"d M Y"|lower }}</time>
+          </div>
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.summary|default:item.body|truncatewords:26 }}</p>
+          <span class="news-card__more">Ler mais <svg class="icon"><use href="#i-arrow-up-right"></use></svg></span>
+        </a>
+      {% empty %}
+        <div class="empty-state">
+          <p>Nenhum comunicado por aqui ainda.</p>
+          <a class="btn btn--ghost" href="{% url 'core:home' %}">Voltar ao início</a>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

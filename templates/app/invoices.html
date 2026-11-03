@@ -1,0 +1,130 @@
+{% extends "base_app.html" %}
+
+{% block title %}Mensalidades — Team Farias{% endblock %}
+{% block topbar_title %}Mensalidades{% endblock %}
+
+{% block content %}
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">Financeiro</p>
+    <h1>Mensalidades</h1>
+    <p class="page-head-app__lead">Valores, vencimentos e histórico. O pagamento é registrado manualmente pela equipe — não há cobrança automática.</p>
+  </div>
+</header>
+
+<div class="stat-grid stat-grid--3">
+  <article class="stat-card stat-card--{% if open_total %}red{% else %}green{% endif %}">
+    <span class="stat-card__label">Em aberto</span>
+    <p class="stat-card__value">R$ {{ open_total|floatformat:"2" }}</p>
+    <p class="stat-card__meta">{{ open_count }} mensalidade{{ open_count|pluralize }}</p>
+  </article>
+  <article class="stat-card stat-card--green">
+    <span class="stat-card__label">Já pago</span>
+    <p class="stat-card__value">R$ {{ paid_total|floatformat:"2" }}</p>
+    <p class="stat-card__meta">{{ paid_count }} pagamento{{ paid_count|pluralize }} confirmado{{ paid_count|pluralize }}</p>
+  </article>
+  <article class="stat-card stat-card--violet">
+    <span class="stat-card__label">Plano atual</span>
+    <p class="stat-card__value" style="font-size:1.25rem">{{ student.active_enrollment.plan.name|default:"—" }}</p>
+    <p class="stat-card__meta">
+      {% if student.active_enrollment %}R$ {{ student.active_enrollment.monthly_fee|floatformat:"2" }} / mês{% else %}Sem matrícula ativa{% endif %}
+    </p>
+  </article>
+</div>
+
+{% if current %}
+  <section class="card mt-24">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Mensalidade atual — {{ current.competence_label }}</h2>
+        <p class="card__subtitle">Vencimento em {{ current.due_date|date:"d/m/Y" }}</p>
+      </div>
+      <span class="badge badge--{% if current.status == 'paga' %}green{% elif current.is_overdue %}red{% else %}amber{% endif %}">{{ current.situacao }}</span>
+    </div>
+    <div class="card__body">
+      <div class="row row--between wrap" style="gap:18px">
+        <div>
+          <p class="faint" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.12em">Valor</p>
+          <p style="font-family:var(--font-display);font-size:1.9rem;font-weight:800;letter-spacing:-.03em">R$ {{ current.total|floatformat:"2" }}</p>
+        </div>
+        <div>
+          <p class="faint" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.12em">Competência</p>
+          <p style="font-size:.9rem">{{ current.competence_label }}</p>
+        </div>
+        <div>
+          <p class="faint" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.12em">Situação</p>
+          <p style="font-size:.9rem">{{ current.situacao }}</p>
+        </div>
+      </div>
+
+      {% if current.status == 'aberta' %}
+        <div class="pix-box mt-24">
+          <div>
+            <span>Chave Pix da escolinha</span>
+            <strong>{{ site.pix }}</strong>
+          </div>
+          <button class="btn btn--soft btn--sm" type="button" data-copy="{{ site.pix }}">
+            <svg class="icon"><use href="#i-clipboard"></use></svg> <span data-copy-label>Copiar chave</span>
+          </button>
+        </div>
+        <p class="faint mt-16" style="font-size:.78rem">
+          Após o pagamento, envie o comprovante para a equipe no WhatsApp. A baixa é feita manualmente e o status muda aqui.
+        </p>
+      {% elif current.status == 'paga' %}
+        <div class="banner banner--violet mt-24">
+          <svg class="icon"><use href="#i-check"></use></svg>
+          <p>Pagamento confirmado{% if current.paid_at %} em {{ current.paid_at|date:"d/m/Y" }}{% endif %}{% if current.payment_method %} · {{ current.get_payment_method_display }}{% endif %}.</p>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endif %}
+
+<section class="card mt-24">
+  <div class="card__head">
+    <div>
+      <h2 class="card__title">Histórico</h2>
+      <p class="card__subtitle">Todas as mensalidades registradas</p>
+    </div>
+  </div>
+  <div class="card__body">
+    {% if invoices %}
+      <div class="invoice-list">
+        {% for invoice in invoices %}
+          <div class="invoice-item {% if invoice.is_overdue %}is-overdue{% endif %}">
+            <div>
+              <p class="invoice-item__month">{{ invoice.competence_label }}</p>
+              <p class="invoice-item__meta">Vence {{ invoice.due_date|date:"d/m/Y" }}{% if invoice.paid_at %} · pago em {{ invoice.paid_at|date:"d/m/Y" }}{% endif %}</p>
+            </div>
+            <span class="badge badge--{% if invoice.status == 'paga' %}green{% elif invoice.is_overdue %}red{% elif invoice.status == 'isenta' %}blue{% else %}amber{% endif %}">{{ invoice.situacao }}</span>
+            <div class="invoice-item__amount">R$ {{ invoice.total|floatformat:"2" }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state"><p>Nenhuma mensalidade registrada ainda.</p></div>
+    {% endif %}
+  </div>
+</section>
+
+{% if payments %}
+  <section class="card mt-24">
+    <div class="card__head"><h2 class="card__title">Pagamentos confirmados</h2></div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Data</th><th>Competência</th><th>Forma</th><th class="is-right">Valor</th></tr></thead>
+        <tbody>
+          {% for payment in payments %}
+            <tr>
+              <td>{{ payment.paid_at|date:"d/m/Y" }}</td>
+              <td>{{ payment.invoice.competence_label }}</td>
+              <td><span class="badge badge--outline">{{ payment.get_method_display }}</span></td>
+              <td class="is-right"><strong class="table__num">R$ {{ payment.amount|floatformat:"2" }}</strong></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

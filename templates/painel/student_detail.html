@@ -1,0 +1,215 @@
+{% extends "base_app.html" %}
+
+{% block title %}{{ student.full_name }} — Painel Team Farias{% endblock %}
+{% block topbar_title %}Aluno{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{% url 'dashboard:students' %}">
+  <svg class="icon"><use href="#i-chevron-left"></use></svg> Todos os alunos
+</a>
+
+<section class="card">
+  <div class="card__body profile-head">
+    <span class="avatar avatar--lg">{{ student.initials }}</span>
+    <div style="flex:1">
+      <h1 style="font-size:1.5rem">{{ student.full_name }}</h1>
+      <p>{{ student.user.email }} · {{ student.user.phone|default:"sem telefone" }}</p>
+      <div class="row wrap" style="gap:6px;margin-top:8px">
+        <span class="badge badge--{% if student.status == 'ativo' %}green{% elif student.status == 'pendente' %}amber{% else %}outline{% endif %}">{{ student.get_status_display }}</span>
+        {% if enrollment %}<span class="badge badge--violet">{{ enrollment.class_group.name }}</span>{% endif %}
+        <span class="badge badge--outline">{{ student.get_level_display }}</span>
+        {% if student.guardian %}<span class="badge badge--outline">Resp.: {{ student.guardian.name }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="row" style="gap:8px">
+      <a class="btn btn--ghost btn--sm" href="tel:{{ student.user.phone }}"><svg class="icon"><use href="#i-phone"></use></svg> Ligar</a>
+      <a class="btn btn--ghost btn--sm" href="mailto:{{ student.user.email }}"><svg class="icon"><use href="#i-mail"></use></svg> E-mail</a>
+    </div>
+  </div>
+</section>
+
+<div class="stat-grid mt-24">
+  <article class="stat-card">
+    <span class="stat-card__label">Pontos</span>
+    <p class="stat-card__value">{{ student.total_points }}</p>
+    <p class="stat-card__meta">Total acumulado</p>
+  </article>
+  <article class="stat-card stat-card--amber">
+    <span class="stat-card__label">Ranking</span>
+    <p class="stat-card__value">{% if position %}{{ position }}º{% else %}—{% endif %}</p>
+    <p class="stat-card__meta">Na escolinha</p>
+  </article>
+  <article class="stat-card stat-card--green">
+    <span class="stat-card__label">Presença</span>
+    <p class="stat-card__value">{{ attendance.rate }}<small>%</small></p>
+    <p class="stat-card__meta">{{ attendance.present }}/{{ attendance.total }} (90 dias)</p>
+  </article>
+  <article class="stat-card">
+    <span class="stat-card__label">Mensalidade</span>
+    <p class="stat-card__value" style="font-size:1.3rem">R$ {{ enrollment.monthly_fee|floatformat:"2"|default:"—" }}</p>
+    <p class="stat-card__meta">{{ enrollment.plan.name|default:"Sem matrícula" }}</p>
+  </article>
+</div>
+
+<div class="grid-2 mt-24">
+  <div class="stack-16">
+    <section class="card">
+      <div class="card__head">
+        <h2 class="card__title">Pontos recentes</h2>
+      </div>
+      <div class="card__body card__body--tight">
+        {% if points %}
+          <table class="table table--compact">
+            <tbody>
+              {% for entry in points %}
+                <tr>
+                  <td>
+                    <strong style="font-size:.84rem">{{ entry.reason }}</strong>
+                    <div class="table__muted">{{ entry.created_at|date:"d/m/Y" }} · {{ entry.get_source_display }}</div>
+                  </td>
+                  <td class="is-right"><strong class="table__num" style="color:{% if entry.points >= 0 %}var(--green){% else %}var(--red){% endif %}">{{ entry.points|stringformat:"+d" }}</strong></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="empty-state"><p>Nenhum ponto lançado.</p></div>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card__head">
+        <h2 class="card__title">Últimas presenças</h2>
+      </div>
+      <div class="card__body card__body--tight">
+        {% if attendance_rows %}
+          <table class="table table--compact">
+            <tbody>
+              {% for record in attendance_rows %}
+                <tr>
+                  <td>
+                    <strong style="font-size:.84rem">{{ record.session.date|date:"d/m/Y" }}</strong>
+                    <div class="table__muted">{{ record.session.class_group.name }}</div>
+                  </td>
+                  <td class="is-right">
+                    <span class="badge badge--{% if record.status == 'presente' %}green{% elif record.status == 'atraso' %}amber{% elif record.status == 'justificada' %}blue{% else %}red{% endif %}">{{ record.get_status_display }}</span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="empty-state"><p>Sem presenças registradas.</p></div>
+        {% endif %}
+      </div>
+    </section>
+
+    {% if user.is_admin_role %}
+    <section class="card">
+      <div class="card__head">
+        <h2 class="card__title">Mensalidades</h2>
+        <a class="card__link" href="{% url 'dashboard:billing' %}">Financeiro <svg class="icon"><use href="#i-arrow-right"></use></svg></a>
+      </div>
+      <div class="card__body card__body--tight">
+        {% if invoices %}
+          <table class="table table--compact">
+            <tbody>
+              {% for invoice in invoices %}
+                <tr>
+                  <td>
+                    <strong style="font-size:.84rem">{{ invoice.competence_label }}</strong>
+                    <div class="table__muted">Vence {{ invoice.due_date|date:"d/m" }}</div>
+                  </td>
+                  <td class="is-right"><strong class="table__num">R$ {{ invoice.total|floatformat:"2" }}</strong></td>
+                  <td class="is-right"><span class="badge badge--{% if invoice.status == 'paga' %}green{% elif invoice.is_overdue %}red{% else %}amber{% endif %}">{{ invoice.situacao }}</span></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="empty-state"><p>Nenhuma mensalidade.</p></div>
+        {% endif %}
+      </div>
+    </section>
+    {% endif %}
+  </div>
+
+  <div class="stack-16">
+    <section class="card">
+      <div class="card__head">
+        <div>
+          <h2 class="card__title">Lançar pontos</h2>
+          <p class="card__subtitle">Somado ao total do atleta</p>
+        </div>
+      </div>
+      <form class="card__body" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="points">
+        <input type="hidden" name="student" value="{{ student.pk }}">
+        <div class="stack-12">
+          <div class="form-grid">
+            {% include "partials/field.html" with field=point_form.points %}
+            {% include "partials/field.html" with field=point_form.source %}
+          </div>
+          {% include "partials/field.html" with field=point_form.reason %}
+          {% include "partials/field.html" with field=point_form.rule %}
+          <button class="btn btn--primary btn--block" type="submit">
+            <svg class="icon"><use href="#i-star"></use></svg> Lançar pontos
+          </button>
+        </div>
+      </form>
+    </section>
+
+    {% if user.is_admin_role %}
+    <section class="card">
+      <div class="card__head">
+        <h2 class="card__title">Dados do cadastro</h2>
+      </div>
+      <form class="card__body" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="edit">
+        <div class="stack-12">
+          <div class="form-grid">
+            {% include "partials/field.html" with field=edit_form.nickname %}
+            {% include "partials/field.html" with field=edit_form.level %}
+            {% include "partials/field.html" with field=edit_form.status %}
+            {% include "partials/field.html" with field=edit_form.position %}
+          </div>
+          <p class="form-section__title" style="margin:4px 0 0">Responsável</p>
+          <div class="form-grid">
+            {% include "partials/field.html" with field=edit_form.guardian_name wide=True %}
+            {% include "partials/field.html" with field=edit_form.guardian_phone %}
+            {% include "partials/field.html" with field=edit_form.guardian_email %}
+          </div>
+          {% include "partials/field.html" with field=edit_form.notes %}
+          <button class="btn btn--ghost btn--block" type="submit">Salvar cadastro</button>
+        </div>
+      </form>
+    </section>
+    {% endif %}
+
+    {% if class_rows %}
+      <section class="card">
+        <div class="card__head">
+          <h2 class="card__title">Ranking da turma</h2>
+        </div>
+        <div class="card__body card__body--tight">
+          <div class="rank-list">
+            {% for row in class_rows %}
+              <div class="rank-row {% if row.student.pk == student.pk %}is-me{% endif %}">
+                <span class="rank-row__pos">{{ row.position }}</span>
+                <div class="rank-row__person">
+                  <span class="avatar avatar--sm">{{ row.student.initials }}</span>
+                  <div><strong>{{ row.student.display_name }}</strong></div>
+                </div>
+                <span class="rank-row__points">{{ row.points }}<span>pts</span></span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

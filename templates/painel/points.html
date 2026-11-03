@@ -1,0 +1,184 @@
+{% extends "base_app.html" %}
+
+{% block title %}Pontuação — Painel Team Farias{% endblock %}
+{% block topbar_title %}Pontuação{% endblock %}
+
+{% block content %}
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">Ranking</p>
+    <h1>Pontuação dos atletas</h1>
+    <p class="page-head-app__lead">Lance pontos individuais ou para a turma inteira. Tudo fica registrado no histórico do aluno.</p>
+  </div>
+  <div class="page-head-app__actions">
+    <span class="badge badge--violet">{{ total_points_month }} pts neste mês</span>
+  </div>
+</header>
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Novo lançamento</h2>
+        <p class="card__subtitle">Escolha individual ou coletivo</p>
+      </div>
+      <div class="segmented" data-tabs>
+        <button type="button" class="is-active" data-tab="single">Individual</button>
+        <button type="button" data-tab="bulk">Turma</button>
+      </div>
+    </div>
+
+    <div class="card__body" data-tab-panel="single">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="single">
+        <div class="stack-12">
+          {% include "partials/field.html" with field=point_form.student %}
+          <div class="form-grid">
+            {% include "partials/field.html" with field=point_form.points %}
+            {% include "partials/field.html" with field=point_form.source %}
+          </div>
+          {% include "partials/field.html" with field=point_form.reason %}
+          {% include "partials/field.html" with field=point_form.rule %}
+          <button class="btn btn--primary btn--block" type="submit"><svg class="icon"><use href="#i-star"></use></svg> Lançar para o atleta</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card__body" data-tab-panel="bulk" hidden>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="bulk">
+        <div class="stack-12">
+          {% include "partials/field.html" with field=bulk_form.class_group %}
+          <div class="form-grid">
+            {% include "partials/field.html" with field=bulk_form.points %}
+            {% include "partials/field.html" with field=bulk_form.source %}
+          </div>
+          {% include "partials/field.html" with field=bulk_form.reason %}
+          {% include "partials/field.html" with field=bulk_form.rule %}
+          <button class="btn btn--primary btn--block" type="submit"><svg class="icon"><use href="#i-users"></use></svg> Lançar para toda a turma</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Ranking</h2>
+        <p class="card__subtitle">{% if group_filter %}Turma filtrada{% else %}Todos os atletas ativos{% endif %}</p>
+      </div>
+      <form method="get">
+        <select class="select select--sm" name="turma" data-autosubmit aria-label="Filtrar ranking por turma">
+          <option value="">Geral</option>
+          {% for group in groups %}
+            <option value="{{ group.pk }}" {% if group_filter == group.pk|stringformat:"s" %}selected{% endif %}>{{ group.name }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+    <div class="card__body card__body--tight">
+      <div class="rank-list">
+        {% for row in ranking %}
+          <div class="rank-row">
+            <span class="rank-row__pos">{{ row.position }}</span>
+            <div class="rank-row__person">
+              <span class="avatar avatar--sm">{{ row.student.initials }}</span>
+              <div><strong>{{ row.student.display_name }}</strong><span>{{ row.student.class_group.name|default:"—" }}</span></div>
+            </div>
+            <span class="rank-row__points">{{ row.points }}<span>pts</span></span>
+          </div>
+        {% empty %}
+          <div class="empty-state"><p>Nenhum atleta ativo.</p></div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+
+<section class="card mt-24">
+  <div class="card__head">
+    <div>
+      <h2 class="card__title">Últimos lançamentos</h2>
+      <p class="card__subtitle">40 registros mais recentes</p>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="table table--stack">
+      <thead>
+        <tr><th>Aluno</th><th>Motivo</th><th>Origem</th><th>Regra</th><th>Quem lançou</th><th class="is-right">Pontos</th></tr>
+      </thead>
+      <tbody>
+        {% for entry in entries %}
+          <tr>
+            <td data-primary>
+              <div class="table__person">
+                <span class="avatar avatar--sm">{{ entry.student.initials }}</span>
+                <div><strong>{{ entry.student.display_name }}</strong><span>{{ entry.student.class_group.name|default:"—" }}</span></div>
+              </div>
+            </td>
+            <td data-label="Motivo">{{ entry.reason }}</td>
+            <td data-label="Origem"><span class="badge badge--outline">{{ entry.get_source_display }}</span></td>
+            <td class="table__muted hide-sm" data-label="Regra">{{ entry.rule.name|default:"—" }}</td>
+            <td class="table__muted hide-sm" data-label="Quem lançou">{{ entry.created_by.first_name_display|default:"—" }}</td>
+            <td class="is-right" data-label="Pontos"><strong class="table__num" style="color:{% if entry.points >= 0 %}var(--green){% else %}var(--red){% endif %}">{{ entry.points|stringformat:"+d" }}</strong></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6"><div class="empty-state"><p>Nenhum lançamento ainda.</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="grid-2 mt-24">
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Regras de pontuação</h2>
+        <p class="card__subtitle">Padrões usados nos lançamentos</p>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="table table--compact">
+        <tbody>
+          {% for rule in rules %}
+            <tr>
+              <td>
+                <strong style="font-size:.84rem">{{ rule.name }}</strong>
+                <div class="table__muted">{{ rule.description }}</div>
+              </td>
+              <td class="is-right">
+                <strong class="table__num" style="color:{% if rule.points >= 0 %}var(--green){% else %}var(--red){% endif %}">{{ rule.points|stringformat:"+d" }}</strong>
+              </td>
+              <td class="is-right">
+                {% if rule.is_active %}<span class="badge badge--green">Ativa</span>{% else %}<span class="badge badge--outline">Inativa</span>{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head">
+      <h2 class="card__title">Nova regra</h2>
+    </div>
+    <form method="post" class="card__body">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="rule">
+      <div class="stack-12">
+        {% include "partials/field.html" with field=rule_form.name %}
+        <div class="form-grid">
+          {% include "partials/field.html" with field=rule_form.points %}
+          {% include "partials/field.html" with field=rule_form.description %}
+        </div>
+        <label class="checkbox">{{ rule_form.is_active }} <span>Regra ativa</span></label>
+        <button class="btn btn--ghost btn--block" type="submit">Salvar regra</button>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}

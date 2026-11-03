@@ -1,0 +1,22 @@
+# Ambiente
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.sqlite3
+db.sqlite3
+db.sqlite3-journal
+
+# Django
+staticfiles/
+media/
+*.log
+
+# Ferramentas
+.preview/
+assets/brand/original/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

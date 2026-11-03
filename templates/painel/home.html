@@ -1,0 +1,258 @@
+{% extends "base_app.html" %}
+
+{% block title %}Visão geral — Painel Team Farias{% endblock %}
+{% block topbar_title %}Visão geral{% endblock %}
+
+{% block content %}
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">{{ today|date:"l, d \d\e F"|capfirst }}</p>
+    <h1>{{ greeting }}, {{ user.first_name_display }}.</h1>
+    <p class="page-head-app__lead">
+      {% if user.is_admin_role %}A situação da escolinha em um relance: matrículas, treinos da semana, presença e financeiro.
+      {% else %}Suas turmas, os treinos da semana e a presença dos seus atletas.{% endif %}
+    </p>
+  </div>
+  <div class="page-head-app__actions">
+    <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:sessions' %}"><svg class="icon"><use href="#i-calendar"></use></svg> Agenda</a>
+    {% if user.is_admin_role %}
+      <a class="btn btn--primary btn--sm" href="{% url 'dashboard:enrollments' %}">
+        <svg class="icon"><use href="#i-clipboard"></use></svg> Matrículas
+        {% if metrics.pending_enrollments %}<span class="badge badge--outline" style="margin-left:2px">{{ metrics.pending_enrollments }}</span>{% endif %}
+      </a>
+    {% else %}
+      <a class="btn btn--primary btn--sm" href="{% url 'dashboard:points_admin' %}"><svg class="icon"><use href="#i-star"></use></svg> Lançar pontos</a>
+    {% endif %}
+  </div>
+</header>
+
+<div class="stat-grid">
+  <article class="stat-card stat-card--violet">
+    <span class="stat-card__label">Alunos ativos</span>
+    <p class="stat-card__value">{{ metrics.active_students }}</p>
+    <p class="stat-card__meta">em {{ metrics.groups }} turma{{ metrics.groups|pluralize }}</p>
+  </article>
+  <article class="stat-card stat-card--amber">
+    <span class="stat-card__label">{% if user.is_admin_role %}Matrículas no mês{% else %}Inscrições na turma{% endif %}</span>
+    <p class="stat-card__value">{% if user.is_admin_role %}{{ metrics.new_enrollments }}{% else %}{{ metrics.pending_enrollments }}{% endif %}</p>
+    <p class="stat-card__meta">{% if user.is_admin_role %}cadastradas pela equipe{% else %}aguardando validação{% endif %}</p>
+  </article>
+  <article class="stat-card stat-card--green">
+    <span class="stat-card__label">Presença (30 dias)</span>
+    <p class="stat-card__value">{{ metrics.attendance_rate }}<small>%</small></p>
+    <p class="stat-card__meta">{{ metrics.week_sessions }} treino{{ metrics.week_sessions|pluralize }} nesta semana</p>
+  </article>
+  {% if user.is_admin_role %}
+    <article class="stat-card {% if metrics.overdue_count %}stat-card--red{% endif %}">
+      <span class="stat-card__label">Em atraso</span>
+      <p class="stat-card__value">R$ {{ metrics.overdue_total|floatformat:"2" }}</p>
+      <p class="stat-card__meta">{{ metrics.overdue_count }} mensalidade{{ metrics.overdue_count|pluralize }}</p>
+    </article>
+  {% else %}
+    <article class="stat-card stat-card--violet">
+      <span class="stat-card__label">Pontos no mês</span>
+      <p class="stat-card__value">{{ metrics.points_month }}</p>
+      <p class="stat-card__meta">lançados nas suas turmas</p>
+    </article>
+  {% endif %}
+</div>
+
+<div class="grid-2 mt-24">
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Treinos da semana</h2>
+        <p class="card__subtitle">Semana atual · {{ metrics.week_sessions }} treinos</p>
+      </div>
+      <a class="card__link" href="{% url 'dashboard:sessions' %}">Abrir agenda <svg class="icon"><use href="#i-arrow-right"></use></svg></a>
+    </div>
+    <div class="card__body">
+      {% if week_sessions %}
+        <div class="session-list">
+          {% for session in week_sessions %}
+            <div class="session-item">
+              <div class="session-date"><strong>{{ session.date|date:"d" }}</strong><span>{{ session.date|date:"D" }}</span></div>
+              <div class="session-info">
+                <strong>{{ session.class_group.name }}</strong>
+                <span>
+                  <svg class="icon"><use href="#i-clock"></use></svg> {{ session.start_time|time:"H\hi" }}
+                  {% if session.venue %}<svg class="icon"><use href="#i-pin"></use></svg> {{ session.venue.name }}{% endif %}
+                  <span class="badge badge--outline">{{ session.confirmed_count }}/{{ session.class_group.occupied }}</span>
+                </span>
+              </div>
+              <div class="session-actions">
+                <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:session_attendance' session.pk %}">Presença</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state"><p>Nenhum treino nesta semana. Gere os treinos na agenda.</p></div>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if user.is_admin_role %}
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Últimas matrículas</h2>
+        <p class="card__subtitle">Feitas pela administração</p>
+      </div>
+      <a class="card__link" href="{% url 'dashboard:enrollment_create' %}">Nova <svg class="icon"><use href="#i-plus"></use></svg></a>
+    </div>
+    <div class="card__body">
+      {% if recent_enrollments %}
+        <div class="stack-12">
+          {% for enrollment in recent_enrollments %}
+            <div class="row row--between" style="align-items:flex-start">
+              <div class="row" style="align-items:flex-start">
+                <span class="avatar avatar--sm">{{ enrollment.student.initials }}</span>
+                <div>
+                  <strong style="font-size:.86rem">{{ enrollment.student.full_name }}</strong>
+                  <p class="faint" style="font-size:.72rem">{{ enrollment.class_group.name }} · {{ enrollment.enrolled_at|date:"d/m/Y" }}</p>
+                </div>
+              </div>
+              <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:student_detail' enrollment.student.pk %}">Abrir</a>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <p>Nenhuma matrícula criada ainda.</p>
+          <a class="btn btn--primary btn--sm" href="{% url 'dashboard:enrollment_create' %}">Criar matrícula</a>
+        </div>
+      {% endif %}
+      {% if pending_total %}
+        <div class="banner banner--amber mt-16" style="font-size:.8rem">
+          <svg class="icon"><use href="#i-alert"></use></svg>
+          <p>{{ pending_total }} matrícula{{ pending_total|pluralize }} pendente{{ pending_total|pluralize }} aguardando análise. <a href="{% url 'dashboard:enrollments' %}?status=pendente">Revisar</a></p>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+  {% else %}
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Atalhos</h2>
+        <p class="card__subtitle">O que você mais usa</p>
+      </div>
+    </div>
+    <div class="card__body stack-12">
+      <a class="btn btn--primary btn--block" href="{% url 'dashboard:sessions' %}"><svg class="icon"><use href="#i-calendar"></use></svg> Registrar presença</a>
+      <a class="btn btn--ghost btn--block" href="{% url 'dashboard:points_admin' %}"><svg class="icon"><use href="#i-star"></use></svg> Lançar pontos</a>
+      <a class="btn btn--ghost btn--block" href="{% url 'dashboard:students' %}"><svg class="icon"><use href="#i-users"></use></svg> Ver meus alunos</a>
+    </div>
+  </section>
+  {% endif %}
+</div>
+
+<div class="grid-2 mt-24">
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Ranking da escolinha</h2>
+        <p class="card__subtitle">Top 8 {% if user.is_admin_role %}da escolinha{% else %}das suas turmas{% endif %}</p>
+      </div>
+      <a class="card__link" href="{% url 'dashboard:points_admin' %}">Pontuação <svg class="icon"><use href="#i-arrow-right"></use></svg></a>
+    </div>
+    <div class="card__body card__body--tight">
+      <div class="rank-list">
+        {% for row in ranking %}
+          <div class="rank-row">
+            <span class="rank-row__pos">{{ row.position }}</span>
+            <div class="rank-row__person">
+              <span class="avatar avatar--sm">{{ row.student.initials }}</span>
+              <div><strong>{{ row.student.display_name }}</strong><span>{{ row.student.class_group.name|default:"—" }}</span></div>
+            </div>
+            <span class="rank-row__points">{{ row.points }}<span>pts</span></span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  {% if user.is_admin_role %}
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Atividade recente</h2>
+        <p class="card__subtitle">Últimos movimentos</p>
+      </div>
+    </div>
+    <div class="card__body">
+      <div class="activity">
+        {% for item in activity %}
+          <div class="activity__item">
+            <span class="activity__icon {% if item.tone == 'green' %}activity__icon--green{% elif item.tone == 'blue' %}activity__icon--blue{% endif %}">
+              <svg class="icon"><use href="#i-{% if item.icon == 'star' %}star{% elif item.icon == 'cash' %}wallet{% else %}user{% endif %}"></use></svg>
+            </span>
+            <div>
+              <strong>{{ item.title }}</strong>
+              <span>{{ item.detail }}</span><br>
+              <time>{{ item.when|date:"d/m H:i" }}</time>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% else %}
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Minhas turmas</h2>
+        <p class="card__subtitle">Ocupação e alunos ativos</p>
+      </div>
+      <a class="card__link" href="{% url 'dashboard:classes' %}">Ver turmas <svg class="icon"><use href="#i-arrow-right"></use></svg></a>
+    </div>
+    <div class="card__body stack-12">
+      {% for group in groups %}
+        <div class="row row--between">
+          <div>
+            <strong style="font-size:.85rem">{{ group.name }}</strong>
+            <p class="faint" style="font-size:.72rem">{{ group.schedule_label }}</p>
+          </div>
+          <span class="badge badge--outline">{{ group.active_count }}/{{ group.capacity }}</span>
+        </div>
+      {% empty %}
+        <div class="empty-state"><p>Nenhuma turma vinculada a você.</p></div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</div>
+
+{% if overdue and user.is_admin_role %}
+  <section class="card mt-24">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Mensalidades em atraso</h2>
+        <p class="card__subtitle">Total de R$ {{ metrics.overdue_total|floatformat:"2" }}</p>
+      </div>
+      <a class="card__link" href="{% url 'dashboard:billing' %}">Financeiro <svg class="icon"><use href="#i-arrow-right"></use></svg></a>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Aluno</th><th>Competência</th><th>Vencimento</th><th class="is-right">Valor</th></tr></thead>
+        <tbody>
+          {% for invoice in overdue %}
+            <tr>
+              <td>
+                <div class="table__person">
+                  <span class="avatar avatar--sm">{{ invoice.student.initials }}</span>
+                  <div><strong>{{ invoice.student.display_name }}</strong><span>{{ invoice.student.full_name }}</span></div>
+                </div>
+              </td>
+              <td>{{ invoice.competence_label }}</td>
+              <td class="table__muted">{{ invoice.due_date|date:"d/m/Y" }}</td>
+              <td class="is-right"><strong class="table__num">R$ {{ invoice.total|floatformat:"2" }}</strong></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

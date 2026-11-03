@@ -1,0 +1,151 @@
+{% extends "base_app.html" %}
+
+{% block title %}Matrículas — Painel Team Farias{% endblock %}
+{% block topbar_title %}Matrículas{% endblock %}
+
+{% block content %}
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">Administração</p>
+    <h1>Matrículas</h1>
+    <p class="page-head-app__lead">A matrícula é feita pela equipe. Cadastre o atleta, defina turma e plano — o acesso e a primeira mensalidade saem prontos.</p>
+  </div>
+  {% if user.is_admin_role %}
+    <div class="page-head-app__actions">
+      <a class="btn btn--primary btn--sm" href="{% url 'dashboard:enrollment_create' %}">
+        <svg class="icon"><use href="#i-plus"></use></svg> Nova matrícula
+      </a>
+    </div>
+  {% endif %}
+</header>
+
+<nav class="segmented" aria-label="Status das matrículas">
+  {% for tab in tabs %}
+    <a class="{% if status == tab.key %}is-active{% endif %}" href="?status={{ tab.key }}">
+      {{ tab.label }} <em>{{ tab.count }}</em>
+    </a>
+  {% endfor %}
+</nav>
+
+{% if status == "pendente" %}
+  <div class="stack-12 mt-24">
+    {% for enrollment in enrollments %}
+      <article class="card">
+        <div class="card__body">
+          <div class="row row--between wrap" style="gap:12px;align-items:flex-start">
+            <div class="row" style="align-items:flex-start">
+              <span class="avatar">{{ enrollment.student.initials }}</span>
+              <div>
+                <h2 style="font-size:1.05rem">{{ enrollment.student.full_name }}</h2>
+                <p class="faint" style="font-size:.78rem">{{ enrollment.student.user.email }} · {{ enrollment.student.user.phone|default:"sem telefone" }}</p>
+                <div class="row wrap" style="gap:6px;margin-top:8px">
+                  <span class="badge badge--outline">{{ enrollment.student.get_level_display }}</span>
+                  <span class="badge badge--violet">{{ enrollment.class_group.name }}</span>
+                  <span class="badge badge--outline">{{ enrollment.plan.name }}</span>
+                </div>
+              </div>
+            </div>
+            <span class="badge badge--amber">Enviada {{ enrollment.enrolled_at|timesince }} atrás</span>
+          </div>
+
+          <div class="grid-2 mt-24">
+            <dl class="kv">
+              <div class="kv__row"><dt>Nascimento</dt><dd>{{ enrollment.student.user.birth_date|date:"d/m/Y"|default:"—" }}</dd></div>
+              <div class="kv__row"><dt>Idade</dt><dd>{{ enrollment.student.user.age|default:"—" }}{% if enrollment.student.user.age %} anos{% endif %}</dd></div>
+              <div class="kv__row"><dt>Posição</dt><dd>{{ enrollment.student.position|default:"—" }}</dd></div>
+              <div class="kv__row"><dt>Responsável</dt><dd>{{ enrollment.student.guardian.name|default:"—" }}</dd></div>
+              <div class="kv__row"><dt>Telefone do responsável</dt><dd>{{ enrollment.student.guardian.phone|default:"—" }}</dd></div>
+              {% if enrollment.student.health_notes %}
+                <div class="kv__row"><dt>Saúde</dt><dd>{{ enrollment.student.health_notes }}</dd></div>
+              {% endif %}
+            </dl>
+
+            <div class="stack-12">
+              <form method="post" class="card" style="background:rgba(255,255,255,.02)">
+                {% csrf_token %}
+                <input type="hidden" name="enrollment" value="{{ enrollment.pk }}">
+                <input type="hidden" name="action" value="approve">
+                <div class="card__body stack-12">
+                  <p class="form-section__title" style="margin:0">Aprovar matrícula</p>
+                  <div class="field">
+                    <label for="grupo-{{ enrollment.pk }}">Turma</label>
+                    <select class="select" name="class_group" id="grupo-{{ enrollment.pk }}">
+                      {% for group in groups %}
+                        <option value="{{ group.pk }}" {% if group.pk == enrollment.class_group_id %}selected{% endif %}>{{ group.name }} · {{ group.free_spots }} vagas</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="plano-{{ enrollment.pk }}">Plano</label>
+                    <select class="select" name="plan" id="plano-{{ enrollment.pk }}">
+                      {% for plan in plans %}
+                        <option value="{{ plan.pk }}" {% if plan.pk == enrollment.plan_id %}selected{% endif %}>{{ plan.name }} · R$ {{ plan.monthly_fee|floatformat:"2" }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <button class="btn btn--primary btn--block" type="submit">
+                    <svg class="icon"><use href="#i-check"></use></svg> Aprovar e gerar mensalidade
+                  </button>
+                </div>
+              </form>
+              <form method="post" data-confirm="Recusar a matrícula de {{ enrollment.student.full_name }}?">
+                {% csrf_token %}
+                <input type="hidden" name="enrollment" value="{{ enrollment.pk }}">
+                <input type="hidden" name="action" value="reject">
+                <button class="btn btn--danger btn--block btn--sm" type="submit">
+                  <svg class="icon"><use href="#i-x"></use></svg> Recusar inscrição
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </article>
+    {% empty %}
+      <div class="empty-state">
+        <svg class="icon" style="width:28px;height:28px;color:var(--violet-400)"><use href="#i-check"></use></svg>
+        <p>Nenhuma matrícula pendente. Tudo em dia.</p>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <section class="card mt-24">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Aluno</th>
+            <th>Turma</th>
+            <th>Plano</th>
+            <th>Início</th>
+            <th>Aprovada por</th>
+            <th>Situação</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for enrollment in enrollments %}
+            <tr>
+              <td>
+                <div class="table__person">
+                  <span class="avatar avatar--sm">{{ enrollment.student.initials }}</span>
+                  <div><strong>{{ enrollment.student.display_name }}</strong><span>{{ enrollment.student.user.email }}</span></div>
+                </div>
+              </td>
+              <td>{{ enrollment.class_group.name }}</td>
+              <td class="table__muted">{{ enrollment.plan.name }}</td>
+              <td class="table__muted">{{ enrollment.start_date|date:"d/m/Y"|default:"—" }}</td>
+              <td class="table__muted">{{ enrollment.approved_by.first_name|default:"—" }}</td>
+              <td>
+                <span class="badge badge--{% if enrollment.status == 'ativa' %}green{% elif enrollment.status == 'pendente' %}amber{% else %}outline{% endif %}">{{ enrollment.get_status_display }}</span>
+              </td>
+              <td class="is-right"><a class="btn btn--ghost btn--sm" href="{% url 'dashboard:student_detail' enrollment.student.pk %}">Abrir</a></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7"><div class="empty-state"><p>Nenhuma matrícula neste status.</p></div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

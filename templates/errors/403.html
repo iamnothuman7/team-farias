@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Acesso restrito — Team Farias{% endblock %}
+
+{% block content %}
+<section class="section error-page">
+  <div class="shell error-page__inner">
+    <span class="error-page__code">403</span>
+    <p class="eyebrow">Acesso restrito</p>
+    <h1>Essa área não é para este perfil.</h1>
+    <p class="error-page__lead">
+      Seu usuário não tem permissão para abrir esta página. Se acredita que é um engano,
+      fale com a administração do Team Farias.
+    </p>
+    <div class="error-page__actions">
+      <a class="btn btn--primary" href="{% url 'dashboard:redirect' %}">Ir para minha área</a>
+      <a class="btn btn--ghost" href="{% url 'core:home' %}">Voltar ao site</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base_app.html" %}
+
+{% block title %}{% if session %}Editar treino{% else %}Novo treino{% endif %} — Painel Team Farias{% endblock %}
+{% block topbar_title %}Agenda{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{% url 'dashboard:sessions' %}">
+  <svg class="icon"><use href="#i-chevron-left"></use></svg> Agenda
+</a>
+
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">Treino</p>
+    <h1>{% if session %}Editar treino{% else %}Novo treino{% endif %}</h1>
+    <p class="page-head-app__lead">Ajustes pontuais de horário, tema e local. O registro de presença fica na tela do treino.</p>
+  </div>
+</header>
+
+<form method="post" class="card">
+  {% csrf_token %}
+  <div class="card__body">
+    <div class="form-grid">
+      {% include "partials/field.html" with field=form.class_group %}
+      {% include "partials/field.html" with field=form.venue %}
+      {% include "partials/field.html" with field=form.date %}
+      {% include "partials/field.html" with field=form.status %}
+      {% include "partials/field.html" with field=form.start_time %}
+      {% include "partials/field.html" with field=form.end_time %}
+      {% include "partials/field.html" with field=form.theme wide=True %}
+      {% include "partials/field.html" with field=form.notes wide=True %}
+    </div>
+  </div>
+  <div class="card__foot row" style="justify-content:flex-end;gap:8px">
+    <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:sessions' %}">Cancelar</a>
+    <button class="btn btn--primary" type="submit">Salvar treino</button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,81 @@
+{
+  "id": "/app/",
+  "name": "Team Farias — Vôlei de Praia",
+  "short_name": "Team Farias",
+  "description": "Escolinha de vôlei de praia: treinos, pontos, ranking e mensalidades em um só lugar.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "/app/?origem=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#07010E",
+  "theme_color": "#07010E",
+  "categories": ["sports", "education", "health"],
+  "prefer_related_applications": false,
+  "launch_handler": { "client_mode": ["navigate-existing", "auto"] },
+  "icons": [
+    {
+      "src": "/static/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/img/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/static/img/pwa/aluno.png",
+      "sizes": "780x1688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Área do aluno com treinos, pontos e mensalidades"
+    },
+    {
+      "src": "/static/img/pwa/agenda.png",
+      "sizes": "780x1688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Agenda de treinos e presenças"
+    },
+    {
+      "src": "/static/img/pwa/login.png",
+      "sizes": "780x1688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Acesso individual por e-mail"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Minha agenda",
+      "short_name": "Agenda",
+      "url": "/app/agenda/",
+      "icons": [{ "src": "/static/img/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Meus pontos",
+      "short_name": "Pontos",
+      "url": "/app/pontos/",
+      "icons": [{ "src": "/static/img/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mensalidades",
+      "short_name": "Financeiro",
+      "url": "/app/mensalidades/",
+      "icons": [{ "src": "/static/img/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

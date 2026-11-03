@@ -1,0 +1,123 @@
+{% extends "base_app.html" %}
+
+{% block title %}Meu perfil — Team Farias{% endblock %}
+{% block topbar_title %}Meu perfil{% endblock %}
+
+{% block content %}
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">Conta</p>
+    <h1>Meu perfil</h1>
+    <p class="page-head-app__lead">Seus dados de atleta, matrícula e responsável. Mantenha o telefone atualizado para a equipe falar com você.</p>
+  </div>
+  <div class="page-head-app__actions">
+    <span class="badge {% if student.status == 'ativo' %}badge--green{% elif student.status == 'pendente' %}badge--amber{% else %}badge--outline{% endif %}">{{ student.get_status_display }}</span>
+    <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:password_change' %}">
+      <svg class="icon"><use href="#i-lock"></use></svg> Alterar senha
+    </a>
+  </div>
+</header>
+
+<section class="card">
+  <div class="card__body profile-head">
+    <span class="avatar">{{ student.initials }}</span>
+    <div>
+      <h1 style="font-size:1.45rem">{{ student.full_name }}</h1>
+      <p>{{ student.user.email }}{% if student.user.phone %} · {{ student.user.phone }}{% endif %}</p>
+      <div class="row wrap" style="gap:6px;margin-top:8px">
+        {% if group %}<span class="badge badge--violet">{{ group.name }}</span>{% endif %}
+        <span class="badge badge--outline">{{ student.get_level_display }}</span>
+        {% if student.joined_at %}<span class="badge badge--outline">Desde {{ student.joined_at|date:"M/Y" }}</span>{% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="profile-grid mt-24">
+  <section class="card">
+    <div class="card__head"><h2 class="card__title">Matrícula</h2></div>
+    <div class="card__body">
+      {% if enrollment %}
+        <dl class="kv">
+          <div class="kv__row"><dt>Turma</dt><dd>{{ enrollment.class_group.name }}</dd></div>
+          <div class="kv__row"><dt>Plano</dt><dd>{{ enrollment.plan.name }}</dd></div>
+          <div class="kv__row"><dt>Mensalidade</dt><dd>R$ {{ enrollment.monthly_fee|floatformat:"2" }}</dd></div>
+          <div class="kv__row"><dt>Início</dt><dd>{{ enrollment.start_date|date:"d/m/Y"|default:"A definir" }}</dd></div>
+          <div class="kv__row"><dt>Horários</dt><dd>{{ enrollment.class_group.schedule_label }}</dd></div>
+          <div class="kv__row"><dt>Professor(a)</dt><dd>{{ enrollment.class_group.professor.first_name_display|default:"Equipe Team Farias" }}</dd></div>
+        </dl>
+      {% else %}
+        <div class="empty-state"><p>Sua matrícula ainda não foi aprovada.</p></div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><h2 class="card__title">Dados do atleta</h2></div>
+    <div class="card__body">
+      <dl class="kv">
+        <div class="kv__row"><dt>Nascimento</dt><dd>{{ student.user.birth_date|date:"d/m/Y"|default:"—" }}</dd></div>
+        <div class="kv__row"><dt>Idade</dt><dd>{{ student.user.age|default:"—" }}{% if student.user.age %} anos{% endif %}</dd></div>
+        <div class="kv__row"><dt>Posição</dt><dd>{{ student.position|default:"—" }}</dd></div>
+        <div class="kv__row"><dt>WhatsApp</dt><dd>{{ student.user.phone|default:"—" }}</dd></div>
+        <div class="kv__row"><dt>Presenças (90 dias)</dt><dd>{{ attendance.rate }}% · {{ attendance.present }}/{{ attendance.total }}</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><h2 class="card__title">Responsável</h2></div>
+    <div class="card__body">
+      {% if student.guardian %}
+        <dl class="kv">
+          <div class="kv__row"><dt>Nome</dt><dd>{{ student.guardian.name }}</dd></div>
+          <div class="kv__row"><dt>Telefone</dt><dd>{{ student.guardian.phone }}</dd></div>
+          <div class="kv__row"><dt>E-mail</dt><dd>{{ student.guardian.email|default:"—" }}</dd></div>
+        </dl>
+      {% else %}
+        <div class="empty-state"><p>Nenhum responsável vinculado. Para menores de 18 anos, fale com a equipe.</p></div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><h2 class="card__title">Mensalidades recentes</h2></div>
+    <div class="card__body">
+      {% if invoices %}
+        <div class="stack-12">
+          {% for invoice in invoices|slice:":4" %}
+            <div class="row row--between">
+              <div>
+                <strong style="font-size:.84rem">{{ invoice.competence_label }}</strong>
+                <p class="faint" style="font-size:.72rem">Vence {{ invoice.due_date|date:"d/m/Y" }}</p>
+              </div>
+              <span class="badge badge--{% if invoice.status == 'paga' %}green{% elif invoice.is_overdue %}red{% else %}amber{% endif %}">{{ invoice.situacao }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="faint" style="font-size:.8rem">Nenhuma mensalidade registrada.</p>
+      {% endif %}
+    </div>
+  </section>
+</div>
+
+<section class="card mt-24">
+  <div class="card__head">
+    <div>
+      <h2 class="card__title">Editar meus dados</h2>
+      <p class="card__subtitle">Nome, e-mail e turma são alterados pela equipe.</p>
+    </div>
+  </div>
+  <form class="card__body" method="post">
+    {% csrf_token %}
+    <div class="form-grid">
+      {% include "partials/field.html" with field=form.nickname %}
+      {% include "partials/field.html" with field=form.phone %}
+      {% include "partials/field.html" with field=form.position %}
+      {% include "partials/field.html" with field=form.health_notes wide=True %}
+    </div>
+    <button class="btn btn--primary mt-24" type="submit">Salvar alterações</button>
+  </form>
+</section>
+{% endblock %}

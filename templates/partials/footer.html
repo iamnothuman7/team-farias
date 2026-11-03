@@ -1,0 +1,73 @@
+{% load static %}
+<footer class="site-footer" id="contato">
+  <div class="shell">
+    <div class="footer__cta">
+      <div>
+        <span class="eyebrow">Vem pra areia</span>
+        <h2>Sua vaga no Team Farias<br>começa com uma inscrição.</h2>
+      </div>
+      <div class="footer__cta-actions">
+        <a class="btn btn--primary btn--lg" href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">
+          <svg class="icon"><use href="#i-whatsapp"></use></svg>
+          Falar com a equipe
+        </a>
+        <a class="btn btn--ghost btn--lg" href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">
+          <svg class="icon"><use href="#i-whatsapp"></use></svg>
+          Falar no WhatsApp
+        </a>
+      </div>
+    </div>
+
+    <div class="footer__grid">
+      <div class="footer__brand">
+        <a class="brand brand--footer" href="{% url 'core:home' %}">
+          <img src="{% static 'img/logo-sm.webp' %}" width="112" height="84" alt="Team Farias Vôlei de Praia">
+        </a>
+        <p>A escolinha organizada. O time mais conectado. Vôlei de praia com método, acompanhamento e comunidade.</p>
+        <div class="footer__social">
+          <a href="https://instagram.com/{{ site.instagram }}" target="_blank" rel="noopener" aria-label="Instagram do Team Farias">
+            <svg class="icon"><use href="#i-instagram"></use></svg>
+          </a>
+          <a href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener" aria-label="WhatsApp do Team Farias">
+            <svg class="icon"><use href="#i-whatsapp"></use></svg>
+          </a>
+          <a href="mailto:{{ site.email }}" aria-label="E-mail do Team Farias">
+            <svg class="icon"><use href="#i-mail"></use></svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="footer__col">
+        <h3>Escolinha</h3>
+        <a href="{% url 'core:home' %}#escolinha">Sobre o Team Farias</a>
+        <a href="{% url 'core:home' %}#turmas">Turmas e horários</a>
+        <a href="{% url 'core:home' %}#sistema">Sistema do aluno</a>
+        <a href="{% url 'core:news_list' %}">Notícias</a>
+      </div>
+
+      <div class="footer__col">
+        <h3>Contato</h3>
+        <a href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">{{ site.phone }}</a>
+        <a href="mailto:{{ site.email }}">{{ site.email }}</a>
+        <a href="https://instagram.com/{{ site.instagram }}" target="_blank" rel="noopener">@{{ site.instagram }}</a>
+        <span class="footer__muted">{{ site.address }}</span>
+      </div>
+
+      <div class="footer__col">
+        <h3>Acesso</h3>
+        <a href="{% url 'accounts:login' %}">Entrar na minha área</a>
+        <a href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">Matrícula com a equipe</a>
+        <a href="{% url 'core:privacy' %}">Política de privacidade</a>
+        <a href="{% url 'dashboard:painel' %}">Painel da equipe</a>
+        <button class="footer__install install-cta" type="button" data-install-open>
+          <svg class="icon"><use href="#i-download"></use></svg> Instalar o app
+        </button>
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      <p>© {{ current_year }} Team Farias — Vôlei de Praia. Todos os direitos reservados.</p>
+      <p class="footer__signature">Feito na areia de {{ site.city }}/{{ site.state }}</p>
+    </div>
+  </div>
+</footer>

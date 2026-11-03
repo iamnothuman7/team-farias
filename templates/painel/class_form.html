@@ -1,0 +1,77 @@
+{% extends "base_app.html" %}
+
+{% block title %}{% if group %}Editar turma{% else %}Nova turma{% endif %} — Painel Team Farias{% endblock %}
+{% block topbar_title %}Turmas{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{% url 'dashboard:classes' %}">
+  <svg class="icon"><use href="#i-chevron-left"></use></svg> Turmas
+</a>
+
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">Estrutura</p>
+    <h1>{% if group %}Editar {{ group.name }}{% else %}Nova turma{% endif %}</h1>
+    <p class="page-head-app__lead">Defina nível, professor e a grade fixa de horários. Os treinos da agenda são gerados a partir desses horários.</p>
+  </div>
+</header>
+
+<form method="post" class="card">
+  {% csrf_token %}
+  <div class="card__body">
+    {% if form.non_field_errors %}
+      <div class="form-errors">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+    {% endif %}
+    <div class="form-grid">
+      {% include "partials/field.html" with field=form.name wide=True %}
+      {% include "partials/field.html" with field=form.category %}
+      {% include "partials/field.html" with field=form.level %}
+      {% include "partials/field.html" with field=form.professor %}
+      {% include "partials/field.html" with field=form.venue %}
+      {% include "partials/field.html" with field=form.capacity %}
+      {% include "partials/field.html" with field=form.description wide=True %}
+    </div>
+    <label class="checkbox mt-16">{{ form.is_active }} <span>Turma ativa (aparece no site e pode receber matrículas)</span></label>
+
+    <div class="form-section mt-32">
+      <p class="form-section__title"><svg class="icon"><use href="#i-calendar"></use></svg> Horários fixos</p>
+      {{ formset.management_form }}
+      {% if formset.non_form_errors %}
+        <div class="form-errors">{% for error in formset.non_form_errors %}<p>{{ error }}</p>{% endfor %}</div>
+      {% endif %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Dia</th>
+              <th>Início</th>
+              <th>Fim</th>
+              <th>Local</th>
+              <th class="is-right">Remover</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for slot_form in formset %}
+              <tr>
+                {{ slot_form.id }}
+                <td>{{ slot_form.weekday }}</td>
+                <td>{{ slot_form.start_time }}</td>
+                <td>{{ slot_form.end_time }}</td>
+                <td>{{ slot_form.venue }}</td>
+                <td class="is-right">
+                  {% if slot_form.instance.pk %}{{ slot_form.DELETE }}{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="faint mt-16" style="font-size:.77rem">Deixe os campos em branco para não criar um horário. Marque "Remover" para apagar um horário existente.</p>
+    </div>
+  </div>
+  <div class="card__foot row" style="justify-content:flex-end;gap:8px">
+    <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:classes' %}">Cancelar</a>
+    <button class="btn btn--primary" type="submit">Salvar turma</button>
+  </div>
+</form>
+{% endblock %}

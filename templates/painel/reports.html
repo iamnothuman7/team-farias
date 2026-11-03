@@ -1,0 +1,147 @@
+{% extends "base_app.html" %}
+
+{% block title %}Relatórios — Painel Team Farias{% endblock %}
+{% block topbar_title %}Relatórios{% endblock %}
+
+{% block content %}
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">Gestão</p>
+    <h1>Relatórios</h1>
+    <p class="page-head-app__lead">Visão consolidada de ocupação, presença e receita dos últimos seis meses.</p>
+  </div>
+</header>
+
+<div class="stat-grid">
+  <article class="stat-card">
+    <span class="stat-card__label">Alunos ativos</span>
+    <p class="stat-card__value">{{ metrics.active_students }}</p>
+    <p class="stat-card__meta">{{ metrics.new_students }} novo{{ metrics.new_students|pluralize }} neste mês</p>
+  </article>
+  <article class="stat-card stat-card--green">
+    <span class="stat-card__label">Presença (30 dias)</span>
+    <p class="stat-card__value">{{ metrics.attendance_rate }}<small>%</small></p>
+    <p class="stat-card__meta">Média geral da escolinha</p>
+  </article>
+  <article class="stat-card stat-card--violet">
+    <span class="stat-card__label">Cobrado no mês</span>
+    <p class="stat-card__value">R$ {{ metrics.month_billed|floatformat:"2" }}</p>
+    <p class="stat-card__meta">R$ {{ metrics.month_paid|floatformat:"2" }} recebido</p>
+  </article>
+  <article class="stat-card stat-card--red">
+    <span class="stat-card__label">Inadimplência</span>
+    <p class="stat-card__value">R$ {{ metrics.overdue_total|floatformat:"2" }}</p>
+    <p class="stat-card__meta">{{ metrics.overdue_count }} mensalidade{{ metrics.overdue_count|pluralize }}</p>
+  </article>
+</div>
+
+<div class="grid-2 mt-24">
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Ocupação por turma</h2>
+        <p class="card__subtitle">Presença média dos últimos 30 dias</p>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Turma</th><th class="is-right">Alunos</th><th>Ocupação</th><th class="is-right">Presença</th></tr></thead>
+        <tbody>
+          {% for row in group_rows %}
+            <tr>
+              <td>
+                <strong style="font-size:.85rem">{{ row.group.name }}</strong>
+                <div class="table__muted">{{ row.group.get_level_display }} · {{ row.group.capacity }} vagas</div>
+              </td>
+              <td class="is-right table__num">{{ row.students }}</td>
+              <td style="min-width:120px">
+                <div class="progress"><i style="width:{{ row.occupancy }}%"></i></div>
+                <span class="table__muted" style="font-size:.68rem">{{ row.occupancy }}%</span>
+              </td>
+              <td class="is-right">
+                <span class="badge badge--{% if row.attendance >= 75 %}green{% elif row.attendance >= 50 %}amber{% else %}red{% endif %}">{{ row.attendance }}%</span>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4"><div class="empty-state"><p>Sem turmas ativas.</p></div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Receita por mês</h2>
+        <p class="card__subtitle">Cobrado x recebido</p>
+      </div>
+    </div>
+    <div class="card__body">
+      <div class="bars" style="height:190px">
+        {% for month in months %}
+          <div class="bar">
+            <span class="bar__value">R$ {{ month.paid|floatformat:"0" }}</span>
+            <div class="bar__track">
+              <div class="bar__fill" style="height:{{ month.height }}%;position:relative">
+                <span style="position:absolute;left:0;right:0;bottom:0;height:{{ month.paid_height }}%;background:linear-gradient(180deg,var(--green),#16805a);border-radius:7px 7px 3px 3px;opacity:.85"></span>
+              </div>
+            </div>
+            <span class="bar__label">{{ month.label }}</span>
+          </div>
+        {% endfor %}
+      </div>
+      <p class="faint mt-16" style="font-size:.75rem">Barra violeta: total cobrado. Faixa verde: efetivamente recebido.</p>
+    </div>
+  </section>
+</div>
+
+<div class="grid-2 mt-24">
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Ranking geral</h2>
+        <p class="card__subtitle">Top 8 por pontos</p>
+      </div>
+    </div>
+    <div class="card__body card__body--tight">
+      <div class="rank-list">
+        {% for row in ranking %}
+          <div class="rank-row">
+            <span class="rank-row__pos">{{ row.position }}</span>
+            <div class="rank-row__person">
+              <span class="avatar avatar--sm">{{ row.student.initials }}</span>
+              <div><strong>{{ row.student.display_name }}</strong><span>{{ row.student.class_group.name|default:"—" }}</span></div>
+            </div>
+            <span class="rank-row__points">{{ row.points }}<span>pts</span></span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Assiduidade</h2>
+        <p class="card__subtitle">Atletas com melhor presença (60 dias)</p>
+      </div>
+    </div>
+    <div class="card__body">
+      <div class="stack-12">
+        {% for row in top_attendance %}
+          <div>
+            <div class="row row--between" style="margin-bottom:5px">
+              <span style="font-size:.83rem">{{ row.student.display_name }}</span>
+              <span class="faint" style="font-size:.74rem">{{ row.rate.rate }}% · {{ row.rate.present }}/{{ row.rate.total }}</span>
+            </div>
+            <div class="progress progress--green"><i style="width:{{ row.rate.rate }}%"></i></div>
+          </div>
+        {% empty %}
+          <div class="empty-state"><p>Sem dados de presença.</p></div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

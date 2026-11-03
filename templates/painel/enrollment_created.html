@@ -1,0 +1,59 @@
+{% extends "base_app.html" %}
+
+{% block title %}Matrícula criada — Painel Team Farias{% endblock %}
+{% block topbar_title %}Matrículas{% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="card__body" style="padding:clamp(22px,4vw,40px)">
+    <div class="row" style="gap:14px;align-items:flex-start">
+      <span class="success-card__icon" style="margin:0;width:54px;height:54px">
+        <svg class="icon"><use href="#i-check"></use></svg>
+      </span>
+      <div>
+        <p class="eyebrow">Matrícula concluída</p>
+        <h1 style="font-size:clamp(1.5rem,2.6vw,2rem);margin-top:6px">{{ student.full_name }} já está na areia.</h1>
+        <p class="muted" style="font-size:.9rem;margin-top:6px">
+          Acesso criado, turma vinculada e primeira mensalidade gerada. Entregue as credenciais abaixo para o aluno.
+        </p>
+      </div>
+    </div>
+
+    <div class="credential-box">
+      <div class="credential-box__row">
+        <span>E-mail de acesso</span>
+        <strong>{{ credentials.email }}</strong>
+        <button class="btn btn--ghost btn--sm" type="button" data-copy="{{ credentials.email }}">
+          <svg class="icon"><use href="#i-clipboard"></use></svg> <span data-copy-label>Copiar</span>
+        </button>
+      </div>
+      <div class="credential-box__row">
+        <span>Senha inicial</span>
+        <strong class="credential-box__password">{{ credentials.password }}</strong>
+        <button class="btn btn--ghost btn--sm" type="button" data-copy="{{ credentials.password }}">
+          <svg class="icon"><use href="#i-clipboard"></use></svg> <span data-copy-label>Copiar</span>
+        </button>
+      </div>
+      <p class="faint" style="font-size:.75rem">
+        {% if credentials.generated %}Esta senha foi gerada automaticamente.{% else %}Senha definida por você.{% endif %}
+        Ela aparece somente nesta tela — anote ou envie agora para o aluno.
+      </p>
+    </div>
+
+    <dl class="kv mt-24">
+      <div class="kv__row"><dt>Turma</dt><dd>{{ enrollment.class_group.name|default:"—" }}</dd></div>
+      <div class="kv__row"><dt>Plano</dt><dd>{{ enrollment.plan.name|default:"—" }}</dd></div>
+      <div class="kv__row"><dt>Mensalidade</dt><dd>R$ {{ enrollment.monthly_fee|floatformat:"2"|default:"—" }}</dd></div>
+      <div class="kv__row"><dt>Início</dt><dd>{{ enrollment.start_date|date:"d/m/Y"|default:"—" }}</dd></div>
+    </dl>
+
+    <div class="row wrap mt-24" style="gap:8px">
+      <a class="btn btn--primary" href="https://wa.me/{{ site.whatsapp }}?text={{ whatsapp_text }}" target="_blank" rel="noopener">
+        <svg class="icon"><use href="#i-whatsapp"></use></svg> Enviar credenciais no WhatsApp
+      </a>
+      <a class="btn btn--ghost" href="{% url 'dashboard:student_detail' student.pk %}">Abrir ficha do aluno</a>
+      <a class="btn btn--ghost" href="{% url 'dashboard:enrollment_create' %}">Nova matrícula</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

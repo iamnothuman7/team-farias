@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Página não encontrada — Team Farias{% endblock %}
+
+{% block content %}
+<section class="section error-page">
+  <div class="shell error-page__inner">
+    <span class="error-page__code">404</span>
+    <p class="eyebrow">Fora da quadra</p>
+    <h1>Essa bola caiu fora.</h1>
+    <p class="error-page__lead">
+      A página que você procura não existe ou mudou de lugar. Volte para o início e continue navegando.
+    </p>
+    <div class="error-page__actions">
+      <a class="btn btn--primary" href="{% url 'core:home' %}">Voltar ao início</a>
+      <a class="btn btn--ghost" href="{% url 'core:news_list' %}">Ver notícias</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

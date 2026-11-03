@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}{{ announcement.title }} — Team Farias{% endblock %}
+{% block description %}{{ announcement.summary|default:announcement.body|truncatewords:28 }}{% endblock %}
+
+{% block content %}
+<article class="article">
+  <div class="shell article__shell">
+    <a class="back-link" href="{% url 'core:news_list' %}">
+      <svg class="icon"><use href="#i-chevron-left"></use></svg> Todas as notícias
+    </a>
+
+    <header class="article__head">
+      <div class="article__meta">
+        <span class="badge badge--{{ announcement.kind }}">{{ announcement.get_kind_display }}</span>
+        <time datetime="{{ announcement.published_at|date:'c' }}">{{ announcement.published_at|date:"d \d\e F \d\e Y" }}</time>
+      </div>
+      <h1>{{ announcement.title }}</h1>
+      {% if announcement.summary %}<p class="article__summary">{{ announcement.summary }}</p>{% endif %}
+    </header>
+
+    <div class="article__body prose">
+      {{ announcement.body|linebreaks }}
+    </div>
+
+    <footer class="article__footer">
+      <div>
+        <strong>Team Farias</strong>
+        <span>Vôlei de Praia · {{ site.city }}/{{ site.state }}</span>
+      </div>
+      <a class="btn btn--ghost btn--sm" href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">
+        <svg class="icon"><use href="#i-whatsapp"></use></svg> Falar com a equipe
+      </a>
+    </footer>
+  </div>
+</article>
+
+{% if related %}
+  <section class="section section--list">
+    <div class="shell">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Continue lendo</p>
+          <h2 class="section-title">Outros recados</h2>
+        </div>
+      </div>
+      <div class="news-grid">
+        {% for item in related %}
+          <a class="news-card" href="{{ item.get_absolute_url }}">
+            <div class="news-card__top">
+              <span class="badge badge--{{ item.kind }}">{{ item.get_kind_display }}</span>
+              <time datetime="{{ item.published_at|date:'c' }}">{{ item.published_at|date:"d M Y" }}</time>
+            </div>
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.summary|default:item.body|truncatewords:18 }}</p>
+            <span class="news-card__more">Ler <svg class="icon"><use href="#i-arrow-up-right"></use></svg></span>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

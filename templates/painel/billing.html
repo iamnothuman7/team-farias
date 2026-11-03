@@ -1,0 +1,251 @@
+{% extends "base_app.html" %}
+
+{% block title %}Financeiro — Painel Team Farias{% endblock %}
+{% block topbar_title %}Financeiro{% endblock %}
+
+{% block content %}
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">Mensalidades</p>
+    <h1>Financeiro</h1>
+    <p class="page-head-app__lead">{{ overview.count }} mensalidade{{ overview.count|pluralize }} na competência {{ competence|date:"m/Y" }}. Baixa manual, sem processamento automático.</p>
+  </div>
+  <div class="page-head-app__actions">
+    <a class="icon-btn" href="?competencia={{ prev_month|date:'Y-m' }}" aria-label="Mês anterior"><svg class="icon"><use href="#i-chevron-left"></use></svg></a>
+    <span class="badge badge--outline" style="height:38px;padding-inline:14px">{{ competence|date:"m/Y" }}</span>
+    <a class="icon-btn" href="?competencia={{ next_month|date:'Y-m' }}" aria-label="Próximo mês"><svg class="icon"><use href="#i-chevron-right"></use></svg></a>
+  </div>
+</header>
+
+<div class="stat-grid">
+  <article class="stat-card">
+    <span class="stat-card__label">Cobrado no mês</span>
+    <p class="stat-card__value">R$ {{ overview.billed|floatformat:"2" }}</p>
+    <p class="stat-card__meta">{{ overview.count }} cobranças</p>
+  </article>
+  <article class="stat-card stat-card--green">
+    <span class="stat-card__label">Recebido</span>
+    <p class="stat-card__value">R$ {{ overview.paid|floatformat:"2" }}</p>
+    <p class="stat-card__meta">{{ overview.paid_rate }}% do total</p>
+  </article>
+  <article class="stat-card stat-card--amber">
+    <span class="stat-card__label">Em aberto</span>
+    <p class="stat-card__value">R$ {{ overview.open|floatformat:"2" }}</p>
+    <p class="stat-card__meta">aguardando baixa</p>
+  </article>
+  <article class="stat-card stat-card--red">
+    <span class="stat-card__label">Em atraso (geral)</span>
+    <p class="stat-card__value">R$ {{ overdue_total|floatformat:"2" }}</p>
+    <p class="stat-card__meta">todos os meses</p>
+  </article>
+</div>
+
+<div class="row row--between wrap mt-24" style="gap:12px">
+  <div class="filter-bar">
+    <a class="chip {% if not status_filter %}is-active{% endif %}" href="?competencia={{ competence|date:'Y-m' }}">Todas</a>
+    <a class="chip {% if status_filter == 'aberta' %}is-active{% endif %}" href="?competencia={{ competence|date:'Y-m' }}&status=aberta">Em aberto</a>
+    <a class="chip {% if status_filter == 'paga' %}is-active{% endif %}" href="?competencia={{ competence|date:'Y-m' }}&status=paga">Pagas</a>
+    <form method="get" class="row" style="gap:6px">
+      <input type="hidden" name="competencia" value="{{ competence|date:'Y-m' }}">
+      {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+      <label class="search-field">
+        <svg class="icon"><use href="#i-search"></use></svg>
+        <input class="input input--sm" type="search" name="q" value="{{ q }}" placeholder="Buscar aluno…" aria-label="Buscar aluno">
+      </label>
+    </form>
+  </div>
+
+  <form method="post" class="row" style="gap:6px">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="generate">
+    <input type="hidden" name="competence" value="{{ competence|date:'Y-m' }}">
+    <button class="btn btn--ghost btn--sm" type="submit" title="Cria mensalidades do mês para matrículas ativas">
+      <svg class="icon"><use href="#i-refresh"></use></svg> Gerar mensalidades
+    </button>
+  </form>
+</div>
+
+<section class="invoice-mobile" aria-label="Mensalidades do mês">
+  {% for invoice in invoices %}
+    <div class="invoice-item invoice-mobile__card {% if invoice.is_overdue %}is-overdue{% endif %}">
+      <div class="invoice-mobile__head">
+        <p class="invoice-item__month">{{ invoice.student.display_name }}</p>
+        <p class="invoice-item__meta">{{ invoice.competence_label }} · vence {{ invoice.due_date|date:"d/m/Y" }}</p>
+      </div>
+      <div class="invoice-item__amount">R$ {{ invoice.total|floatformat:"2" }}</div>
+      <span class="badge badge--{% if invoice.status == 'paga' %}green{% elif invoice.is_overdue %}red{% elif invoice.status == 'isenta' %}blue{% else %}amber{% endif %}">{{ invoice.situacao }}</span>
+      <div class="invoice-mobile__action">
+        {% if invoice.status == 'aberta' %}
+          <button class="btn btn--success btn--sm" type="button"
+            data-dialog-open="pay-dialog"
+            data-invoice="{{ invoice.pk }}"
+            data-student="{{ invoice.student.display_name }}"
+            data-amount="R$ {{ invoice.total|floatformat:'2' }}">
+            <svg class="icon"><use href="#i-check"></use></svg> Baixar
+          </button>
+        {% else %}
+          <form method="post" data-confirm="Reabrir a mensalidade de {{ invoice.student.display_name }}?">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reopen">
+            <input type="hidden" name="invoice" value="{{ invoice.pk }}">
+            <button class="btn btn--ghost btn--sm" type="submit">Reabrir</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <div class="empty-state"><p>Nenhuma mensalidade na competência.</p></div>
+  {% endfor %}
+</section>
+
+<section class="card mt-16 billing-table">
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Aluno</th>
+          <th>Plano</th>
+          <th>Vencimento</th>
+          <th class="is-right">Valor</th>
+          <th>Situação</th>
+          <th class="is-right">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for invoice in invoices %}
+          <tr>
+            <td>
+              <div class="table__person">
+                <span class="avatar avatar--sm">{{ invoice.student.initials }}</span>
+                <div>
+                  <strong>{{ invoice.student.display_name }}</strong>
+                  <span>{{ invoice.student.user.email }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="table__muted">{{ invoice.plan.name|default:"—" }}</td>
+            <td class="{% if invoice.is_overdue %}nowrap{% endif %}" style="{% if invoice.is_overdue %}color:var(--red){% endif %}">
+              {{ invoice.due_date|date:"d/m/Y" }}
+            </td>
+            <td class="is-right"><strong class="table__num">R$ {{ invoice.total|floatformat:"2" }}</strong></td>
+            <td>
+              <span class="badge badge--{% if invoice.status == 'paga' %}green{% elif invoice.is_overdue %}red{% elif invoice.status == 'isenta' %}blue{% else %}amber{% endif %}">{{ invoice.situacao }}</span>
+            </td>
+            <td>
+              <div class="table__actions">
+                {% if invoice.status == 'aberta' %}
+                  <button class="btn btn--success btn--sm" type="button"
+                    data-dialog-open="pay-dialog"
+                    data-invoice="{{ invoice.pk }}"
+                    data-student="{{ invoice.student.display_name }}"
+                    data-amount="R$ {{ invoice.total|floatformat:'2' }}">
+                    <svg class="icon"><use href="#i-check"></use></svg> Baixar
+                  </button>
+                {% else %}
+                  <form method="post" data-confirm="Reabrir a mensalidade de {{ invoice.student.display_name }}?">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reopen">
+                    <input type="hidden" name="invoice" value="{{ invoice.pk }}">
+                    <button class="btn btn--ghost btn--sm" type="submit">Reabrir</button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">
+                <p>Nenhuma mensalidade em {{ competence|date:"m/Y" }}. Gere as mensalidades do mês.</p>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="grid-2 mt-24">
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Últimos pagamentos</h2>
+        <p class="card__subtitle">Baixas registradas pela equipe</p>
+      </div>
+    </div>
+    <div class="card__body">
+      {% if recent_payments %}
+        <div class="activity">
+          {% for payment in recent_payments %}
+            <div class="activity__item">
+              <span class="activity__icon activity__icon--green"><svg class="icon"><use href="#i-wallet"></use></svg></span>
+              <div>
+                <strong>{{ payment.invoice.student.display_name }} · R$ {{ payment.amount|floatformat:"2" }}</strong>
+                <span>{{ payment.invoice.competence_label }} · {{ payment.get_method_display }}</span><br>
+                <time>{{ payment.paid_at|date:"d/m/Y" }}</time>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state"><p>Nenhum pagamento registrado.</p></div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><h2 class="card__title">Mensalidade avulsa</h2></div>
+    <form method="post" class="card__body">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="create">
+      <div class="stack-12">
+        <div class="form-grid">
+          {% include "partials/field.html" with field=invoice_form.student %}
+          {% include "partials/field.html" with field=invoice_form.plan %}
+          {% include "partials/field.html" with field=invoice_form.competence %}
+          {% include "partials/field.html" with field=invoice_form.due_date %}
+          {% include "partials/field.html" with field=invoice_form.amount %}
+          {% include "partials/field.html" with field=invoice_form.discount %}
+        </div>
+        <button class="btn btn--ghost btn--block" type="submit">Criar mensalidade</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<dialog id="pay-dialog" data-dialog>
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="pay">
+    <input type="hidden" name="invoice">
+    <div class="dialog__head">
+      <h2>Confirmar pagamento</h2>
+      <button class="icon-btn" type="button" data-dialog-close aria-label="Fechar"><svg class="icon"><use href="#i-x"></use></svg></button>
+    </div>
+    <div class="dialog__body">
+      <div class="dialog__summary">
+        <span data-dialog-student></span>
+        <strong data-dialog-amount></strong>
+      </div>
+      <div class="field">
+        <label for="pay-method">Forma de pagamento</label>
+        <select class="select" name="method" id="pay-method">
+          <option value="pix">Pix</option>
+          <option value="dinheiro">Dinheiro</option>
+          <option value="cartao">Cartão</option>
+          <option value="transferencia">Transferência</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="pay-note">Observação (opcional)</label>
+        <input class="input" type="text" name="note" id="pay-note" placeholder="Ex.: comprovante enviado no WhatsApp">
+      </div>
+    </div>
+    <div class="dialog__foot">
+      <button class="btn btn--ghost btn--sm" type="button" data-dialog-close>Cancelar</button>
+      <button class="btn btn--primary btn--sm" type="submit"><svg class="icon"><use href="#i-check"></use></svg> Confirmar baixa</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}

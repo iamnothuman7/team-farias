@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Sem conexão — Team Farias{% endblock %}
+
+{% block content %}
+<section class="section error-page">
+  <div class="shell error-page__inner">
+    <img class="error-page__logo" src="/static/img/logo-sm.webp" alt="Team Farias" width="180" height="135">
+    <p class="eyebrow">Modo offline</p>
+    <h1>Você está sem conexão.</h1>
+    <p class="error-page__lead">
+      A página que você tentou abrir precisa de internet. Verifique sua conexão e tente de novo —
+      suas informações continuam salvas.
+    </p>
+    <div class="error-page__actions">
+      <a class="btn btn--primary" href="/">Tentar novamente</a>
+      <a class="btn btn--ghost" href="/app/">Minha área</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

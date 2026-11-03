@@ -1,0 +1,156 @@
+{% load static %}<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}Minha área — Team Farias{% endblock %}</title>
+  <meta name="description" content="Área do aluno e painel de gestão do Team Farias.">
+  <meta name="theme-color" content="#07010E">
+  <meta name="color-scheme" content="dark">
+  <meta name="robots" content="noindex">
+  {% include "partials/pwa_head.html" %}
+  <link rel="preload" href="{% static 'fonts/archivo-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{% static 'fonts/jakarta-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body class="app-body">
+  {% include "partials/icons.html" %}
+  {% with url_name=request.resolver_match.url_name is_team=user.is_team_member %}
+  <div class="app-backdrop" data-sidebar-backdrop hidden></div>
+  <div class="app-shell">
+    <aside class="app-sidebar" id="app-sidebar" data-sidebar>
+      <a class="brand brand--app" href="{% url 'core:home' %}">
+        <img class="brand__logo" src="{% static 'img/logo-sm.webp' %}" width="46" height="35" alt="Team Farias">
+        <span class="brand__text"><strong>TEAM FARIAS</strong><span>{% if is_team %}Gestão{% else %}Minha área{% endif %}</span></span>
+      </a>
+
+      {% if is_team %}
+        <nav class="app-nav" aria-label="Painel de gestão">
+          <p class="app-nav__label">Operação</p>
+          <a class="app-nav__link {% if url_name == 'painel' %}is-active{% endif %}" href="{% url 'dashboard:painel' %}">
+            <svg class="icon"><use href="#i-home"></use></svg><span>Visão geral</span>
+          </a>
+          {% if user.is_admin_role %}
+            <a class="app-nav__link {% if url_name == 'enrollments' %}is-active{% endif %}" href="{% url 'dashboard:enrollments' %}">
+              <svg class="icon"><use href="#i-clipboard"></use></svg><span>Matrículas</span>
+              {% if nav_counts.pending %}<em class="app-nav__badge">{{ nav_counts.pending }}</em>{% endif %}
+            </a>
+          {% endif %}
+          <a class="app-nav__link {% if url_name == 'students' or url_name == 'student_detail' %}is-active{% endif %}" href="{% url 'dashboard:students' %}">
+            <svg class="icon"><use href="#i-users"></use></svg><span>Alunos</span>
+          </a>
+          <a class="app-nav__link {% if url_name == 'classes' or url_name == 'class_create' or url_name == 'class_edit' %}is-active{% endif %}" href="{% url 'dashboard:classes' %}">
+            <svg class="icon"><use href="#i-ball"></use></svg><span>Turmas</span>
+          </a>
+          <a class="app-nav__link {% if url_name == 'sessions' or url_name == 'session_create' or url_name == 'session_edit' or url_name == 'session_attendance' %}is-active{% endif %}" href="{% url 'dashboard:sessions' %}">
+            <svg class="icon"><use href="#i-calendar"></use></svg><span>Agenda e presença</span>
+          </a>
+          <a class="app-nav__link {% if url_name == 'points_admin' %}is-active{% endif %}" href="{% url 'dashboard:points_admin' %}">
+            <svg class="icon"><use href="#i-star"></use></svg><span>Pontuação</span>
+          </a>
+          {% if user.is_admin_role %}
+            <a class="app-nav__link {% if url_name == 'billing' %}is-active{% endif %}" href="{% url 'dashboard:billing' %}">
+              <svg class="icon"><use href="#i-wallet"></use></svg><span>Financeiro</span>
+              {% if nav_counts.overdue %}<em class="app-nav__badge app-nav__badge--alert">{{ nav_counts.overdue }}</em>{% endif %}
+            </a>
+            <a class="app-nav__link {% if url_name == 'announcements_admin' or url_name == 'announcement_create' or url_name == 'announcement_edit' %}is-active{% endif %}" href="{% url 'dashboard:announcements_admin' %}">
+              <svg class="icon"><use href="#i-megaphone"></use></svg><span>Comunicados</span>
+            </a>
+            <a class="app-nav__link {% if url_name == 'reports' %}is-active{% endif %}" href="{% url 'dashboard:reports' %}">
+              <svg class="icon"><use href="#i-chart"></use></svg><span>Relatórios</span>
+            </a>
+          {% endif %}
+        </nav>
+      {% else %}
+        <nav class="app-nav" aria-label="Área do aluno">
+          <p class="app-nav__label">Meu time</p>
+          <a class="app-nav__link {% if url_name == 'home' %}is-active{% endif %}" href="{% url 'dashboard:home' %}">
+            <svg class="icon"><use href="#i-home"></use></svg><span>Início</span>
+          </a>
+          <a class="app-nav__link {% if url_name == 'agenda' %}is-active{% endif %}" href="{% url 'dashboard:agenda' %}">
+            <svg class="icon"><use href="#i-calendar"></use></svg><span>Agenda</span>
+          </a>
+          <a class="app-nav__link {% if url_name == 'points' %}is-active{% endif %}" href="{% url 'dashboard:points' %}">
+            <svg class="icon"><use href="#i-star"></use></svg><span>Pontos e ranking</span>
+          </a>
+          <a class="app-nav__link {% if url_name == 'invoices' %}is-active{% endif %}" href="{% url 'dashboard:invoices' %}">
+            <svg class="icon"><use href="#i-wallet"></use></svg><span>Mensalidades</span>
+          </a>
+          <a class="app-nav__link {% if url_name == 'announcements' or url_name == 'announcement_detail' %}is-active{% endif %}" href="{% url 'dashboard:announcements' %}">
+            <svg class="icon"><use href="#i-megaphone"></use></svg><span>Comunicados</span>
+          </a>
+          <p class="app-nav__label">Conta</p>
+          <a class="app-nav__link {% if url_name == 'profile' %}is-active{% endif %}" href="{% url 'dashboard:profile' %}">
+            <svg class="icon"><use href="#i-user"></use></svg><span>Meu perfil</span>
+          </a>
+        </nav>
+      {% endif %}
+
+      <div class="app-sidebar__foot">
+        <div class="app-user">
+          <span class="avatar avatar--sm">{{ user.initials }}</span>
+          <div class="app-user__info">
+            <strong>{{ user.first_name_display }}</strong>
+            <span>{{ user.get_role_display }}</span>
+          </div>
+          <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button class="icon-btn app-user__logout" type="submit" aria-label="Sair da conta" title="Sair">
+              <svg class="icon"><use href="#i-logout"></use></svg>
+            </button>
+          </form>
+        </div>
+        <a class="app-sidebar__site" href="{% url 'core:home' %}">
+          <svg class="icon"><use href="#i-arrow-up-right"></use></svg> Ver site
+        </a>
+        <button class="app-sidebar__site install-cta" type="button" data-install-open>
+          <svg class="icon"><use href="#i-download"></use></svg> Instalar app
+        </button>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="app-topbar">
+        <button class="icon-btn app-topbar__menu" type="button" data-sidebar-toggle aria-label="Abrir menu" aria-expanded="false">
+          <svg class="icon"><use href="#i-menu"></use></svg>
+        </button>
+        <div class="app-topbar__title">
+          {% block topbar_title %}{% endblock %}
+        </div>
+        <div class="app-topbar__actions">
+          {% block topbar_actions %}{% endblock %}
+          <span class="app-topbar__date">{{ today|date:"d M" }}</span>
+        </div>
+      </header>
+
+      <main class="app-content" id="main">
+        {% include "partials/messages.html" %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <nav class="app-tabbar" aria-label="Navegação rápida">
+    {% if is_team %}
+      <a class="{% if url_name == 'painel' %}is-active{% endif %}" href="{% url 'dashboard:painel' %}"><svg class="icon"><use href="#i-home"></use></svg><span>Painel</span></a>
+      <a class="{% if url_name == 'enrollments' %}is-active{% endif %}" href="{% url 'dashboard:enrollments' %}"><svg class="icon"><use href="#i-clipboard"></use></svg><span>Matrículas</span></a>
+      <a class="{% if url_name == 'sessions' or url_name == 'session_attendance' %}is-active{% endif %}" href="{% url 'dashboard:sessions' %}"><svg class="icon"><use href="#i-calendar"></use></svg><span>Agenda</span></a>
+      <a class="{% if url_name == 'billing' %}is-active{% endif %}" href="{% url 'dashboard:billing' %}"><svg class="icon"><use href="#i-wallet"></use></svg><span>Financeiro</span></a>
+      <a class="{% if url_name == 'students' %}is-active{% endif %}" href="{% url 'dashboard:students' %}"><svg class="icon"><use href="#i-users"></use></svg><span>Alunos</span></a>
+    {% else %}
+      <a class="{% if url_name == 'home' %}is-active{% endif %}" href="{% url 'dashboard:home' %}"><svg class="icon"><use href="#i-home"></use></svg><span>Início</span></a>
+      <a class="{% if url_name == 'agenda' %}is-active{% endif %}" href="{% url 'dashboard:agenda' %}"><svg class="icon"><use href="#i-calendar"></use></svg><span>Agenda</span></a>
+      <a class="{% if url_name == 'points' %}is-active{% endif %}" href="{% url 'dashboard:points' %}"><svg class="icon"><use href="#i-star"></use></svg><span>Pontos</span></a>
+      <a class="{% if url_name == 'invoices' %}is-active{% endif %}" href="{% url 'dashboard:invoices' %}"><svg class="icon"><use href="#i-wallet"></use></svg><span>Mensalidades</span></a>
+      <a class="{% if url_name == 'profile' %}is-active{% endif %}" href="{% url 'dashboard:profile' %}"><svg class="icon"><use href="#i-user"></use></svg><span>Perfil</span></a>
+    {% endif %}
+  </nav>
+  {% endwith %}
+
+  <script src="{% static 'js/app.js' %}" defer></script>
+  <script src="{% static 'js/dashboard.js' %}" defer></script>
+  {% include "partials/install_dialog.html" %}
+  {% block scripts %}{% endblock %}
+</body>
+</html>

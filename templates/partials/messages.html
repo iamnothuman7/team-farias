@@ -1,0 +1,18 @@
+{% if messages %}
+  <div class="toasts" data-toasts aria-live="polite">
+    {% for message in messages %}
+      <div class="toast toast--{{ message.tags|default:'info' }}" data-toast>
+        <span class="toast__icon">
+          {% if message.tags == "success" %}<svg class="icon"><use href="#i-check"></use></svg>
+          {% elif message.tags == "error" %}<svg class="icon"><use href="#i-alert"></use></svg>
+          {% elif message.tags == "warning" %}<svg class="icon"><use href="#i-alert"></use></svg>
+          {% else %}<svg class="icon"><use href="#i-bell"></use></svg>{% endif %}
+        </span>
+        <p>{{ message }}</p>
+        <button type="button" class="toast__close" data-toast-close aria-label="Fechar aviso">
+          <svg class="icon"><use href="#i-x"></use></svg>
+        </button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}

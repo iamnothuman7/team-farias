@@ -1,0 +1,79 @@
+{% extends "base_app.html" %}
+
+{% block title %}Agenda — Painel Team Farias{% endblock %}
+{% block topbar_title %}Agenda e presença{% endblock %}
+
+{% block content %}
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">Treinos</p>
+    <h1>Agenda da semana</h1>
+    <p class="page-head-app__lead">
+      {{ start|date:"d/m" }} a {{ end|date:"d/m/Y" }} · {{ week_total }} treino{{ week_total|pluralize }} na semana.
+    </p>
+  </div>
+  <div class="page-head-app__actions">
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="generate">
+      <button class="btn btn--ghost btn--sm" type="submit" title="Cria os treinos das próximas 4 semanas a partir dos horários">
+        <svg class="icon"><use href="#i-refresh"></use></svg> Gerar treinos
+      </button>
+    </form>
+    <a class="btn btn--primary btn--sm" href="{% url 'dashboard:session_create' %}"><svg class="icon"><use href="#i-plus"></use></svg> Novo treino</a>
+  </div>
+</header>
+
+<div class="row row--between wrap" style="gap:10px;margin-bottom:16px">
+  <div class="row" style="gap:6px">
+    <a class="icon-btn" href="?inicio={{ prev|date:'Y-m-d' }}{% if group_filter %}&turma={{ group_filter }}{% endif %}" aria-label="Semana anterior">
+      <svg class="icon"><use href="#i-chevron-left"></use></svg>
+    </a>
+    <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:sessions' %}">Hoje</a>
+    <a class="icon-btn" href="?inicio={{ next|date:'Y-m-d' }}{% if group_filter %}&turma={{ group_filter }}{% endif %}" aria-label="Próxima semana">
+      <svg class="icon"><use href="#i-chevron-right"></use></svg>
+    </a>
+  </div>
+  <form method="get" class="row" style="gap:6px">
+    <input type="hidden" name="inicio" value="{{ start|date:'Y-m-d' }}">
+    <select class="select select--sm" name="turma" data-autosubmit aria-label="Filtrar por turma">
+      <option value="">Todas as turmas</option>
+      {% for group in groups %}
+        <option value="{{ group.pk }}" {% if group_filter == group.pk|stringformat:"s" %}selected{% endif %}>{{ group.name }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+<div class="week">
+  {% for day in days %}
+    <div class="week__day">
+      <div class="week__head {% if day.date == today %}is-today{% endif %}">
+        <span>{{ day.date|date:"D" }}</span>
+        <strong>{{ day.date|date:"d" }}</strong>
+      </div>
+      <div class="week__body">
+        {% for session in day.sessions %}
+          <a class="session-chip {% if session.status == 'cancelado' %}is-canceled{% elif session.status == 'realizado' %}is-done{% endif %}"
+             href="{% url 'dashboard:session_attendance' session.pk %}">
+            <strong>{{ session.start_time|time:"H\hi" }} · {{ session.class_group.name|truncatechars:20 }}</strong>
+            <span>{{ session.theme|default:"Treino"|truncatechars:24 }}</span>
+            <em>{{ session.confirmed_count }}/{{ session.class_group.occupied }} presentes</em>
+          </a>
+        {% empty %}
+          <span class="week__empty">—</span>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="card mt-24">
+  <div class="card__body row wrap" style="gap:18px;font-size:.78rem;color:var(--muted)">
+    <span class="row" style="gap:6px"><i style="width:10px;height:10px;border-radius:3px;background:var(--violet-500);display:inline-block"></i> Agendado</span>
+    <span class="row" style="gap:6px"><i style="width:10px;height:10px;border-radius:3px;background:var(--green);display:inline-block"></i> Realizado</span>
+    <span class="row" style="gap:6px"><i style="width:10px;height:10px;border-radius:3px;background:var(--red);display:inline-block"></i> Cancelado</span>
+    <span style="margin-left:auto">Clique em um treino para registrar presença.</span>
+  </div>
+</div>
+{% endblock %}

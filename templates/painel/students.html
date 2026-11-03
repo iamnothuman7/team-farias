@@ -1,0 +1,100 @@
+{% extends "base_app.html" %}
+
+{% block title %}Alunos — Painel Team Farias{% endblock %}
+{% block topbar_title %}Alunos{% endblock %}
+
+{% block content %}
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">Cadastro</p>
+    <h1>Alunos</h1>
+    <p class="page-head-app__lead">{{ total }} aluno{{ total|pluralize }} no cadastro. Busque por nome, e-mail ou turma.</p>
+  </div>
+  <div class="page-head-app__actions">
+    {% if user.is_admin_role %}
+      <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:enrollments' %}"><svg class="icon"><use href="#i-clipboard"></use></svg> Matrículas</a>
+    {% endif %}
+  </div>
+</header>
+
+<form class="filter-bar" method="get">
+  <label class="search-field" style="flex:1;min-width:200px">
+    <svg class="icon"><use href="#i-search"></use></svg>
+    <input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar aluno…" aria-label="Buscar aluno">
+  </label>
+  <select class="select select--sm" name="turma" data-autosubmit aria-label="Filtrar por turma">
+    <option value="">Turma</option>
+    {% for group in groups %}
+      <option value="{{ group.pk }}" {% if selected_group == group.pk|stringformat:"s" %}selected{% endif %}>{{ group.name }}</option>
+    {% endfor %}
+  </select>
+  <select class="select select--sm" name="status" data-autosubmit aria-label="Filtrar por situação">
+    <option value="">Situação</option>
+    {% for key, label in statuses %}
+      <option value="{{ key }}" {% if selected_status == key %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn btn--ghost btn--sm" type="submit">Filtrar</button>
+</form>
+
+<section class="card mt-24">
+  <div class="table-wrap">
+    <table class="table table--stack">
+      <thead>
+        <tr>
+          <th>Aluno</th>
+          <th>Turma</th>
+          <th>Nível</th>
+          <th>Situação</th>
+          <th class="is-right">Pontos</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+          <tr>
+            <td data-primary>
+              <div class="table__person">
+                <span class="avatar avatar--sm">{{ student.initials }}</span>
+                <div>
+                  <strong>{{ student.full_name }}</strong>
+                  <span>{{ student.user.email }}</span>
+                </div>
+              </div>
+            </td>
+            <td data-label="Turma">{{ student.class_group.name|default:"—" }}</td>
+            <td class="table__muted hide-sm" data-label="Nível">{{ student.get_level_display }}</td>
+            <td data-label="Situação">
+              <span class="badge badge--{% if student.status == 'ativo' %}green{% elif student.status == 'pendente' %}amber{% else %}outline{% endif %}">{{ student.get_status_display }}</span>
+            </td>
+            <td class="is-right" data-label="Pontos"><strong class="table__num">{{ student.points_total|default:0 }}</strong></td>
+            <td class="is-right">
+              <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:student_detail' student.pk %}">Detalhes</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6"><div class="empty-state"><p>Nenhum aluno encontrado com esses filtros.</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% if page.has_other_pages %}
+  <nav class="pagination" aria-label="Paginação">
+    {% if page.has_previous %}
+      <a href="?page={{ page.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_group %}&turma={{ selected_group }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">Anterior</a>
+    {% endif %}
+    {% for num in page.paginator.page_range %}
+      {% if num == page.number %}
+        <span class="is-current">{{ num }}</span>
+      {% elif num > page.number|add:"-3" and num < page.number|add:"3" %}
+        <a href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}{% if selected_group %}&turma={{ selected_group }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">{{ num }}</a>
+      {% endif %}
+    {% endfor %}
+    {% if page.has_next %}
+      <a href="?page={{ page.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_group %}&turma={{ selected_group }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">Próxima</a>
+    {% endif %}
+  </nav>
+{% endif %}
+{% endblock %}

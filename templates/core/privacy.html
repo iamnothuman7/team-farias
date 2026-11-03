@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Política de privacidade — Team Farias{% endblock %}
+{% block description %}Como o Team Farias trata os dados de alunos, responsáveis e visitantes do site.{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div class="shell">
+    <p class="eyebrow">Privacidade</p>
+    <h1 class="page-head__title">Seus dados,<br>nosso cuidado.</h1>
+    <p class="page-head__lead">Última atualização: outubro de 2026. Este documento explica quais dados a escolinha usa e por quê.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell prose prose--narrow">
+    <h2>Quais dados coletamos</h2>
+    <p>
+      No cadastro de matrícula, coletamos nome, e-mail, telefone, data de nascimento, nível de experiência e,
+      quando aplicável, dados do responsável legal. Também registramos presenças, pontuação e informações de
+      mensalidades vinculadas ao aluno.
+    </p>
+
+    <h2>Para que usamos</h2>
+    <ul>
+      <li>Organizar matrículas, turmas e a agenda de treinos.</li>
+      <li>Registrar presença, pontuação e o histórico esportivo do atleta.</li>
+      <li>Controlar mensalidades e a situação financeira do aluno.</li>
+      <li>Enviar comunicados da escolinha.</li>
+    </ul>
+
+    <h2>Quem tem acesso</h2>
+    <p>
+      Os dados são acessíveis apenas à equipe administrativa e aos professores responsáveis pelas turmas.
+      Cada aluno acessa somente as próprias informações. O acesso é protegido por login individual.
+    </p>
+
+    <h2>Compartilhamento</h2>
+    <p>
+      Não vendemos e não compartilhamos dados pessoais com terceiros para publicidade. O site não processa
+      pagamentos automaticamente: pagamentos são registrados manualmente pela equipe.
+    </p>
+
+    <h2>Seus direitos</h2>
+    <p>
+      Você pode solicitar confirmação, correção, portabilidade ou exclusão dos seus dados a qualquer momento.
+      Basta falar com a equipe pelo e-mail <a href="mailto:{{ site.email }}">{{ site.email }}</a> ou pelo
+      WhatsApp <a href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">{{ site.phone }}</a>.
+    </p>
+
+    <h2>Cookies e armazenamento local</h2>
+    <p>
+      Usamos apenas cookies essenciais de sessão e, quando você instala o site no celular, um cache local para
+      funcionar em modo offline. Não usamos rastreadores de publicidade.
+    </p>
+
+    <h2>Contato</h2>
+    <p>
+      Responsável pelo tratamento: Team Farias — Vôlei de Praia, {{ site.address }}.<br>
+      E-mail: {{ site.email }} · Telefone: {{ site.phone }}
+    </p>
+  </div>
+</section>
+{% endblock %}

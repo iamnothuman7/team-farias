@@ -1,0 +1,148 @@
+{% extends "base_app.html" %}
+
+{% block title %}Pontos e ranking — Team Farias{% endblock %}
+{% block topbar_title %}Pontos e ranking{% endblock %}
+
+{% block content %}
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">Temporada</p>
+    <h1>Pontos e ranking</h1>
+    <p class="page-head-app__lead">Cada treino soma. A equipe lança presença e desempenho, e a classificação é atualizada na hora.</p>
+  </div>
+  <div class="page-head-app__actions">
+    <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:agenda' %}"><svg class="icon"><use href="#i-calendar"></use></svg> Minha agenda</a>
+  </div>
+</header>
+
+<div class="stat-grid stat-grid--3">
+  <article class="stat-card">
+    <span class="stat-card__label">Meus pontos</span>
+    <p class="stat-card__value">{{ total_points }} <small>pts</small></p>
+    <p class="stat-card__meta">Total acumulado</p>
+  </article>
+  <article class="stat-card stat-card--amber">
+    <span class="stat-card__label">Minha posição</span>
+    <p class="stat-card__value">{% if position %}{{ position }}º <small>de {{ total_students }}</small>{% else %}—{% endif %}</p>
+    <p class="stat-card__meta">Ranking geral ativo</p>
+  </article>
+  <article class="stat-card stat-card--green">
+    <span class="stat-card__label">Presenças</span>
+    <p class="stat-card__value">{{ attendance.rate }}<small>%</small></p>
+    <p class="stat-card__meta">{{ attendance.present }} de {{ attendance.total }} treinos (90 dias)</p>
+  </article>
+</div>
+
+<div class="grid-2 mt-24">
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Ranking do time</h2>
+        <p class="card__subtitle">Todos os atletas ativos</p>
+      </div>
+      <span class="badge badge--violet">Top 10</span>
+    </div>
+    <div class="card__body card__body--tight">
+      <div class="rank-list">
+        {% for row in top %}
+          <div class="rank-row {% if row.student.pk == student.pk %}is-me{% endif %}">
+            <span class="rank-row__pos">{{ row.position }}</span>
+            <div class="rank-row__person">
+              <span class="avatar avatar--sm">{{ row.student.initials }}</span>
+              <div>
+                <strong>{{ row.student.display_name }}</strong>
+                <span>{% if row.student.class_group %}{{ row.student.class_group.name }}{% else %}—{% endif %}</span>
+              </div>
+            </div>
+            <span class="rank-row__points">{{ row.points }}<span>pts</span></span>
+          </div>
+        {% empty %}
+          <div class="empty-state"><p>Ranking em construção.</p></div>
+        {% endfor %}
+      </div>
+      {% if mine and mine.position > 10 %}
+        <div class="rank-list" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
+          <div class="rank-row is-me">
+            <span class="rank-row__pos">{{ mine.position }}</span>
+            <div class="rank-row__person">
+              <span class="avatar avatar--sm">{{ student.initials }}</span>
+              <div><strong>Você</strong><span>{{ student.display_name }}</span></div>
+            </div>
+            <span class="rank-row__points">{{ mine.points }}<span>pts</span></span>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">Evolução</h2>
+        <p class="card__subtitle">Pontos por mês</p>
+      </div>
+    </div>
+    <div class="card__body">
+      {% if months %}
+        <div class="bars">
+          {% for month in months %}
+            <div class="bar {% if month.total <= 0 %}is-low{% endif %}">
+              <span class="bar__value">{{ month.total }}</span>
+              <div class="bar__track"><div class="bar__fill" style="height:{{ month.height }}%"></div></div>
+              <span class="bar__label">{{ month.label }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state"><p>Sem lançamentos suficientes para o gráfico.</p></div>
+      {% endif %}
+
+      <div class="stack-12 mt-24">
+        {% for row in by_source %}
+          <div class="row row--between">
+            <span class="badge badge--{% if row.source == 'presenca' %}green{% elif row.source == 'desempenho' %}violet{% elif row.source == 'evento' %}blue{% else %}amber{% endif %}">{{ row.label }}</span>
+            <span class="table__num">{{ row.total }} pts <span class="faint" style="font-weight:400;font-size:.72rem">· {{ row.count }}x</span></span>
+          </div>
+        {% empty %}
+          <p class="faint" style="font-size:.8rem">Nenhum ponto lançado ainda.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+
+<section class="card mt-24">
+  <div class="card__head">
+    <div>
+      <h2 class="card__title">Histórico de pontos</h2>
+      <p class="card__subtitle">Cada lançamento feito pela equipe</p>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="table table--stack">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Motivo</th>
+          <th>Origem</th>
+          <th>Regra</th>
+          <th class="is-right">Pontos</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in entries %}
+          <tr>
+            <td class="table__muted nowrap" data-label="Data">{{ entry.created_at|date:"d/m/Y" }}</td>
+            <td data-primary>{{ entry.reason }}</td>
+            <td data-label="Origem"><span class="badge badge--outline">{{ entry.get_source_display }}</span></td>
+            <td class="table__muted hide-sm" data-label="Regra">{{ entry.rule.name|default:"—" }}</td>
+            <td class="is-right" data-label="Pontos"><strong class="table__num" style="color:{% if entry.points >= 0 %}var(--green){% else %}var(--red){% endif %}">{{ entry.points|stringformat:"+d" }}</strong></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5"><div class="empty-state"><p>Nenhum ponto lançado ainda. Bora treinar!</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

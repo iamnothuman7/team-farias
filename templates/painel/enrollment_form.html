@@ -1,0 +1,96 @@
+{% extends "base_app.html" %}
+
+{% block title %}Nova matrícula — Painel Team Farias{% endblock %}
+{% block topbar_title %}Matrículas{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{% url 'dashboard:enrollments' %}">
+  <svg class="icon"><use href="#i-chevron-left"></use></svg> Matrículas
+</a>
+
+<header class="page-head-app">
+  <div>
+    <p class="eyebrow">Administração</p>
+    <h1>Nova matrícula</h1>
+    <p class="page-head-app__lead">
+      A matrícula é feita pela equipe. Ao salvar, o aluno já sai com acesso liberado, turma definida e a primeira
+      mensalidade gerada.
+    </p>
+  </div>
+</header>
+
+<div class="enroll">
+  <form class="panel form-panel" method="post" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="form-errors">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+    {% endif %}
+
+    <fieldset class="form-section form-section--first">
+      <legend class="form-section__title"><svg class="icon"><use href="#i-user"></use></svg> Dados do atleta</legend>
+      <div class="form-grid">
+        {% include "partials/field.html" with field=form.first_name %}
+        {% include "partials/field.html" with field=form.last_name %}
+        {% include "partials/field.html" with field=form.email %}
+        {% include "partials/field.html" with field=form.phone %}
+        {% include "partials/field.html" with field=form.birth_date %}
+        {% include "partials/field.html" with field=form.level %}
+        {% include "partials/field.html" with field=form.position %}
+      </div>
+      {% include "partials/field.html" with field=form.health_notes %}
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend class="form-section__title"><svg class="icon"><use href="#i-ball"></use></svg> Turma e plano</legend>
+      <div class="form-grid">
+        {% include "partials/field.html" with field=form.class_group wide=True %}
+        {% include "partials/field.html" with field=form.plan wide=True %}
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend class="form-section__title"><svg class="icon"><use href="#i-shield"></use></svg> Responsável</legend>
+      <p class="form-section__hint">Obrigatório para menores de 18 anos.</p>
+      <div class="form-grid">
+        {% include "partials/field.html" with field=form.guardian_name wide=True %}
+        {% include "partials/field.html" with field=form.guardian_phone %}
+        {% include "partials/field.html" with field=form.guardian_email %}
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend class="form-section__title"><svg class="icon"><use href="#i-lock"></use></svg> Acesso do aluno</legend>
+      <div class="form-grid">
+        {% include "partials/field.html" with field=form.password wide=True %}
+      </div>
+    </fieldset>
+
+    <div class="form-actions">
+      <button class="btn btn--primary btn--lg" type="submit">
+        <svg class="icon"><use href="#i-check"></use></svg> Criar matrícula e liberar acesso
+      </button>
+      <p class="form-actions__note">A primeira mensalidade é criada automaticamente com o valor do plano escolhido.</p>
+    </div>
+  </form>
+
+  <aside class="enroll-aside">
+    <div class="enroll-aside__card">
+      <h2>Como fica depois de salvar</h2>
+      <ol class="mini-steps">
+        <li><span>01</span><div><strong>Aluno ativo</strong><p>Cadastro, turma e plano prontos no painel.</p></div></li>
+        <li><span>02</span><div><strong>Acesso liberado</strong><p>O aluno entra com o e-mail e a senha definidos aqui.</p></div></li>
+        <li><span>03</span><div><strong>Cobrança criada</strong><p>Primeira mensalidade já aparece no financeiro.</p></div></li>
+      </ol>
+    </div>
+
+    <div class="enroll-aside__card enroll-aside__card--help">
+      <h2>Senha inicial</h2>
+      <p>
+        Se você deixar a senha em branco, o sistema gera uma senha temporária e mostra uma única vez na próxima tela.
+        O aluno pode alterá-la depois em <strong>Meu perfil → Alterar senha</strong>.
+      </p>
+    </div>
+  </aside>
+</div>
+{% endblock %}

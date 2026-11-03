@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Entrar — Team Farias{% endblock %}
+{% block description %}Acesse a área do aluno ou o painel da equipe do Team Farias.{% endblock %}
+{% block body_class %}site-body auth-body{% endblock %}
+
+{% block content %}
+<section class="auth">
+  <div class="auth__art">
+    <div class="auth__art-glow" aria-hidden="true"></div>
+    <a class="brand" href="{% url 'core:home' %}">
+      <img class="brand__logo" src="{% static 'img/logo-sm.webp' %}" width="132" height="99" alt="Team Farias Vôlei de Praia">
+      <span class="brand__text"><strong>TEAM FARIAS</strong><span>Vôlei de Praia</span></span>
+    </a>
+    <div class="auth__art-copy">
+      <p class="eyebrow">Área do aluno</p>
+      <h1>Seu treino,<br> seus pontos,<br> <em>sua areia.</em></h1>
+      <p>Acompanhe a agenda, a pontuação e as mensalidades do Team Farias em um só lugar.</p>
+    </div>
+    <ul class="auth__art-list">
+      <li><svg class="icon"><use href="#i-calendar"></use></svg> Calendário de treinos e presenças</li>
+      <li><svg class="icon"><use href="#i-trophy"></use></svg> Pontos, histórico e ranking</li>
+      <li><svg class="icon"><use href="#i-wallet"></use></svg> Mensalidades e status de pagamento</li>
+    </ul>
+  </div>
+
+  <div class="auth__panel">
+    <div class="auth__card">
+      <p class="eyebrow">Bem-vindo de volta</p>
+      <h2>Entrar na sua conta</h2>
+      <p class="auth__hint">Use o e-mail cadastrado na matrícula.</p>
+
+      {% if form.non_field_errors %}
+        <div class="form-errors">
+          {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="post" class="auth__form" novalidate>
+        {% csrf_token %}
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+        <div class="field">
+          <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+          {{ form.username }}
+          {% for error in form.username.errors %}<span class="error">{{ error }}</span>{% endfor %}
+        </div>
+
+        <div class="field">
+          <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+          <div class="password-field">
+            {{ form.password }}
+          </div>
+          {% for error in form.password.errors %}<span class="error">{{ error }}</span>{% endfor %}
+        </div>
+
+        <button class="btn btn--primary btn--block btn--lg" type="submit">
+          Entrar
+          <svg class="icon"><use href="#i-arrow-right"></use></svg>
+        </button>
+      </form>
+
+      <div class="auth__divider"><span>Novo por aqui?</span></div>
+      <a class="btn btn--ghost btn--block" href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">Falar com a equipe no WhatsApp</a>
+
+      <p class="auth__help">
+        Problemas para entrar? <a href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">Fale com a equipe</a>.
+      </p>
+    </div>
+
+    <a class="auth__back" href="{% url 'core:home' %}">
+      <svg class="icon"><use href="#i-chevron-left"></use></svg> Voltar ao site
+    </a>
+  </div>
+</section>
+{% endblock %}
