@@ -901,3 +901,23 @@ def painel_reports(request):
         ],
     }
     return render(request, "painel/reports.html", context)
+
+
+@staff_required
+def painel_settings(request):
+    from core.models import SiteConfiguration
+    from .forms import SiteConfigurationForm, SinglePlanForm
+    config = SiteConfiguration.current()
+    plan = Plan.objects.filter(is_active=True).first()
+    action = request.POST.get("action") if request.method == "POST" else None
+    form = SiteConfigurationForm(request.POST if action == "site" else None, instance=config)
+    plan_form = SinglePlanForm(request.POST if action == "plan" else None, instance=plan, initial={"name": "Plano único"}, auto_id="id_billing_%s")
+    if action == "site" and form.is_valid():
+        form.save()
+        messages.success(request, "Configurações atualizadas.")
+        return redirect("dashboard:settings")
+    if action == "plan" and plan_form.is_valid():
+        plan_form.save()
+        messages.success(request, "Plano único atualizado. Matrículas anteriores mantêm seus valores.")
+        return redirect("dashboard:settings")
+    return render(request, "painel/settings.html", {"form": form, "plan_form": plan_form})

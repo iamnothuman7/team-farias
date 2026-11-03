@@ -2,6 +2,7 @@ from django.contrib.auth import views as auth_views
 from django.urls import reverse
 
 from .forms import EmailAuthenticationForm
+from core.models import SiteConfiguration
 
 
 class LoginView(auth_views.LoginView):
@@ -16,4 +17,5 @@ class LoginView(auth_views.LoginView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["next"] = self.request.GET.get("next", "")
+        context["site"] = SiteConfiguration.current()
         return context

@@ -8,6 +8,7 @@ Uso:
 from __future__ import annotations
 
 import sys
+import os
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -16,11 +17,13 @@ BASE = "http://127.0.0.1:8000"
 OUT = Path(".preview")
 OUT.mkdir(exist_ok=True)
 
-STUDENT = ("ana.almeida@aluno.teamfarias.com.br", "teamfarias123")
-ADMIN = ("farias@teamfarias.com.br", "teamfarias123")
+STUDENT = ("ana.almeida@aluno.teamfarias.com.br", os.getenv("TEAM_FARIAS_DEMO_PASSWORD", ""))
+ADMIN = ("farias@teamfarias.com.br", os.getenv("TEAM_FARIAS_DEMO_PASSWORD", ""))
 
 
 def login(page, credentials):
+    if not credentials[1]:
+        raise RuntimeError("Defina TEAM_FARIAS_DEMO_PASSWORD com a senha gerada pelo seed_demo local.")
     page.goto(f"{BASE}/entrar/", wait_until="networkidle")
     page.fill("#id_username", credentials[0])
     page.fill("#id_password", credentials[1])

@@ -1,5 +1,6 @@
 {% load static %}/* Team Farias — service worker {{ version }} */
 const VERSION = "{{ version }}";
+const DEVELOPMENT = {{ development|yesno:"true,false" }};
 const STATIC_CACHE = `tf-static-${VERSION}`;
 const PAGE_CACHE = `tf-pages-${VERSION}`;
 
@@ -18,8 +19,9 @@ const PRECACHE = [
 ];
 
 self.addEventListener("install", (event) => {
+  if (DEVELOPMENT) { self.skipWaiting(); return; }
   event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting())
+    caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE.map((url) => new Request(url, { credentials: "omit" })))).then(() => self.skipWaiting())
   );
 });
 
@@ -28,46 +30,31 @@ self.addEventListener("activate", (event) => {
     caches
       .keys()
       .then((keys) =>
-        Promise.all(keys.filter((key) => ![STATIC_CACHE, PAGE_CACHE].includes(key)).map((key) => caches.delete(key)))
+        Promise.all(keys.filter((key) => key.startsWith("tf-") && (DEVELOPMENT || ![STATIC_CACHE, PAGE_CACHE].includes(key))).map((key) => caches.delete(key)))
       )
       .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener("fetch", (event) => {
+  if (DEVELOPMENT) return;
   const { request } = event;
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-  // Nunca cacheia área logada, painel ou admin.
-  if (url.pathname.startsWith("/app/") || url.pathname.startsWith("/painel/") || url.pathname.startsWith("/admin/")) {
+  // Só arquivos estáticos são armazenados. HTML contém CSRF e dados de sessão.
+  if (url.pathname.startsWith("/static/")) {
+    event.respondWith(caches.match(request).then((cached) => cached || fetch(request).then((response) => {
+      if (response.ok) {
+        const copy = response.clone();
+        event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.put(request, copy)));
+      }
+      return response;
+    })));
     return;
   }
-
   if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(PAGE_CACHE).then((cache) => cache.put(request, copy));
-          return response;
-        })
-        .catch(() => caches.match(request).then((cached) => cached || caches.match("/offline/")))
-    );
-    return;
+    event.respondWith(fetch(request).catch(() => caches.match("/offline/")));
   }
-
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((response) => {
-        if (response.ok && (url.pathname.startsWith("/static/") || url.pathname.startsWith("/media/"))) {
-          const copy = response.clone();
-          caches.open(STATIC_CACHE).then((cache) => cache.put(request, copy));
-        }
-        return response;
-      });
-    })
-  );
 });

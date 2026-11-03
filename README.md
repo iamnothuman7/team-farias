@@ -33,11 +33,11 @@ Cada entrega da proposta foi implementada no código:
 ## Stack
 
 - **Python 3.12** + **Django 5.2**
-- **SQLite** em desenvolvimento (troca simples para PostgreSQL)
+- **PostgreSQL** em desenvolvimento e produção, com psycopg 3
 - Templates Django + CSS próprio (sem framework de UI) + **JavaScript vanilla**
 - **HTMX 2** (self-hosted) para navegação, formulários e filtros sem recarregar a página
 - **WhiteNoise** para arquivos estáticos em produção
-- **PWA**: manifest, service worker, cache offline, atalhos, splash screens e convite de instalação automático
+- **PWA**: manifest, service worker, fallback offline, atalhos, splash screens e convite de instalação configurável
 - Fontes self-hosted (Archivo + Plus Jakarta Sans) — o site não depende de CDN
 
 ---
@@ -55,9 +55,9 @@ pip install -r requirements.txt
 copy .env.example .env      # Windows
 cp .env.example .env        # Linux/macOS
 
-# 3. banco + dados de demonstração
+# 3. banco PostgreSQL configurado no .env
 python manage.py migrate
-python manage.py seed_demo
+# Não carregue seed_demo em ambientes reais.
 
 # 4. servidor
 python manage.py runserver
@@ -65,18 +65,13 @@ python manage.py runserver
 
 Acesse **http://127.0.0.1:8000**.
 
-> Para recriar os dados de demonstração do zero: `python manage.py seed_demo --reset`
+> `seed_demo` é opcional e exclusivo de bancos descartáveis de desenvolvimento; gera uma senha aleatória por execução.
 
-### Contas de demonstração
+### Administração
 
-| Perfil | E-mail | Senha |
-| --- | --- | --- |
-| Administração | `farias@teamfarias.com.br` | `teamfarias123` |
-| Professora | `marina@teamfarias.com.br` | `teamfarias123` |
-| Aluna | `ana.almeida@aluno.teamfarias.com.br` | `teamfarias123` |
-| Superusuário Django | `farias@teamfarias.com.br` | `teamfarias123` |
-
-O painel do Django fica em `/admin/`.
+Crie seu acesso local com `python manage.py createsuperuser`. Não há conta de produção predefinida.
+Use `/painel/configuracoes/` para contatos, marca, textos, seções e plano único. Usuários, responsáveis,
+locais e demais registros também podem ser gerenciados em `/admin/`, conforme as permissões.
 
 ---
 
@@ -163,8 +158,8 @@ Arquivos em `static/img/`: `logo.png`, `logo.webp`, `logo-sm.webp`, ícones 192/
 
 - `manifest.webmanifest` com ícones 192/512, ícone maskable, atalhos e capturas de tela.
 - Ícone e splash screens do iPhone gerados com a logo; favicons **sem fundo**.
-- Service worker na raiz (`Service-Worker-Allowed: /`): cache de estáticos e páginas públicas, offline em `/offline/`; área logada e painel **nunca** são cacheados.
-- **Convite de instalação automático** na primeira visita (some por 7 dias em “Agora não”), com instruções específicas para iPhone, Android e desktop.
+- Service worker na raiz (`Service-Worker-Allowed: /`): cache de estáticos, offline em `/offline/`; área logada e painel **nunca** são cacheados.
+- **Convite de instalação configurável**, desativado por padrão; quando ativado aparece na primeira visita (some por 7 dias em “Agora não”), com instruções específicas para iPhone, Android e desktop.
 - Layout com `env(safe-area-inset-*)`, alvos de toque maiores, campos de 16px (sem zoom no iOS) e tabelas em cartões.
 - Em produção, **HTTPS** libera instalação completa no Android, cache offline e atualizações automáticas.
 
@@ -175,7 +170,7 @@ Arquivos em `static/img/`: `logo.png`, `logo.webp`, `logo-sm.webp`, ícones 192/
 - `hx-boost` global no `<body>`: links internos, formulários, filtros, login, logout e ações do painel passam por AJAX.
 - Barra de progresso no topo, View Transitions API (com respeito a `prefers-reduced-motion`) e troca de `<title>`/histórico automática.
 - O `body` e o `<head>` são sincronizados a cada troca (classe do layout, `noindex`, descrição e canonical).
-- Erros 403/404 são exibidos dentro da própria página; sem internet, o app cai no `/offline/`.
+- Erros 403/404 são exibidos dentro da própria página; sem internet, mantém o formulário e informa o erro para uma nova tentativa.
 - Os scripts usam delegação e reinicialização após cada swap (menus, toasts, modais, presença, abas e instalação).
 - **Sidebar retrátil** no desktop: rail de 84px que expande para 272px no hover/foco e sobrepõe o conteúdo sem deslocar a página. No mobile, o mesmo menu abre como drawer pelo botão do topo, com backdrop e fechamento por Esc, toque fora ou ao navegar.
 
@@ -187,7 +182,7 @@ Arquivos em `static/img/`: `logo.png`, `logo.webp`, `logo-sm.webp`, ícones 192/
 python manage.py test
 ```
 
-51 testes cobrindo: páginas públicas, matrícula feita pela administração (duplicidade de e-mail, responsável, senha gerada, mensalidade automática), permissões por perfil, presença, pontuação individual/coletiva, baixa e reabertura de mensalidade, geração de cobranças, ranking, PWA e geração de treinos.
+Testes cobrindo: páginas públicas, matrícula feita pela administração (duplicidade de e-mail, responsável, senha gerada, mensalidade automática), permissões por perfil, presença, pontuação individual/coletiva, baixa e reabertura de mensalidade, geração de cobranças, ranking, PWA e geração de treinos.
 
 ---
 
@@ -204,46 +199,93 @@ Desktop: [site](screenshots/site-desktop.png) · [painel](screenshots/painel.png
 
 ---
 
-## Produção
+## Configuração e produção
 
-1. Defina `DJANGO_DEBUG=0`, uma `DJANGO_SECRET_KEY` nova e `DJANGO_ALLOWED_HOSTS` com o domínio.
-2. Rode `python manage.py collectstatic` (o manifesto com hash é ativado automaticamente fora do modo debug).
-3. Sirva com Gunicorn atrás de Nginx:
+O PostgreSQL é o banco padrão. Crie um banco e usuário dedicados, copie `.env.example` para `.env`
+e informe `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT`
+e o modo TLS exigido pelo provedor (`POSTGRES_SSLMODE`). Credenciais nunca entram no Git.
+
+```bash
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py collectstatic --noinput
+python manage.py check --deploy
+```
+
+Em produção, defina `DJANGO_DEBUG=0`, chave `DJANGO_SECRET_KEY` exclusiva com pelo menos 50 caracteres,
+`DJANGO_ALLOWED_HOSTS` e `DJANGO_CSRF_TRUSTED_ORIGINS` para o domínio real. Configure HTTPS no proxy
+que sobrescreve `X-Forwarded-Proto`, sirva com Gunicorn e mantenha backups privados do PostgreSQL.
+Não desative cookies seguros. A aplicação rejeita chave de desenvolvimento e SQLite em produção.
 
 ```bash
 gunicorn teamfarias.wsgi:application --bind 127.0.0.1:8000 --workers 3
 ```
 
-4. HTTPS obrigatório (PWA, cookies seguros e `CSRF_TRUSTED_ORIGINS`).
-5. Para PostgreSQL, troque o bloco `DATABASES` em `teamfarias/settings.py` por `django.db.backends.postgresql` com `psycopg[binary]`.
+Dados demonstrativos são opcionais em um banco descartável de desenvolvimento; `seed_demo` é
+bloqueado com `DEBUG=0`. Não importe o SQLite de demonstração para produção. Se houver dados reais
+em uma instalação anterior, faça backup privado, valide a importação e confira contagens e vínculos
+antes de trocar a conexão. As migrações não apagam matrículas nem cobranças.
 
-Checklist rápido: `python manage.py check --deploy`.
+### Configurações pelo painel
 
----
+- Marca, logo por URL HTTPS e cor de destaque.
+- WhatsApp, Instagram, telefone, e-mail opcional, cidade/UF e endereço confirmado.
+- Título, descrição, texto sobre a escola, rodapé, chamada de contato e descrição para buscadores.
+- Visibilidade de seções, contadores reais, próximo treino e convite de instalação.
+- Idade mínima opcional e chave Pix restrita à área do aluno.
+- Plano único: nome, descrição, valor interno, vencimento e frequência. Alterações valem para novas
+  matrículas; os valores já combinados permanecem nas matrículas existentes.
 
-## Personalização
+O site apresenta um único plano, sempre com consulta pelo WhatsApp. Nenhum preço é publicado.
+A migração mantém somente o primeiro plano ativo; outros planos permanecem no histórico das
+matrículas e cobranças, inativos para novas adesões. A regra de um plano ativo é garantida no banco.
 
-- **Contatos e endereço:** variáveis `SITE_*` no `.env` (telefone, WhatsApp com DDI, e-mail, Instagram, Pix).
-- **Turmas e horários:** painel `/painel/turmas/`. Os treinos da agenda são gerados a partir dos horários fixos pelo botão **Gerar treinos**.
-- **Planos e valores:** Django admin → Planos.
-- **Regras de pontuação:** painel `/painel/pontos/` → Nova regra.
-- **Logo:** substitua `static/img/logo.png` e `logo.webp` mantendo as proporções; os ícones PWA podem ser regerados a partir do original.
+WhatsApp confirmado: 5588992671163. Instagram: teamfarias_. Localização: Tianguá/CE.
+E-mail, endereço e Pix ficam vazios até serem informados pela administração.
 
----
+### Privacidade e arquivos locais
 
-## Fora do escopo (conforme a proposta)
+HTML e páginas autenticadas não são armazenados no cache persistente do HTMX ou service worker.
+O modo offline mantém apenas os arquivos estáticos e uma página genérica sem sessão.
+Os nomes dos alunos e o ranking não são publicados na página inicial.
 
-- Processamento automático de pagamentos (baixa é manual).
-- Aplicativo nativo em loja (a entrega é PWA instalável).
-- Domínio próprio, integrações pagas e mensagens por WhatsApp/SMS.
-- Envio de e-mail transacional (o contato inicial é feito pela equipe).
-- Renovações de infraestrutura são custos futuros, informados à parte.
+`.env`, `.local/`, bancos, backups, chaves, `ACESSOS.md` e `acessos-qr.png` são ignorados.
+Os dois arquivos de acesso foram retirados do índice, sem excluir as cópias locais. Isso não remove
+versões já presentes no histórico remoto: credenciais reais expostas anteriormente devem ser trocadas.
+Nunca execute `git add -f` nesses arquivos. Revise `git diff --cached` antes de enviar alterações.
 
----
+### Validação
 
-## Próximos passos sugeridos
+```bash
+python manage.py test --noinput
+python manage.py makemigrations --check --dry-run
+python manage.py check
+```
 
-1. Validar textos, turmas, valores e contatos reais com o Team Farias.
-2. Conectar um domínio e configurar HTTPS.
-3. Avaliar e-mail transacional (recuperação de senha) e lembrete de mensalidade.
-4. Migrar para PostgreSQL quando o volume de alunos crescer.
+Os testes usam PostgreSQL por padrão e precisam de usuário local com permissão para criar o banco de
+testes. SQLite só pode ser selecionado explicitamente com `DJANGO_DB_ENGINE=sqlite` para testes
+isolados ou desenvolvimento; não é fallback de produção.
+
+Referências: [PostgreSQL no Django](https://docs.djangoproject.com/en/5.2/ref/databases/)
+e [histórico do HTMX](https://htmx.org/docs/#history).
+
+### PostgreSQL local deste workspace (Windows)
+
+Foi criado um cluster separado em `.local/postgres`, porta `55439`, com credenciais aleatórias
+no `.env` ignorado. O serviço PostgreSQL já existente não foi alterado. Para iniciar o cluster:
+
+```powershell
+& 'C:/Program Files/PostgreSQL/17/bin/pg_ctl.exe' -D .local/postgres -l .local/postgres.log start
+python manage.py runserver
+```
+
+Se já estiver em execução, basta iniciar o Django. Para encerrar somente esse cluster:
+
+```powershell
+& 'C:/Program Files/PostgreSQL/17/bin/pg_ctl.exe' -D .local/postgres -m fast stop
+```
+
+O SQLite anterior foi preservado como arquivo local e não foi importado; o PostgreSQL começa limpo,
+sem alunos, contas de demonstração, notícias ou preços fictícios. Crie o administrador com
+`python manage.py createsuperuser` e cadastre o valor interno do plano em Configurações.

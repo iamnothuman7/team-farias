@@ -20,3 +20,17 @@ assets/brand/original/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Segredos, backups, relatórios locais e credenciais de acesso
+.env.*
+!.env.example
+.local/
+backups/
+*.dump
+*.sql
+*.pem
+*.key
+.ruff_cache/
+.pytest_cache/
+ACESSOS.md
+acessos-qr.png

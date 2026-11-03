@@ -2117,3 +2117,7 @@ html.is-loading .site-main { opacity: 0.72; transition: opacity 0.2s; }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
 }
+
+.plan-single { max-width: 760px; margin-inline: auto; padding: clamp(24px, 5vw, 56px); }
+.plan-single .section-lead { margin-block: 18px; }
+.plan-single .btn { white-space: normal; text-align: center; }

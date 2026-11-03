@@ -10,6 +10,7 @@ import os
 import sys
 
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
@@ -30,8 +31,7 @@ ALLOWED_HOSTS = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()]
 
 # Em desenvolvimento, o servidor roda em portas variadas.
-if DEBUG:
-    ALLOWED_HOSTS = ["*"]
+
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -50,6 +50,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "core.middleware.PrivateResponseMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -80,12 +81,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "teamfarias.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / os.getenv("DJANGO_DB_NAME", "db.sqlite3"),
-    }
-}
+# PostgreSQL em desenvolvimento e produção. SQLite apenas opt-in para testes isolados.
+if os.getenv("DJANGO_DB_ENGINE") == "sqlite":
+    if not DEBUG and not TESTING:
+        raise ImproperlyConfigured("Produção exige PostgreSQL.")
+    DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / os.getenv("DJANGO_DB_NAME", "db.sqlite3")}}
+else:
+    DATABASES = {"default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRES_DB", "teamfarias"),
+        "USER": os.getenv("POSTGRES_USER", "teamfarias"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", ""),
+        "HOST": os.getenv("POSTGRES_HOST", "127.0.0.1"),
+        "PORT": os.getenv("POSTGRES_PORT", "5432"),
+        "CONN_MAX_AGE": 0 if DEBUG else 60,
+        "CONN_HEALTH_CHECKS": True,
+        "OPTIONS": {"sslmode": os.getenv("POSTGRES_SSLMODE", "prefer"), "connect_timeout": 5},
+    }}
+
+if not DEBUG and (len(SECRET_KEY) < 50 or SECRET_KEY.startswith("django-insecure-") or SECRET_KEY == "troque-esta-chave-em-producao"):
+    raise ImproperlyConfigured("Defina uma DJANGO_SECRET_KEY forte e exclusiva em produção.")
 
 AUTH_USER_MODEL = "accounts.User"
 
@@ -105,7 +120,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = Path(os.getenv("DJANGO_STATIC_ROOT", str(BASE_DIR / "staticfiles")))
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
@@ -115,7 +130,7 @@ STORAGES = {
 if DEBUG or TESTING:
     STORAGES["staticfiles"] = {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"}
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = Path(os.getenv("DJANGO_MEDIA_ROOT", str(BASE_DIR / "media")))
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -123,17 +138,7 @@ LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "dashboard:redirect"
 LOGOUT_REDIRECT_URL = "core:home"
 
-# ---------------------------------------------------------------- Marca / site
-SITE_NAME = "Team Farias"
-SITE_TAGLINE = "Vôlei de Praia"
-SITE_PHONE = os.getenv("SITE_PHONE", "(85) 90000-0000")
-SITE_WHATSAPP = os.getenv("SITE_WHATSAPP", "5585900000000")
-SITE_EMAIL = os.getenv("SITE_EMAIL", "contato@teamfarias.com.br")
-SITE_INSTAGRAM = os.getenv("SITE_INSTAGRAM", "teamfarias")
-SITE_CITY = os.getenv("SITE_CITY", "Fortaleza")
-SITE_STATE = os.getenv("SITE_STATE", "CE")
-SITE_ADDRESS = os.getenv("SITE_ADDRESS", "Quadra de areia — Beira-Mar, Fortaleza/CE")
-SITE_PIX_KEY = os.getenv("SITE_PIX_KEY", "contato@teamfarias.com.br")
+# Marca, contatos e conteúdo são editados em /painel/configuracoes/.
 
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
 
@@ -145,6 +150,6 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_REFERRER_POLICY = "same-origin"
     SECURE_HSTS_SECONDS = int(os.getenv("DJANGO_HSTS_SECONDS", "31536000"))
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool("DJANGO_HSTS_INCLUDE_SUBDOMAINS", True)
+    SECURE_HSTS_PRELOAD = env_bool("DJANGO_HSTS_PRELOAD", True)
     X_FRAME_OPTIONS = "DENY"

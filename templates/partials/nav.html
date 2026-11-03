@@ -1,20 +1,20 @@
 {% load static %}
 <header class="site-header" data-header>
   <div class="shell site-header__inner">
-    <a class="brand" href="{% url 'core:home' %}" aria-label="Team Farias — página inicial">
-      <img class="brand__logo" src="{% static 'img/logo-sm.webp' %}" width="132" height="99" alt="Emblema Team Farias Vôlei de Praia">
+    <a class="brand" href="{% url 'core:home' %}" aria-label="{{ site.name }} — página inicial">
+      <img class="brand__logo" src="{% if site.logo_url %}{{ site.logo_url }}{% else %}{% static 'img/logo-sm.webp' %}{% endif %}" width="132" height="99" alt="Emblema {{ site.name }} Vôlei de Praia">
       <span class="brand__text">
-        <strong>TEAM FARIAS</strong>
-        <span>Vôlei de Praia</span>
+        <strong>{{ site.name|upper }}</strong>
+        <span>{{ site.tagline }}</span>
       </span>
     </a>
 
     <nav class="site-nav" aria-label="Navegação principal">
-      <a href="{% url 'core:home' %}#escolinha">A escolinha</a>
-      <a href="{% url 'core:home' %}#sistema">O sistema</a>
-      <a href="{% url 'core:home' %}#turmas">Turmas</a>
-      <a href="{% url 'core:home' %}#como-funciona">Como funciona</a>
-      <a href="{% url 'core:news_list' %}">Notícias</a>
+      {% if site.show_about %}<a href="{% url 'core:home' %}#escolinha">A escolinha</a>{% endif %}
+      {% if site.show_system %}<a href="{% url 'core:home' %}#sistema">O sistema</a>{% endif %}
+      {% if site.show_groups %}<a href="{% url 'core:home' %}#turmas">Turmas</a>{% endif %}
+      {% if site.show_steps %}<a href="{% url 'core:home' %}#como-funciona">Como funciona</a>{% endif %}
+      {% if site.show_news %}<a href="{% url 'core:news_list' %}">Notícias</a>{% endif %}
       <a href="{% url 'core:home' %}#contato">Contato</a>
     </nav>
 
@@ -39,11 +39,11 @@
 
   <div class="mobile-nav" id="mobile-nav" data-mobile-nav hidden>
     <nav class="mobile-nav__links" aria-label="Navegação principal (mobile)">
-      <a href="{% url 'core:home' %}#escolinha">A escolinha</a>
-      <a href="{% url 'core:home' %}#sistema">O sistema</a>
-      <a href="{% url 'core:home' %}#turmas">Turmas</a>
-      <a href="{% url 'core:home' %}#como-funciona">Como funciona</a>
-      <a href="{% url 'core:news_list' %}">Notícias</a>
+      {% if site.show_about %}<a href="{% url 'core:home' %}#escolinha">A escolinha</a>{% endif %}
+      {% if site.show_system %}<a href="{% url 'core:home' %}#sistema">O sistema</a>{% endif %}
+      {% if site.show_groups %}<a href="{% url 'core:home' %}#turmas">Turmas</a>{% endif %}
+      {% if site.show_steps %}<a href="{% url 'core:home' %}#como-funciona">Como funciona</a>{% endif %}
+      {% if site.show_news %}<a href="{% url 'core:news_list' %}">Notícias</a>{% endif %}
       <a href="{% url 'core:home' %}#contato">Contato</a>
     </nav>
     <div class="mobile-nav__actions">
@@ -51,7 +51,7 @@
         <a class="btn btn--primary btn--block" href="{% url 'dashboard:redirect' %}">Minha área</a>
       {% else %}
         <a class="btn btn--ghost btn--block" href="{% url 'accounts:login' %}">Entrar</a>
-        <a class="btn btn--primary btn--block" href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">Falar com a equipe</a>
+        <a class="btn btn--primary btn--block" href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">{{ site.whatsapp_label }}</a>
       {% endif %}
     </div>
   </div>

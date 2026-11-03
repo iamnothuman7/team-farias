@@ -1,0 +1,33 @@
+[Unit]
+Description=Team Farias Django application
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=teamfarias
+Group=teamfarias
+WorkingDirectory=/var/www/apps/teamfarias/current
+EnvironmentFile=/var/www/apps/teamfarias/shared/.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/var/www/apps/teamfarias/current/.venv/bin/gunicorn teamfarias.wsgi:application --bind 127.0.0.1:8100 --workers 2 --threads 2 --timeout 60 --graceful-timeout 30 --max-requests 1000 --max-requests-jitter 100 --access-logfile /var/www/apps/teamfarias/shared/logs/access.log --error-logfile /var/www/apps/teamfarias/shared/logs/error.log --capture-output
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=40
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
+ReadWritePaths=/var/www/apps/teamfarias/shared/media /var/www/apps/teamfarias/shared/logs
+MemoryMax=512M
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target

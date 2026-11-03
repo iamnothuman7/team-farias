@@ -53,19 +53,8 @@
     document.body.style.overflow = "";
   }
 
-  function closeAppDrawer() {
-    const sidebar = $("[data-sidebar]");
-    if (!sidebar) return;
-    sidebar.classList.remove("is-open");
-    $("[data-sidebar-toggle]")?.setAttribute("aria-expanded", "false");
-    const backdrop = $("[data-sidebar-backdrop]");
-    if (backdrop) backdrop.hidden = true;
-    document.body.classList.remove("has-drawer");
-  }
-
   function closeOverlays() {
     closeSiteNav();
-    closeAppDrawer();
   }
 
   /* ----------------------------------------------------------- PWA */
@@ -350,8 +339,11 @@
 
       const canonical = doc.head.querySelector('link[rel="canonical"]');
       const currentCanonical = document.head.querySelector('link[rel="canonical"]');
-      if (canonical && currentCanonical) {
-        currentCanonical.setAttribute("href", canonical.getAttribute("href") || "");
+      currentCanonical?.remove();
+      if (canonical) document.head.appendChild(canonical.cloneNode(true));
+      for (const selector of ['meta[property^="og:"]', 'meta[name^="twitter:"]']) {
+        document.head.querySelectorAll(selector).forEach((node) => node.remove());
+        doc.head.querySelectorAll(selector).forEach((node) => document.head.appendChild(node.cloneNode(true)));
       }
     } catch {
       /* resposta não HTML */
@@ -361,7 +353,10 @@
   function syncBodyClass(xhr) {
     try {
       const doc = new DOMParser().parseFromString(xhr.responseText, "text/html");
-      if (doc.body?.className) document.body.className = doc.body.className;
+      if (doc.body) {
+        document.body.className = doc.body.className;
+        document.body.style.cssText = doc.body.style.cssText;
+      }
       const historyAttr = doc.body?.getAttribute("hx-history");
       if (historyAttr !== null) document.body.setAttribute("hx-history", historyAttr);
       else document.body.removeAttribute("hx-history");
@@ -376,9 +371,15 @@
 
     htmx.config.allowScriptTags = false;
     htmx.config.globalViewTransitions = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    htmx.config.historyCacheSize = 12;
+    htmx.config.historyCacheSize = 0;
+    htmx.config.historyRestoreAsHxRequest = false;
+    try { localStorage.removeItem("htmx-history-cache"); } catch {}
 
     const body = document.body;
+    window.addEventListener("popstate", () => {
+      // Uma resposta atrasada não deve sobrescrever a página escolhida no histórico.
+      document.querySelectorAll(".htmx-request").forEach((element) => htmx.trigger(element, "htmx:abort"));
+    });
 
     body.addEventListener("htmx:beforeRequest", (event) => {
       setLoading(1);
@@ -399,8 +400,10 @@
     });
 
     body.addEventListener("htmx:beforeSwap", (event) => {
-      syncBodyClass(event.detail.xhr);
-      syncHead(event.detail.xhr);
+      if (event.detail.shouldSwap || [403, 404].includes(event.detail.xhr.status)) {
+        syncBodyClass(event.detail.xhr);
+        syncHead(event.detail.xhr);
+      }
       const status = event.detail.xhr.status;
       if (status === 403 || status === 404) {
         event.detail.shouldSwap = true;
@@ -415,6 +418,10 @@
       }
     });
 
+    body.addEventListener("htmx:historyCacheMissLoad", (event) => {
+      syncBodyClass(event.detail.xhr);
+      syncHead(event.detail.xhr);
+    });
     body.addEventListener("htmx:historyRestore", () => initPage());
 
     body.addEventListener("htmx:responseError", () => {
@@ -422,7 +429,7 @@
     });
 
     body.addEventListener("htmx:sendError", () => {
-      if (!navigator.onLine) window.location.assign("/offline/");
+      toast("Sem conexão. Seus campos continuam aqui; tente novamente quando a internet voltar.");
     });
   }
 

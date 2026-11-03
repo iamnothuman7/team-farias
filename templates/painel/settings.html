@@ -1,0 +1,28 @@
+{% extends "base_app.html" %}
+{% block title %}Configurações — {{ site.name }}{% endblock %}
+{% block topbar_title %}Configurações{% endblock %}
+{% block content %}
+<header class="page-head-app"><div><p class="eyebrow">Do seu jeito</p><h1>Configurações</h1><p class="page-head-app__lead">Marca, contatos, conteúdo e operação em um só lugar.</p></div><a href="{% url 'core:home' %}" class="btn btn--ghost">Ver site</a></header>
+<form method="post" class="settings-form">
+  {% csrf_token %}<input type="hidden" name="action" value="site">
+  {{ form.non_field_errors }}
+  {% for title, fields in form.sections %}
+  <section class="card">
+    <div class="card__head"><h2>{{ title }}</h2></div>
+    <div class="card__body form-grid">
+      {% for field in fields %}{% include "partials/field.html" with field=field %}{% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+  <div class="settings-save"><button type="submit" class="btn btn--primary">Salvar configurações</button></div>
+</form>
+<section class="card" id="plano">
+  <div class="card__head"><div><h2>Plano único · financeiro</h2><p class="muted">Valores internos para novas matrículas. No site, a consulta é sempre pelo WhatsApp.</p></div></div>
+  <form method="post">
+    {% csrf_token %}<input type="hidden" name="action" value="plan">
+    <div class="card__body"><div class="form-errors">{{ plan_form.non_field_errors }}</div><div class="form-grid">{% for field in plan_form %}{% include "partials/field.html" with field=field %}{% endfor %}</div></div>
+    <div class="card__foot"><button type="submit" class="btn btn--primary">Salvar plano único</button></div>
+  </form>
+</section>
+{% if user.is_staff %}<p class="muted">Outros cadastros: <a href="/admin/" hx-boost="false">administração avançada</a> (usuários, responsáveis, locais, turmas e registros).</p>{% endif %}
+{% endblock %}

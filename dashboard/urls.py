@@ -5,6 +5,7 @@ from . import views
 app_name = "dashboard"
 
 urlpatterns = [
+    path("painel/configuracoes/", views.painel_settings, name="settings"),
     path("inicio/", views.role_redirect, name="redirect"),
     # ------------------------------------------------------------ área do aluno
     path("app/", views.app_home, name="home"),

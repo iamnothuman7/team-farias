@@ -1,7 +1,7 @@
 {% load static %}
 <dialog id="install-dialog" class="install-dialog" data-install-dialog aria-labelledby="install-title">
   <div class="dialog__head">
-    <h2 id="install-title">Instalar o Team Farias</h2>
+    <h2 id="install-title">Instalar o {{ site.name }}</h2>
     <button class="icon-btn" type="button" data-dialog-close aria-label="Fechar">
       <svg class="icon"><use href="#i-x"></use></svg>
     </button>
@@ -10,7 +10,7 @@
     <div class="install-dialog__brand">
       <img src="{% static 'img/icon-192.png' %}" width="56" height="56" alt="">
       <div>
-        <strong>Team Farias</strong>
+        <strong>{{ site.name }}</strong>
         <span>Vôlei de Praia · app do aluno e da equipe</span>
       </div>
     </div>
@@ -20,7 +20,7 @@
       <ol class="install-steps">
         <li><span>1</span><p>Toque no botão <strong>Compartilhar</strong> <svg class="icon"><use href="#i-arrow-up-right"></use></svg> na barra do Safari.</p></li>
         <li><span>2</span><p>Escolha <strong>Adicionar à Tela de Início</strong>.</p></li>
-        <li><span>3</span><p>Confirme em <strong>Adicionar</strong>. O ícone do Team Farias aparece na sua tela.</p></li>
+        <li><span>3</span><p>Confirme em <strong>Adicionar</strong>. O ícone do {{ site.name }} aparece na sua tela.</p></li>
       </ol>
       <p class="install-dialog__hint" data-install-inapp hidden>
         Você está em um navegador interno (Instagram/WhatsApp). Toque em “Abrir no Safari” e repita os passos.
@@ -32,7 +32,7 @@
       <ol class="install-steps">
         <li><span>1</span><p>Abra o menu <strong>⋮</strong> no canto superior direito.</p></li>
         <li><span>2</span><p>Toque em <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.</p></li>
-        <li><span>3</span><p>Confirme. O Team Farias abre em tela cheia, como um app.</p></li>
+        <li><span>3</span><p>Confirme. O {{ site.name }} abre em tela cheia, como um app.</p></li>
       </ol>
     </div>
 

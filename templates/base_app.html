@@ -3,19 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>{% block title %}Minha área — Team Farias{% endblock %}</title>
-  <meta name="description" content="Área do aluno e painel de gestão do Team Farias.">
+  <title>{% block title %}Minha área — {{ site.name }}{% endblock %}</title>
+  <meta name="description" content="Área do aluno e painel de gestão do {{ site.name }}.">
   <meta name="theme-color" content="#07010E">
   <meta name="color-scheme" content="dark">
   <meta name="robots" content="noindex">
-  <meta name="htmx-config" content='{"allowScriptTags": false, "globalViewTransitions": true}'>
+  <meta name="htmx-config" content='{"allowScriptTags": false, "globalViewTransitions": true, "historyCacheSize": 0}'>
   {% include "partials/pwa_head.html" %}
   <link rel="preload" href="{% static 'fonts/archivo-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="{% static 'fonts/jakarta-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 </head>
-<body class="app-body" hx-boost="true" hx-history="false">
+<body style="--violet-500: {{ site.accent_color }}; --grad-brand: linear-gradient(135deg, {{ site.accent_color }}, var(--violet-600));" class="app-body" hx-boost="true" hx-history="false">
   <div class="page-progress" aria-hidden="true"><span></span></div>
   {% include "partials/icons.html" %}
   {% with url_name=request.resolver_match.url_name is_team=user.is_team_member %}
@@ -23,8 +23,8 @@
   <div class="app-shell">
     <aside class="app-sidebar" id="app-sidebar" data-sidebar>
       <a class="brand brand--app" href="{% url 'core:home' %}">
-        <img class="brand__logo" src="{% static 'img/logo-sm.webp' %}" width="46" height="35" alt="Team Farias">
-        <span class="brand__text"><strong>TEAM FARIAS</strong><span>{% if is_team %}Gestão{% else %}Minha área{% endif %}</span></span>
+        <img class="brand__logo" src="{% if site.logo_url %}{{ site.logo_url }}{% else %}{% static 'img/logo-sm.webp' %}{% endif %}" width="46" height="35" alt="{{ site.name }}">
+        <span class="brand__text"><strong>{{ site.name|upper }}</strong><span>{% if is_team %}Gestão{% else %}Minha área{% endif %}</span></span>
       </a>
       <button class="icon-btn app-sidebar__close" type="button" data-sidebar-close aria-label="Fechar menu">
         <svg class="icon"><use href="#i-x"></use></svg>
@@ -61,6 +61,9 @@
             </a>
             <a class="app-nav__link {% if url_name == 'announcements_admin' or url_name == 'announcement_create' or url_name == 'announcement_edit' %}is-active{% endif %}" href="{% url 'dashboard:announcements_admin' %}">
               <svg class="icon"><use href="#i-megaphone"></use></svg><span>Comunicados</span>
+            </a>
+            <a class="app-nav__link {% if url_name == 'settings' %}is-active{% endif %}" href="{% url 'dashboard:settings' %}">
+              <svg class="icon"><use href="#i-clipboard"></use></svg><span>Configurações</span>
             </a>
             <a class="app-nav__link {% if url_name == 'reports' %}is-active{% endif %}" href="{% url 'dashboard:reports' %}">
               <svg class="icon"><use href="#i-chart"></use></svg><span>Relatórios</span>
@@ -139,9 +142,9 @@
   <nav class="app-tabbar" aria-label="Navegação rápida">
     {% if is_team %}
       <a class="{% if url_name == 'painel' %}is-active{% endif %}" href="{% url 'dashboard:painel' %}"><svg class="icon"><use href="#i-home"></use></svg><span>Painel</span></a>
-      <a class="{% if url_name == 'enrollments' %}is-active{% endif %}" href="{% url 'dashboard:enrollments' %}"><svg class="icon"><use href="#i-clipboard"></use></svg><span>Matrículas</span></a>
+      {% if user.is_admin_role %}<a class="{% if url_name == 'enrollments' %}is-active{% endif %}" href="{% url 'dashboard:enrollments' %}"><svg class="icon"><use href="#i-clipboard"></use></svg><span>Matrículas</span></a>{% endif %}
       <a class="{% if url_name == 'sessions' or url_name == 'session_attendance' %}is-active{% endif %}" href="{% url 'dashboard:sessions' %}"><svg class="icon"><use href="#i-calendar"></use></svg><span>Agenda</span></a>
-      <a class="{% if url_name == 'billing' %}is-active{% endif %}" href="{% url 'dashboard:billing' %}"><svg class="icon"><use href="#i-wallet"></use></svg><span>Financeiro</span></a>
+      {% if user.is_admin_role %}<a class="{% if url_name == 'billing' %}is-active{% endif %}" href="{% url 'dashboard:billing' %}"><svg class="icon"><use href="#i-wallet"></use></svg><span>Financeiro</span></a>{% endif %}
       <a class="{% if url_name == 'students' %}is-active{% endif %}" href="{% url 'dashboard:students' %}"><svg class="icon"><use href="#i-users"></use></svg><span>Alunos</span></a>
     {% else %}
       <a class="{% if url_name == 'home' %}is-active{% endif %}" href="{% url 'dashboard:home' %}"><svg class="icon"><use href="#i-home"></use></svg><span>Início</span></a>

@@ -4,12 +4,12 @@
     <div class="footer__cta">
       <div>
         <span class="eyebrow">Vem pra areia</span>
-        <h2>Sua vaga no Team Farias<br>começa com uma inscrição.</h2>
+        <h2>Sua vaga no {{ site.name }}<br>começa com uma inscrição.</h2>
       </div>
       <div class="footer__cta-actions">
         <a class="btn btn--primary btn--lg" href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">
           <svg class="icon"><use href="#i-whatsapp"></use></svg>
-          Falar com a equipe
+          {{ site.whatsapp_label }}
         </a>
         <a class="btn btn--ghost btn--lg" href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">
           <svg class="icon"><use href="#i-whatsapp"></use></svg>
@@ -21,25 +21,25 @@
     <div class="footer__grid">
       <div class="footer__brand">
         <a class="brand brand--footer" href="{% url 'core:home' %}">
-          <img src="{% static 'img/logo-sm.webp' %}" width="112" height="84" alt="Team Farias Vôlei de Praia">
+          <img src="{% if site.logo_url %}{{ site.logo_url }}{% else %}{% static 'img/logo-sm.webp' %}{% endif %}" width="112" height="84" alt="{{ site.name }} Vôlei de Praia">
         </a>
-        <p>A escolinha organizada. O time mais conectado. Vôlei de praia com método, acompanhamento e comunidade.</p>
+        <p>{{ site.footer_text }}</p>
         <div class="footer__social">
-          <a href="https://instagram.com/{{ site.instagram }}" target="_blank" rel="noopener" aria-label="Instagram do Team Farias">
+          {% if site.instagram %}<a href="https://instagram.com/{{ site.instagram }}" target="_blank" rel="noopener" aria-label="Instagram do {{ site.name }}">
             <svg class="icon"><use href="#i-instagram"></use></svg>
-          </a>
-          <a href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener" aria-label="WhatsApp do Team Farias">
+          </a>{% endif %}
+          <a href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener" aria-label="WhatsApp do {{ site.name }}">
             <svg class="icon"><use href="#i-whatsapp"></use></svg>
           </a>
-          <a href="mailto:{{ site.email }}" aria-label="E-mail do Team Farias">
+          {% if site.email %}<a href="mailto:{{ site.email }}" aria-label="E-mail do {{ site.name }}">
             <svg class="icon"><use href="#i-mail"></use></svg>
-          </a>
+          </a>{% endif %}
         </div>
       </div>
 
       <div class="footer__col">
         <h3>Escolinha</h3>
-        <a href="{% url 'core:home' %}#escolinha">Sobre o Team Farias</a>
+        <a href="{% url 'core:home' %}#escolinha">Sobre o {{ site.name }}</a>
         <a href="{% url 'core:home' %}#turmas">Turmas e horários</a>
         <a href="{% url 'core:home' %}#sistema">Sistema do aluno</a>
         <a href="{% url 'core:news_list' %}">Notícias</a>
@@ -48,9 +48,9 @@
       <div class="footer__col">
         <h3>Contato</h3>
         <a href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">{{ site.phone }}</a>
-        <a href="mailto:{{ site.email }}">{{ site.email }}</a>
-        <a href="https://instagram.com/{{ site.instagram }}" target="_blank" rel="noopener">@{{ site.instagram }}</a>
-        <span class="footer__muted">{{ site.address }}</span>
+        {% if site.email %}<a href="mailto:{{ site.email }}">{{ site.email }}</a>{% endif %}
+        {% if site.instagram %}<a href="https://instagram.com/{{ site.instagram }}" target="_blank" rel="noopener">@{{ site.instagram }}</a>{% endif %}
+        {% if site.address %}<span class="footer__muted">{{ site.address }}</span>{% endif %}<span class="footer__muted">{{ site.city }}/{{ site.state }}</span>
       </div>
 
       <div class="footer__col">
@@ -66,7 +66,7 @@
     </div>
 
     <div class="footer__bottom">
-      <p>© {{ current_year }} Team Farias — Vôlei de Praia. Todos os direitos reservados.</p>
+      <p>© {{ current_year }} {{ site.name }} — Vôlei de Praia. Todos os direitos reservados.</p>
       <p class="footer__signature">Feito na areia de {{ site.city }}/{{ site.state }}</p>
     </div>
   </div>

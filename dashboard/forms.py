@@ -12,6 +12,7 @@ from django.utils.crypto import get_random_string
 
 from accounts.models import Guardian, Student, User
 from billing.models import Invoice, Plan
+from core.models import SiteConfiguration
 from school.models import Announcement, ClassGroup, Enrollment, PointEntry, PointRule, ScheduleSlot, Session, Venue
 
 
@@ -101,8 +102,8 @@ class AdminEnrollmentForm(StyledFormMixin, forms.Form):
             age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
             if birth_date > today:
                 self.add_error("birth_date", "A data de nascimento não pode estar no futuro.")
-            elif age < 10:
-                self.add_error("birth_date", "A escolinha atende a partir de 10 anos.")
+            elif age < SiteConfiguration.current().minimum_age:
+                self.add_error("birth_date", "Idade abaixo do mínimo configurado pela equipe.")
             elif age < 18 and not (cleaned.get("guardian_name") and cleaned.get("guardian_phone")):
                 self.add_error("guardian_name", "Para menores de 18 anos, informe nome e WhatsApp do responsável.")
 
@@ -420,3 +421,33 @@ class EnrollmentReviewForm(StyledFormMixin, forms.Form):
             self.fields["class_group"].initial = enrollment.class_group
             self.fields["plan"].initial = enrollment.plan
         self._style()
+
+
+class SiteConfigurationForm(StyledFormMixin, forms.ModelForm):
+    class Meta:
+        model = SiteConfiguration
+        exclude = ["id", "updated_at"]
+        widgets = {"accent_color": forms.TextInput(attrs={"type": "color"})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._style()
+        for field in self.fields.values():
+            if isinstance(field.widget, forms.Textarea):
+                field.widget.attrs["rows"] = 3
+
+    @property
+    def sections(self):
+        from core.configuration import CONFIGURATION_GROUPS
+        return [(title, [self[name] for name in fields]) for title, fields in CONFIGURATION_GROUPS]
+
+
+class SinglePlanForm(StyledFormMixin, forms.ModelForm):
+    class Meta:
+        model = Plan
+        fields = ["name", "description", "monthly_fee", "due_day", "sessions_per_week"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._style()
+        self.fields["monthly_fee"].help_text = "Valor interno para novas matrículas. Nunca aparece no site público. Matrículas existentes mantêm o valor combinado."

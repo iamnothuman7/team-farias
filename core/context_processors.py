@@ -1,4 +1,4 @@
-from django.conf import settings
+from .models import SiteConfiguration
 from django.utils import timezone
 
 
@@ -18,18 +18,7 @@ def site(request):
         }
 
     return {
-        "site": {
-            "name": settings.SITE_NAME,
-            "tagline": settings.SITE_TAGLINE,
-            "phone": settings.SITE_PHONE,
-            "whatsapp": settings.SITE_WHATSAPP,
-            "email": settings.SITE_EMAIL,
-            "instagram": settings.SITE_INSTAGRAM,
-            "city": settings.SITE_CITY,
-            "state": settings.SITE_STATE,
-            "address": settings.SITE_ADDRESS,
-            "pix": settings.SITE_PIX_KEY,
-        },
+        "site": SiteConfiguration.current(),
         "nav_counts": counts,
         "greeting": _greeting(),
         "today": timezone.localdate(),

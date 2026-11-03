@@ -11,7 +11,15 @@
     const toggle = $("[data-sidebar-toggle]");
     const backdrop = $("[data-sidebar-backdrop]");
     if (!sidebar) return;
+    const mobile = window.matchMedia("(max-width: 1024px)").matches;
+    open = mobile && open;
+    const wasOpen = sidebar.classList.contains("is-open");
     sidebar.classList.toggle("is-open", open);
+    sidebar.inert = mobile && !open;
+    document.querySelector(".app-main")?.toggleAttribute("inert", open);
+    document.querySelector(".app-tabbar")?.toggleAttribute("inert", open);
+    if (open) sidebar.querySelector("[data-sidebar-close]")?.focus();
+    else if (wasOpen) toggle?.focus();
     toggle?.setAttribute("aria-expanded", String(open));
     if (backdrop) backdrop.hidden = !open;
     document.body.classList.toggle("has-drawer", open);
@@ -22,6 +30,7 @@
     const backdrop = $("[data-sidebar-backdrop]");
     const sidebar = $("[data-sidebar]");
     if (!sidebar) return;
+    setSidebar(false);
 
     if (toggle && !toggle.dataset.bound) {
       toggle.dataset.bound = "1";
@@ -38,8 +47,16 @@
     });
     if (!state.globalBound) {
       state.globalBound = true;
+      window.matchMedia("(max-width: 1024px)").addEventListener("change", () => setSidebar(false));
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") setSidebar(false);
+        const drawer = $("[data-sidebar].is-open");
+        if (event.key === "Tab" && drawer) {
+          const items = $$("a[href], button:not([disabled]), input:not([disabled])", drawer).filter((el) => el.getClientRects().length);
+          const first = items[0], last = items[items.length - 1];
+          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+        }
       });
       document.body.addEventListener("htmx:beforeRequest", () => {
         setSidebar(false);

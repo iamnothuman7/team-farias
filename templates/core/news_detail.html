@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ announcement.title }} — Team Farias{% endblock %}
+{% block title %}{{ announcement.title }} — {{ site.name }}{% endblock %}
 {% block description %}{{ announcement.summary|default:announcement.body|truncatewords:28 }}{% endblock %}
 
 {% block content %}
@@ -25,11 +25,11 @@
 
     <footer class="article__footer">
       <div>
-        <strong>Team Farias</strong>
+        <strong>{{ site.name }}</strong>
         <span>Vôlei de Praia · {{ site.city }}/{{ site.state }}</span>
       </div>
       <a class="btn btn--ghost btn--sm" href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">
-        <svg class="icon"><use href="#i-whatsapp"></use></svg> Falar com a equipe
+        <svg class="icon"><use href="#i-whatsapp"></use></svg> {{ site.whatsapp_label }}
       </a>
     </footer>
   </div>

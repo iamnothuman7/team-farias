@@ -5,6 +5,7 @@ from datetime import date
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -13,15 +14,16 @@ from django.utils import timezone
 class Plan(models.Model):
     name = models.CharField("nome do plano", max_length=80)
     description = models.CharField("descrição", max_length=200, blank=True)
-    monthly_fee = models.DecimalField("valor mensal", max_digits=8, decimal_places=2)
-    due_day = models.PositiveSmallIntegerField("dia de vencimento", default=10)
-    sessions_per_week = models.PositiveSmallIntegerField("treinos por semana", default=2)
+    monthly_fee = models.DecimalField("valor mensal", max_digits=8, decimal_places=2, validators=[MinValueValidator(0)])
+    due_day = models.PositiveSmallIntegerField("dia de vencimento", default=10, validators=[MinValueValidator(1), MaxValueValidator(31)])
+    sessions_per_week = models.PositiveSmallIntegerField("treinos por semana", default=2, validators=[MinValueValidator(1), MaxValueValidator(7)])
     is_active = models.BooleanField("ativo", default=True)
 
     class Meta:
         verbose_name = "plano"
         verbose_name_plural = "planos"
         ordering = ["monthly_fee"]
+        constraints = [models.UniqueConstraint(fields=["is_active"], condition=models.Q(is_active=True), name="one_active_plan")]
 
     def __str__(self) -> str:
         return f"{self.name} — R$ {self.monthly_fee}"

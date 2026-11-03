@@ -11,9 +11,11 @@ import random
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
-from django.core.management.base import BaseCommand
+from django.conf import settings
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 
 from accounts.models import Guardian, Student, User
 from billing.models import Invoice, Payment, Plan, due_date_for
@@ -29,7 +31,7 @@ from school.models import (
     Venue,
 )
 
-PASSWORD = "teamfarias123"
+PASSWORD = get_random_string(24)
 
 STUDENTS = [
     ("Ana Sofia", "Almeida", "ana.almeida", 2, "intermediario", 16, "levantamento"),
@@ -203,6 +205,8 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
+        if not settings.DEBUG:
+            raise CommandError("Dados de demonstração são proibidos em produção.")
         rng = random.Random(7)
         today = timezone.localdate()
 
@@ -260,29 +264,7 @@ class Command(BaseCommand):
             Venue.objects.create(name="Arena Beira-Mar", address="Av. Beira-Mar, 2500 — Meireles, Fortaleza/CE"),
             Venue.objects.create(name="Arena Praia do Futuro", address="Av. Zezé Diogo, 4400 — Praia do Futuro, Fortaleza/CE"),
         ]
-        plans = [
-            Plan.objects.create(
-                name="Plano 2x",
-                monthly_fee=Decimal("180.00"),
-                sessions_per_week=2,
-                due_day=10,
-                description="Dois treinos por semana na turma fixa.",
-            ),
-            Plan.objects.create(
-                name="Plano 3x",
-                monthly_fee=Decimal("240.00"),
-                sessions_per_week=3,
-                due_day=10,
-                description="Três treinos por semana e avaliação mensal com o professor.",
-            ),
-            Plan.objects.create(
-                name="Plano Livre",
-                monthly_fee=Decimal("320.00"),
-                sessions_per_week=5,
-                due_day=10,
-                description="Treinos ilimitados nas turmas com vaga disponível.",
-            ),
-        ]
+        plans = [Plan.objects.create(name="Plano único", monthly_fee=Decimal("180.00"), sessions_per_week=2, due_day=10, description="Exemplo apenas para desenvolvimento.")]
 
         groups = []
         for spec in GROUPS:
@@ -344,9 +326,9 @@ class Command(BaseCommand):
             enrollment = Enrollment.objects.create(
                 student=student,
                 class_group=groups[group_index],
-                plan=plans[1] if group_index in (2, 3, 5) else plans[0],
+                plan=plans[0],
                 status=Enrollment.Status.ATIVA,
-                monthly_fee=plans[1].monthly_fee if group_index in (2, 3, 5) else plans[0].monthly_fee,
+                monthly_fee=plans[0].monthly_fee,
                 start_date=student.joined_at,
                 approved_by=admin,
             )

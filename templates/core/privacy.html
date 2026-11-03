@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Política de privacidade — Team Farias{% endblock %}
-{% block description %}Como o Team Farias trata os dados de alunos, responsáveis e visitantes do site.{% endblock %}
+{% block title %}Política de privacidade — {{ site.name }}{% endblock %}
+{% block description %}Como o {{ site.name }} trata os dados de alunos, responsáveis e visitantes do site.{% endblock %}
 
 {% block content %}
 <section class="page-head">
   <div class="shell">
     <p class="eyebrow">Privacidade</p>
     <h1 class="page-head__title">Seus dados,<br>nosso cuidado.</h1>
-    <p class="page-head__lead">Última atualização: outubro de 2026. Este documento explica quais dados a escolinha usa e por quê.</p>
+    <p class="page-head__lead">Este documento explica quais dados a escolinha usa e por quê.</p>
   </div>
 </section>
 
@@ -44,7 +44,7 @@
     <h2>Seus direitos</h2>
     <p>
       Você pode solicitar confirmação, correção, portabilidade ou exclusão dos seus dados a qualquer momento.
-      Basta falar com a equipe pelo e-mail <a href="mailto:{{ site.email }}">{{ site.email }}</a> ou pelo
+      Basta falar com a equipe {% if site.email %}pelo e-mail <a href="mailto:{{ site.email }}">{{ site.email }}</a> ou {% endif %}pelo
       WhatsApp <a href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">{{ site.phone }}</a>.
     </p>
 
@@ -56,8 +56,8 @@
 
     <h2>Contato</h2>
     <p>
-      Responsável pelo tratamento: Team Farias — Vôlei de Praia, {{ site.address }}.<br>
-      E-mail: {{ site.email }} · Telefone: {{ site.phone }}
+      Responsável pelo tratamento: {{ site.name }} — Vôlei de Praia, {{ site.city }}/{{ site.state }}{% if site.address %}, {{ site.address }}{% endif %}.<br>
+      {% if site.email %}E-mail: {{ site.email }} ·{% endif %} Telefone: {{ site.phone }}
     </p>
   </div>
 </section>

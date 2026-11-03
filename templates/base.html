@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>{% block title %}Team Farias — Escolinha de Vôlei de Praia{% endblock %}</title>
+  <title>{% block title %}{{ site.name }} — Escolinha de Vôlei de Praia{% endblock %}</title>
   <meta name="description" content="{% block description %}Escolinha de vôlei de praia em {{ site.city }}/{{ site.state }}. Treinos por turma, matrícula feita pela equipe, pontos, ranking e mensalidades em um só lugar.{% endblock %}">
   <meta name="theme-color" content="#07010E">
   <meta name="color-scheme" content="dark">
-  <meta name="htmx-config" content='{"allowScriptTags": false, "globalViewTransitions": true}'>
+  <meta name="htmx-config" content='{"allowScriptTags": false, "globalViewTransitions": true, "historyCacheSize": 0}'>
   <link rel="canonical" href="{{ request.build_absolute_uri }}">
   {% include "partials/pwa_head.html" %}
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Team Farias">
-  <meta property="og:title" content="{% block og_title %}Team Farias — Vôlei de Praia{% endblock %}">
-  <meta property="og:description" content="A escolinha organizada. O time mais conectado.">
+  <meta property="og:site_name" content="{{ site.name }}">
+  <meta property="og:title" content="{% block og_title %}{{ site.name }} — Vôlei de Praia{% endblock %}">
+  <meta property="og:description" content="{{ site.meta_description }}">
   <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'img/og-image.png' %}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
   <script>document.documentElement.classList.remove('no-js');</script>
 </head>
-<body class="{% block body_class %}site-body{% endblock %}" hx-boost="true">
+<body style="--violet-500: {{ site.accent_color }}; --grad-brand: linear-gradient(135deg, {{ site.accent_color }}, var(--violet-600));" class="{% block body_class %}site-body{% endblock %}" hx-boost="true" hx-history="false">
   <a class="skip-link" href="#main" hx-boost="false">Ir para o conteúdo</a>
   <div class="page-progress" aria-hidden="true"><span></span></div>
   {% include "partials/icons.html" %}

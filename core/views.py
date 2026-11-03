@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from django.contrib import messages
+from django.conf import settings
+from django.db import connection, DatabaseError
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -31,16 +33,11 @@ CATEGORY_ORDER = {"sub13": 0, "sub15": 1, "sub17": 2, "livre": 3, "adulto": 4}
 
 def home(request):
     groups = sorted(_public_groups(), key=lambda g: (CATEGORY_ORDER.get(g.category, 9), g.name))
-    plans = list(Plan.objects.filter(is_active=True).order_by("monthly_fee"))
+
     news = list(_public_announcements()[:3])
     today = timezone.localdate()
-    from dashboard.services import ranking
-
-    top = ranking()[:1]
     context = {
-        "leader": top[0] if top else None,
         "groups": groups,
-        "plans": plans,
         "news": news,
         "stats": {
             "students": Student.objects.filter(status=Student.Status.ATIVO).count(),
@@ -97,7 +94,7 @@ def offline(request):
 def service_worker(request):
     """Service worker na raiz para controlar todo o escopo do site."""
     response = HttpResponse(
-        render_to_string("core/sw.js", {"version": "v4"}),
+        render_to_string("core/sw.js", {"version": "v6", "development": settings.DEBUG}),
         content_type="application/javascript",
     )
     response["Service-Worker-Allowed"] = "/"
@@ -105,7 +102,14 @@ def service_worker(request):
     return response
 
 
+@never_cache
 def health(request):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+    except DatabaseError:
+        return HttpResponse("unavailable", status=503, content_type="text/plain")
     return HttpResponse("ok", content_type="text/plain")
 
 
