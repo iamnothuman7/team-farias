@@ -55,13 +55,13 @@
     </div>
 
     <div class="hero__visual">
-      <div class="crest">
-        <div class="crest__glow" aria-hidden="true"></div>
-        <div class="crest__grain" aria-hidden="true"></div>
-        <div class="crest__lines" aria-hidden="true"></div>
-        <img class="crest__logo" src="{% if site.logo_url %}{{ site.logo_url }}{% else %}{% static 'img/logo.webp' %}{% endif %}" width="1000" height="750" alt="Emblema {{ site.name }} Vôlei de Praia" fetchpriority="high">
-        <div class="crest__ring" aria-hidden="true"></div>
-      </div>
+      <img class="hero__artwork"
+           src="{% static 'img/hero-atleta.webp' %}"
+           srcset="{% static 'img/hero-atleta-480.webp' %} 480w, {% static 'img/hero-atleta-768.webp' %} 768w, {% static 'img/hero-atleta.webp' %} 1122w"
+           sizes="(max-width: 600px) calc(100vw - 16px), (max-width: 1080px) 560px, (max-width: 1280px) 44vw, 560px"
+           width="1122" height="1402"
+           alt="Atleta do Team Farias em três momentos do vôlei de praia, entre bolas, areia e rastros de luz violeta"
+           fetchpriority="high" decoding="async">
 
       {% if site.show_next_session and next_session %}
       <div class="float-card float-card--next"><span class="float-card__label">Próximo treino</span><strong>{{ next_session.date|date:"d/m" }} · {{ next_session.start_time|time:"H:i" }}</strong><span>{{ next_session.class_group.name }}{% if next_session.venue %} · {{ next_session.venue.name }}{% endif %}</span></div>
