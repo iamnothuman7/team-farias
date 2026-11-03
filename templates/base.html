@@ -7,6 +7,7 @@
   <meta name="description" content="{% block description %}Escolinha de vôlei de praia em {{ site.city }}/{{ site.state }}. Treinos por turma, matrícula feita pela equipe, pontos, ranking e mensalidades em um só lugar.{% endblock %}">
   <meta name="theme-color" content="#07010E">
   <meta name="color-scheme" content="dark">
+  <meta name="htmx-config" content='{"allowScriptTags": false, "globalViewTransitions": true}'>
   <link rel="canonical" href="{{ request.build_absolute_uri }}">
   {% include "partials/pwa_head.html" %}
   <meta property="og:type" content="website">
@@ -21,10 +22,12 @@
   <link rel="preload" href="{% static 'fonts/archivo-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="{% static 'fonts/jakarta-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
   <script>document.documentElement.classList.remove('no-js');</script>
 </head>
-<body class="{% block body_class %}site-body{% endblock %}">
-  <a class="skip-link" href="#main">Ir para o conteúdo</a>
+<body class="{% block body_class %}site-body{% endblock %}" hx-boost="true">
+  <a class="skip-link" href="#main" hx-boost="false">Ir para o conteúdo</a>
+  <div class="page-progress" aria-hidden="true"><span></span></div>
   {% include "partials/icons.html" %}
   {% include "partials/nav.html" %}
   <main id="main" class="{% block main_class %}site-main{% endblock %}">
@@ -33,7 +36,9 @@
   {% include "partials/footer.html" %}
   {% include "partials/messages.html" %}
   {% include "partials/install_dialog.html" %}
+  <script src="{% static 'js/vendor/htmx.min.js' %}" defer></script>
   <script src="{% static 'js/app.js' %}" defer></script>
+  <script src="{% static 'js/dashboard.js' %}" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

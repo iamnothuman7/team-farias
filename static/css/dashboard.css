@@ -968,3 +968,168 @@ dialog::backdrop { background: rgba(4, 1, 10, 0.7); backdrop-filter: blur(4px); 
   .credential-box__row { grid-template-columns: 1fr auto; }
   .credential-box__row > span { grid-column: 1 / -1; }
 }
+
+/* ==========================================================================
+   Sidebar retrátil (desktop) + drawer (mobile)
+   ========================================================================== */
+@media (min-width: 1025px) {
+  .app-shell { display: block; }
+  .app-main { margin-left: 84px; }
+
+  .app-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 84px;
+    height: 100vh;
+    padding: 18px 12px 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    z-index: 60;
+    transition: width 0.28s var(--ease), box-shadow 0.28s var(--ease), background 0.28s;
+  }
+  .app-sidebar:hover,
+  .app-sidebar:focus-within {
+    width: 272px;
+    background: linear-gradient(180deg, rgba(25, 7, 45, 0.99), rgba(8, 2, 16, 0.99));
+    box-shadow: 26px 0 60px -32px rgba(0, 0, 0, 0.9);
+  }
+
+  .app-sidebar .brand--app { justify-content: center; padding-inline: 0; }
+  .app-sidebar .brand__text {
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: opacity 0.16s, max-width 0.2s;
+  }
+  .app-sidebar:hover .brand--app,
+  .app-sidebar:focus-within .brand--app { justify-content: flex-start; padding-inline: 8px; }
+  .app-sidebar:hover .brand__text,
+  .app-sidebar:focus-within .brand__text { max-width: 190px; opacity: 1; }
+
+  .app-nav { gap: 3px; }
+  .app-nav__label {
+    height: 0;
+    margin: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: opacity 0.16s, height 0.2s, margin 0.2s;
+  }
+  .app-sidebar:hover .app-nav__label,
+  .app-sidebar:focus-within .app-nav__label {
+    height: auto;
+    margin: 14px 10px 6px;
+    opacity: 1;
+  }
+  .app-sidebar:hover .app-nav__label:first-child,
+  .app-sidebar:focus-within .app-nav__label:first-child { margin-top: 0; }
+
+  .app-nav__link {
+    justify-content: center;
+    padding: 11px 0;
+    gap: 0;
+  }
+  .app-nav__link .icon { width: 19px; height: 19px; opacity: 0.9; }
+  .app-nav__link > span {
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: opacity 0.16s, max-width 0.2s;
+  }
+  .app-sidebar:hover .app-nav__link,
+  .app-sidebar:focus-within .app-nav__link {
+    justify-content: flex-start;
+    gap: 11px;
+    padding: 9px 11px;
+  }
+  .app-sidebar:hover .app-nav__link > span,
+  .app-sidebar:focus-within .app-nav__link > span { max-width: 180px; opacity: 1; }
+
+  .app-nav__badge {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 4px;
+    display: grid;
+    place-items: center;
+    font-size: 0.55rem;
+  }
+  .app-sidebar:hover .app-nav__badge,
+  .app-sidebar:focus-within .app-nav__badge {
+    position: static;
+    height: auto;
+    margin-left: auto;
+    padding: 1px 7px;
+    font-size: 0.66rem;
+  }
+
+  .app-sidebar__foot { align-items: center; }
+  .app-user { width: 100%; justify-content: center; gap: 0; }
+  .app-user__info { display: none; }
+  .app-user form { display: none; }
+  .app-sidebar:hover .app-user { justify-content: flex-start; gap: 10px; }
+  .app-sidebar:hover .app-user__info { display: flex; }
+  .app-sidebar:hover .app-user form { display: block; margin-left: auto; }
+
+  .app-sidebar__site { font-size: 0; justify-content: center; padding: 9px 0; }
+  .app-sidebar__site .icon { width: 17px; height: 17px; }
+  .app-sidebar:hover .app-sidebar__site,
+  .app-sidebar:focus-within .app-sidebar__site {
+    font-size: 0.74rem;
+    justify-content: flex-start;
+    padding: 7px 10px;
+  }
+
+  .app-content { max-width: 1280px; margin-inline: auto; }
+}
+
+@media (max-width: 1024px) {
+  .app-main { margin-left: 0; }
+  .app-sidebar { z-index: 70; }
+  .app-topbar__menu { position: relative; z-index: 71; }
+}
+
+@media (min-width: 1025px) {
+  .app-nav__link.is-active::before { left: -12px; }
+  .app-sidebar:hover .app-nav__link.is-active::before,
+  .app-sidebar:focus-within .app-nav__link.is-active::before { left: -14px; }
+}
+
+@media (max-width: 1024px) {
+  /* backdrop e drawer no mesmo contexto de empilhamento */
+  .app-shell { z-index: auto; }
+  .app-backdrop:not([hidden]) { z-index: 65; }
+  .app-sidebar { z-index: 70; }
+  .app-topbar { z-index: 30; }
+}
+
+@media (min-width: 1025px) {
+  /* logout sempre acessível, mesmo com a barra retraída */
+  .app-user { flex-direction: column; gap: 6px; }
+  .app-user form { display: block; margin-left: 0; }
+  .app-user__logout { width: 28px; height: 28px; }
+  .app-sidebar:hover .app-user,
+  .app-sidebar:focus-within .app-user { flex-direction: row; gap: 10px; }
+  .app-sidebar:hover .app-user form,
+  .app-sidebar:focus-within .app-user form { margin-left: auto; }
+}
+
+/* Fechar drawer e marca no menu mobile */
+.app-sidebar__close { display: none; }
+@media (max-width: 1024px) {
+  .app-sidebar { padding-top: calc(18px + env(safe-area-inset-top)); }
+  .app-sidebar .brand__text { display: flex; }
+  .app-sidebar__close {
+    display: inline-grid;
+    position: absolute;
+    top: calc(14px + env(safe-area-inset-top));
+    right: 12px;
+    width: 38px;
+    height: 38px;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.06);
+  }
+}

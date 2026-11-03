@@ -74,7 +74,7 @@ Chrome/Edge: ícone de instalação na barra de endereço → **Instalar**.
 
 ## 6. Dicas de teste
 
-- O site também tem um botão **Instalar app** no rodapé e um card **“Team Farias na tela inicial”** dentro da área do aluno.
+- O convite **“Instalar o Team Farias”** abre sozinho na primeira visita ao site; o botão também existe no rodapé e há um card **“Team Farias na tela inicial”** na área do aluno.
 - Depois de instalado, os convites de instalação desaparecem automaticamente.
 - Sem internet, o app mostra a tela **“Você está sem conexão”** em vez de erro do navegador.
 - A área logada nunca é gravada em cache — dados de alunos não ficam no aparelho.

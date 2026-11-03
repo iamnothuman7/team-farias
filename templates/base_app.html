@@ -8,13 +8,15 @@
   <meta name="theme-color" content="#07010E">
   <meta name="color-scheme" content="dark">
   <meta name="robots" content="noindex">
+  <meta name="htmx-config" content='{"allowScriptTags": false, "globalViewTransitions": true}'>
   {% include "partials/pwa_head.html" %}
   <link rel="preload" href="{% static 'fonts/archivo-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="{% static 'fonts/jakarta-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 </head>
-<body class="app-body">
+<body class="app-body" hx-boost="true" hx-history="false">
+  <div class="page-progress" aria-hidden="true"><span></span></div>
   {% include "partials/icons.html" %}
   {% with url_name=request.resolver_match.url_name is_team=user.is_team_member %}
   <div class="app-backdrop" data-sidebar-backdrop hidden></div>
@@ -24,6 +26,9 @@
         <img class="brand__logo" src="{% static 'img/logo-sm.webp' %}" width="46" height="35" alt="Team Farias">
         <span class="brand__text"><strong>TEAM FARIAS</strong><span>{% if is_team %}Gestão{% else %}Minha área{% endif %}</span></span>
       </a>
+      <button class="icon-btn app-sidebar__close" type="button" data-sidebar-close aria-label="Fechar menu">
+        <svg class="icon"><use href="#i-x"></use></svg>
+      </button>
 
       {% if is_team %}
         <nav class="app-nav" aria-label="Painel de gestão">
@@ -148,6 +153,7 @@
   </nav>
   {% endwith %}
 
+  <script src="{% static 'js/vendor/htmx.min.js' %}" defer></script>
   <script src="{% static 'js/app.js' %}" defer></script>
   <script src="{% static 'js/dashboard.js' %}" defer></script>
   {% include "partials/install_dialog.html" %}

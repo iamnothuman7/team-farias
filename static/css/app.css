@@ -2072,3 +2072,48 @@ dialog::backdrop { background: rgba(4, 1, 10, 0.72); backdrop-filter: blur(6px);
   transition: color 0.2s;
 }
 .install-dialog__later:hover { color: #fff; }
+
+/* ==========================================================================
+   HTMX: carregamento, transições e estados
+   ========================================================================== */
+.page-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 400;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.page-progress span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, #8b2fe0, #bd93ff, #8b2fe0);
+  box-shadow: 0 0 18px rgba(189, 147, 255, 0.8);
+}
+html.is-loading .page-progress { opacity: 1; }
+html.is-loading .page-progress span { animation: progress-run 1.4s var(--ease) infinite; }
+@keyframes progress-run {
+  0% { transform: scaleX(0); opacity: 1; }
+  60% { transform: scaleX(0.72); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0.2; }
+}
+html.is-loading { cursor: progress; }
+html.is-loading .app-content,
+html.is-loading .site-main { opacity: 0.72; transition: opacity 0.2s; }
+
+/* Transições de página (View Transitions API) */
+@view-transition { navigation: auto; }
+::view-transition-old(root) { animation: tf-fade-out 0.18s var(--ease); }
+::view-transition-new(root) { animation: tf-fade-in 0.26s var(--ease); }
+@keyframes tf-fade-out { to { opacity: 0; transform: translateY(-4px); } }
+@keyframes tf-fade-in { from { opacity: 0; transform: translateY(6px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+}

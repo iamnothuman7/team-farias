@@ -34,9 +34,10 @@ Cada entrega da proposta foi implementada no código:
 
 - **Python 3.12** + **Django 5.2**
 - **SQLite** em desenvolvimento (troca simples para PostgreSQL)
-- Templates Django + CSS próprio (sem framework de UI) + JavaScript vanilla
+- Templates Django + CSS próprio (sem framework de UI) + **JavaScript vanilla**
+- **HTMX 2** (self-hosted) para navegação, formulários e filtros sem recarregar a página
 - **WhiteNoise** para arquivos estáticos em produção
-- **PWA**: manifest, service worker, cache offline e atalhos de app
+- **PWA**: manifest, service worker, cache offline, atalhos, splash screens e convite de instalação automático
 - Fontes self-hosted (Archivo + Plus Jakarta Sans) — o site não depende de CDN
 
 ---
@@ -158,13 +159,25 @@ Arquivos em `static/img/`: `logo.png`, `logo.webp`, `logo-sm.webp`, ícones 192/
 
 ---
 
-## PWA
+## PWA e uso no celular
 
-- `manifest.webmanifest` com ícones, tema e atalhos para agenda, pontos e mensalidades.
-- Service worker servido na raiz (`Service-Worker-Allowed: /`) para controlar todo o escopo.
-- Cache de estáticos e páginas públicas; área logada e painel **nunca** são cacheados.
-- Fallback `/offline/` quando não há conexão.
-- Requer HTTPS (ou `localhost`) para instalação, como em qualquer PWA.
+- `manifest.webmanifest` com ícones 192/512, ícone maskable, atalhos e capturas de tela.
+- Ícone e splash screens do iPhone gerados com a logo; favicons **sem fundo**.
+- Service worker na raiz (`Service-Worker-Allowed: /`): cache de estáticos e páginas públicas, offline em `/offline/`; área logada e painel **nunca** são cacheados.
+- **Convite de instalação automático** na primeira visita (some por 7 dias em “Agora não”), com instruções específicas para iPhone, Android e desktop.
+- Layout com `env(safe-area-inset-*)`, alvos de toque maiores, campos de 16px (sem zoom no iOS) e tabelas em cartões.
+- Em produção, **HTTPS** libera instalação completa no Android, cache offline e atualizações automáticas.
+
+---
+
+## Navegação sem recarregar (HTMX)
+
+- `hx-boost` global no `<body>`: links internos, formulários, filtros, login, logout e ações do painel passam por AJAX.
+- Barra de progresso no topo, View Transitions API (com respeito a `prefers-reduced-motion`) e troca de `<title>`/histórico automática.
+- O `body` e o `<head>` são sincronizados a cada troca (classe do layout, `noindex`, descrição e canonical).
+- Erros 403/404 são exibidos dentro da própria página; sem internet, o app cai no `/offline/`.
+- Os scripts usam delegação e reinicialização após cada swap (menus, toasts, modais, presença, abas e instalação).
+- **Sidebar retrátil** no desktop: rail de 84px que expande para 272px no hover/foco e sobrepõe o conteúdo sem deslocar a página. No mobile, o mesmo menu abre como drawer pelo botão do topo, com backdrop e fechamento por Esc, toque fora ou ao navegar.
 
 ---
 

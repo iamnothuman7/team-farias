@@ -5,9 +5,13 @@ const PAGE_CACHE = `tf-pages-${VERSION}`;
 
 const PRECACHE = [
   "{% static 'css/app.css' %}",
+  "{% static 'css/dashboard.css' %}",
   "{% static 'js/app.js' %}",
+  "{% static 'js/dashboard.js' %}",
+  "{% static 'js/vendor/htmx.min.js' %}",
   "{% static 'img/logo-sm.webp' %}",
   "{% static 'img/icon-192.png' %}",
+  "{% static 'img/favicon-32.png' %}",
   "{% static 'fonts/archivo-latin.woff2' %}",
   "{% static 'fonts/jakarta-latin.woff2' %}",
   "/offline/",

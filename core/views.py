@@ -97,7 +97,7 @@ def offline(request):
 def service_worker(request):
     """Service worker na raiz para controlar todo o escopo do site."""
     response = HttpResponse(
-        render_to_string("core/sw.js", {"version": "v3"}),
+        render_to_string("core/sw.js", {"version": "v4"}),
         content_type="application/javascript",
     )
     response["Service-Worker-Allowed"] = "/"
