@@ -43,6 +43,8 @@
 
     <fieldset class="form-section">
       <legend class="form-section__title"><svg class="icon"><use href="#i-ball"></use></svg> Turma e plano</legend>
+      {% if not plans %}<p class="form-errors">Cadastre um plano ativo em <a href="{% url 'dashboard:plan_create' %}">Planos → Criar plano</a> antes de matricular.</p>{% endif %}
+      {% if not groups %}<p class="form-errors">Cadastre uma turma ativa em <a href="{% url 'dashboard:class_create' %}">Turmas → Nova turma</a>.</p>{% endif %}
       <div class="form-grid">
         {% include "partials/field.html" with field=form.class_group wide=True %}
         {% include "partials/field.html" with field=form.plan wide=True %}

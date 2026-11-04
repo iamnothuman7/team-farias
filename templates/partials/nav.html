@@ -14,7 +14,7 @@
       {% if site.show_system %}<a href="{% url 'core:home' %}#sistema">O sistema</a>{% endif %}
       {% if site.show_groups %}<a href="{% url 'core:home' %}#turmas">Turmas</a>{% endif %}
       {% if site.show_steps %}<a href="{% url 'core:home' %}#como-funciona">Como funciona</a>{% endif %}
-      {% if site.show_news %}<a href="{% url 'core:news_list' %}">Notícias</a>{% endif %}
+
       <a href="{% url 'core:home' %}#contato">Contato</a>
     </nav>
 
@@ -25,11 +25,7 @@
           <span>Minha área</span>
         </a>
       {% else %}
-        <a class="btn btn--ghost btn--sm hide-sm" href="{% url 'accounts:login' %}">Entrar</a>
-        <a class="btn btn--primary btn--sm" href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">
-          <svg class="icon"><use href="#i-whatsapp"></use></svg>
-          Fale com a equipe
-        </a>
+        <a class="btn btn--ghost btn--sm" href="{% url 'accounts:login' %}">Entrar</a>
       {% endif %}
       <button class="icon-btn site-header__toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="mobile-nav" aria-label="Abrir menu">
         <svg class="icon"><use href="#i-menu"></use></svg>
@@ -43,7 +39,7 @@
       {% if site.show_system %}<a href="{% url 'core:home' %}#sistema">O sistema</a>{% endif %}
       {% if site.show_groups %}<a href="{% url 'core:home' %}#turmas">Turmas</a>{% endif %}
       {% if site.show_steps %}<a href="{% url 'core:home' %}#como-funciona">Como funciona</a>{% endif %}
-      {% if site.show_news %}<a href="{% url 'core:news_list' %}">Notícias</a>{% endif %}
+
       <a href="{% url 'core:home' %}#contato">Contato</a>
     </nav>
     <div class="mobile-nav__actions">

@@ -141,7 +141,7 @@
       <div class="student-panel">
         <div class="student-panel__copy">
           <span class="badge badge--violet">Área do aluno</span>
-          <h3>O celular na mão,<br>o treino na cabeça.</h3>
+          <h3>O celular na mão.<br>O treino na cabeça.</h3>
           <p>Uma experiência personalizada do primeiro cadastro ao próximo treino.</p>
           <ul class="feature-list">
             <li><span>01</span><div><strong>Matrícula com a equipe</strong><p>A administração cadastra o atleta, a turma e o plano, e libera o acesso.</p></div></li>
@@ -153,7 +153,7 @@
           </ul>
         </div>
 
-        <div class="student-panel__device"><div class="device-note"><svg class="icon"><use href="#i-download"></use></svg><p><strong>Sua rotina no celular</strong><br>Agenda, avisos e mensalidades na área do aluno.</p></div></div>
+        <aside class="student-panel__device"><div class="routine-preview"><span class="eyebrow">Tudo no seu tempo</span><h4>Sua rotina.<br>Seu time.</h4><div class="routine-preview__item"><svg class="icon"><use href="#i-calendar"></use></svg><div><strong>Próximo treino</strong><p>Consulte sua agenda</p></div></div><div class="routine-preview__item"><svg class="icon"><use href="#i-megaphone"></use></svg><div><strong>Recados da equipe</strong><p>Ative as notificações</p></div></div><div class="routine-preview__item"><svg class="icon"><use href="#i-star"></use></svg><div><strong>Sua evolução</strong><p>Acompanhe presença e pontos</p></div></div><a href="{% url 'accounts:login' %}" class="btn btn--primary btn--block">Acessar minha área</a></div><p class="device-note">Agenda, avisos e mensalidades reunidos no app.</p></aside>
       </div>
 
       <div class="team-panel">
@@ -313,42 +313,9 @@
 </section>
 {% endif %}
 
-<section class="section" id="plano"><div class="shell"><article class="plan-card plan-card--featured plan-single"><p class="eyebrow">Um só plano</p><h2>{{ site.plan_title }}</h2><p class="section-lead">{{ site.plan_description|linebreaksbr }}</p><p class="plan-card__sessions">Valores sob consulta pelo WhatsApp</p><a class="btn btn--primary" href="https://wa.me/{{ site.whatsapp }}?text=Ol%C3%A1!%20Quero%20consultar%20o%20plano%20Team%20Farias." target="_blank" rel="noopener">Consultar valores no WhatsApp</a></article></div></section>
+<section class="section" id="plano"><div class="shell"><article class="plan-card plan-card--featured plan-single"><p class="eyebrow">Seu próximo treino</p><h2>{{ site.plan_title }}</h2><p class="section-lead">{{ site.plan_description|linebreaksbr }}</p><p class="plan-card__sessions">Valores sob consulta pelo WhatsApp</p><a class="btn btn--primary" href="https://wa.me/{{ site.whatsapp }}?text=Ol%C3%A1!%20Quero%20consultar%20o%20plano%20Team%20Farias." target="_blank" rel="noopener">Consultar valores no WhatsApp</a></article></div></section>
 
-{% if site.show_news %}
-<section class="section section--news" id="noticias">
-  <div class="shell">
-    <div class="section-head">
-      <div>
-        <p class="eyebrow">Notícias e recados</p>
-        <h2 class="section-title">O que rola na areia.</h2>
-      </div>
-      <a class="btn btn--ghost btn--sm" href="{% url 'core:news_list' %}">
-        Ver todas
-        <svg class="icon"><use href="#i-arrow-right"></use></svg>
-      </a>
-    </div>
 
-    <div class="news-grid">
-      {% for item in news %}
-        <a class="news-card" href="{{ item.get_absolute_url }}">
-          <div class="news-card__top">
-            <span class="badge badge--{{ item.kind }}">{{ item.get_kind_display }}</span>
-            <time datetime="{{ item.published_at|date:'c' }}">{{ item.published_at|date:"d M Y" }}</time>
-          </div>
-          <h3>{{ item.title }}</h3>
-          <p>{{ item.summary|default:item.body|truncatewords:22 }}</p>
-          <span class="news-card__more">Ler notícia <svg class="icon"><use href="#i-arrow-up-right"></use></svg></span>
-        </a>
-      {% empty %}
-        <div class="empty-state">
-          <p>Nenhuma notícia publicada ainda. Os comunicados da escolinha aparecem aqui.</p>
-        </div>
-      {% endfor %}
-    </div>
-  </div>
-</section>
-{% endif %}
 
 <section class="section section--cta">
   <div class="shell">
@@ -360,7 +327,7 @@
         <p>{{ site.cta_text }}</p>
         <div class="cta-panel__actions">
           <a class="btn btn--primary btn--lg" href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener"><svg class="icon"><use href="#i-whatsapp"></use></svg> {{ site.whatsapp_label }}</a>
-          <a class="btn btn--ghost btn--lg" href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">Tirar dúvidas</a>
+
         </div>
       </div>
       <ul class="cta-panel__list">

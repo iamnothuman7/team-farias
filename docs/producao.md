@@ -178,3 +178,12 @@ A auditoria anterior encontrou 502 em `ramilosengenharia.nabio.pro` e erro de TL
 Referências: [checklist Django](https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/),
 [Certbot](https://eff-certbot.readthedocs.io/en/stable/using.html),
 [Nginx proxy](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header).
+# Notificações de comunicados
+
+Use `WEBPUSH_PRIVATE_KEY` com o caminho de uma chave privada P-256 fora da release e do Git, `WEBPUSH_PUBLIC_KEY` com a chave pública X9.62 em base64url, e `WEBPUSH_SUBJECT` com a URL pública do site. A chave privada deve ser legível somente por root e pelo grupo do serviço.
+
+Instale `deploy/teamfarias-push.service` e `deploy/teamfarias-push.timer` em `/etc/systemd/system/` e habilite o timer. Ele executa `manage.py send_push` como usuário `teamfarias`, usando o ambiente privado existente, a cada minuto após concluir a execução anterior. Preserve o par de chaves entre releases; trocar a chave invalida inscrições existentes.
+
+Comandos de conferência: `systemctl status teamfarias-push.timer`, `systemctl status teamfarias-push.service` e `journalctl -u teamfarias-push.service`. O log mostra apenas estado de configuração e quantidade enviada, sem endpoints, chaves de aparelhos ou conteúdo dos comunicados.
+
+Antes de rollback, avalie as migrações de planos e comunicados. Reativar o código anterior não restaura a antiga regra de plano único nem a publicação pública; não restaure o banco sem avaliar cadastros feitos desde o backup.

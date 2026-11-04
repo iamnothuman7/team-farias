@@ -8,11 +8,11 @@
   <div>
     <p class="eyebrow">Mural</p>
     <h1>Comunicados</h1>
-    <p class="page-head-app__lead">{{ counts.publico }} publicados no site e {{ counts.alunos }} exclusivos para alunos.</p>
+    <p class="page-head-app__lead">Recados privados. Os alunos que ativarem as notificações receberão um aviso no celular.</p>
   </div>
-  <div class="page-head-app__actions">
+  {% if user.is_admin_role %}<div class="page-head-app__actions">
     <a class="btn btn--primary btn--sm" href="{% url 'dashboard:announcement_create' %}"><svg class="icon"><use href="#i-plus"></use></svg> Novo comunicado</a>
-  </div>
+  </div>{% endif %}
 </header>
 
 <section class="card">
@@ -40,15 +40,19 @@
             <td class="table__muted nowrap">{{ item.published_at|date:"d/m/Y H:i" }}</td>
             <td>
               {% if item.is_published %}<span class="badge badge--green">Publicado</span>{% else %}<span class="badge badge--outline">Rascunho</span>{% endif %}
+              {% if item.audience == 'alunos' %}<small class="table__muted" style="display:block">{{ item.sent_count }} aceitos · {{ item.pending_count }} na fila · {{ item.failed_count }} com falha</small>{% endif %}
               {% if item.is_pinned %}<span class="badge badge--violet">Fixado</span>{% endif %}
             </td>
             <td>
               <div class="table__actions">
+                <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:announcement_team_detail' item.pk %}">Ler</a>
+                {% if user.is_admin_role %}
                 <form method="post" action="{% url 'dashboard:announcement_toggle' item.pk %}">
                   {% csrf_token %}
                   <button class="btn btn--ghost btn--sm" type="submit">{% if item.is_published %}Despublicar{% else %}Publicar{% endif %}</button>
                 </form>
                 <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:announcement_edit' item.pk %}">Editar</a>
+                {% endif %}
               </div>
             </td>
           </tr>

@@ -70,7 +70,7 @@ Acesse **http://127.0.0.1:8000**.
 ### Administração
 
 Crie seu acesso local com `python manage.py createsuperuser`. Não há conta de produção predefinida.
-Use `/painel/configuracoes/` para contatos, marca, textos, seções e plano único. Usuários, responsáveis,
+Use `/painel/configuracoes/` para contatos, marca, textos e seções. Use `/painel/planos/` para os planos. Usuários, responsáveis,
 locais e demais registros também podem ser gerenciados em `/admin/`, conforme as permissões.
 
 ---
@@ -234,7 +234,7 @@ antes de trocar a conexão. As migrações não apagam matrículas nem cobrança
 - Título, descrição, texto sobre a escola, rodapé, chamada de contato e descrição para buscadores.
 - Visibilidade de seções, contadores reais, próximo treino e convite de instalação.
 - Idade mínima opcional e chave Pix restrita à área do aluno.
-- Plano único: nome, descrição, valor interno, vencimento e frequência. Alterações valem para novas
+- Planos: nome, descrição, valor interno, vencimento, frequência e estado ativo. Alterações de preço valem para novas
   matrículas; os valores já combinados permanecem nas matrículas existentes.
 
 O site apresenta um único plano, sempre com consulta pelo WhatsApp. Nenhum preço é publicado.

@@ -133,7 +133,7 @@ ANNOUNCEMENTS = [
     {
         "title": "Nova grade de horários começa nesta semana",
         "kind": "noticia",
-        "audience": "publico",
+        "audience": "alunos",
         "summary": "Turmas reorganizadas por nível e dois novos horários na Arena Beira-Mar.",
         "body": (
             "A partir desta semana, o Team Farias passa a operar com uma grade reorganizada por nível. "
@@ -148,7 +148,7 @@ ANNOUNCEMENTS = [
     {
         "title": "Aulão aberto de vôlei de praia no feriado",
         "kind": "evento",
-        "audience": "publico",
+        "audience": "alunos",
         "summary": "Treino aberto para alunos e convidados, com circuito de fundamentos e jogo livre.",
         "body": (
             "No próximo feriado vamos abrir a areia para um aulão especial. Serão duas horas de circuito "
@@ -161,7 +161,7 @@ ANNOUNCEMENTS = [
     {
         "title": "Ranking do mês: quem subiu na areia",
         "kind": "noticia",
-        "audience": "publico",
+        "audience": "alunos",
         "summary": "Veja quem mais pontuou no último ciclo de treinos e como funciona a pontuação.",
         "body": (
             "O ranking do Team Farias é atualizado a cada treino. Presença vale pontos, e a equipe também "

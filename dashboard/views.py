@@ -7,11 +7,13 @@ from urllib.parse import quote
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import PasswordChangeView
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Q, Sum, F
+from django.db import IntegrityError, transaction
 from django.db.models.functions import TruncMonth
 from django.shortcuts import get_object_or_404, redirect, render
+from django.http import Http404
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -69,10 +71,25 @@ def _month_param(request) -> date:
     raw = request.GET.get("competencia") or request.GET.get("mes")
     if raw:
         try:
-            return date.fromisoformat(f"{raw}-01" if len(raw) == 7 else raw).replace(day=1)
+            value = date.fromisoformat(f"{raw}-01" if len(raw) == 7 else raw).replace(day=1)
+            if not 1970 <= value.year <= 2100:
+                raise ValueError
+            return value
         except ValueError:
             pass
     return timezone.localdate().replace(day=1)
+
+
+def _id_param(value):
+    if value in (None, ""):
+        return None
+    try:
+        result = int(value)
+        if not 0 < result < 2**63:
+            raise ValueError
+        return result
+    except (ValueError, TypeError):
+        raise Http404("Registro inválido.")
 
 
 def _shift_month(reference: date, months: int) -> date:
@@ -126,8 +143,8 @@ def app_home(request):
         "total_points": student.total_points,
         "attendance": attendance_summary(student),
         "announcements": Announcement.objects.filter(
-            is_published=True,
-            audience__in=[Announcement.Audience.PUBLICO, Announcement.Audience.ALUNOS],
+            is_published=True, published_at__lte=timezone.now(),
+            audience__in=[Announcement.Audience.ALUNOS],
         )[:3],
         "recent_points": student.points.all()[:4],
         "history": student.attendance.select_related("session", "session__class_group").order_by("-session__date")[:5],
@@ -216,7 +233,7 @@ def app_agenda(request):
     try:
         year = int(request.GET.get("ano", today.year))
         month = int(request.GET.get("mes", today.month))
-        if not 1 <= month <= 12:
+        if not 1 <= month <= 12 or not 1970 <= year <= 2100:
             raise ValueError
     except ValueError:
         year, month = today.year, today.month
@@ -267,18 +284,19 @@ def app_invoices(request):
 @student_required
 def app_announcements(request):
     announcements = Announcement.objects.filter(
-        is_published=True,
-        audience__in=[Announcement.Audience.PUBLICO, Announcement.Audience.ALUNOS],
+        is_published=True, published_at__lte=timezone.now(),
+        audience__in=[Announcement.Audience.ALUNOS],
     )
-    return render(request, "app/announcements.html", {"announcements": announcements, "student": request.user.student})
+    enabled = request.user.push_subscriptions.filter(pk=request.session.get("push_subscription_id")).exists()
+    return render(request, "app/announcements.html", {"announcements": announcements, "student": request.user.student, "push_enabled": enabled})
 
 
 @student_required
 def app_announcement_detail(request, pk):
     announcement = get_object_or_404(
         Announcement.objects.filter(
-            is_published=True,
-            audience__in=[Announcement.Audience.PUBLICO, Announcement.Audience.ALUNOS],
+            is_published=True, published_at__lte=timezone.now(),
+            audience__in=[Announcement.Audience.ALUNOS],
         ),
         pk=pk,
     )
@@ -348,21 +366,25 @@ def painel_enrollments(request):
         status = Enrollment.Status.ATIVA
 
     if request.method == "POST":
-        enrollment = get_object_or_404(Enrollment, pk=request.POST.get("enrollment"))
+        enrollment = get_object_or_404(Enrollment, pk=_id_param(request.POST.get("enrollment")))
         action = request.POST.get("action")
         if action == "approve":
             group = None
             plan = None
             if request.POST.get("class_group"):
-                group = get_object_or_404(ClassGroup, pk=request.POST["class_group"])
+                group = get_object_or_404(ClassGroup, pk=_id_param(request.POST["class_group"]))
             if request.POST.get("plan"):
-                plan = get_object_or_404(Plan, pk=request.POST["plan"])
-            approve_enrollment(enrollment, request.user, group=group, plan=plan)
+                plan = get_object_or_404(Plan, pk=_id_param(request.POST["plan"]))
+            try:
+                approve_enrollment(enrollment, request.user, group=group, plan=plan)
+            except ValidationError as exc:
+                messages.error(request, "; ".join(exc.messages))
+                return redirect("dashboard:enrollments")
             messages.success(
                 request,
                 f"Matrícula de {enrollment.student.full_name} aprovada. Mensalidade inicial gerada.",
             )
-        elif action == "reject":
+        elif action == "reject" and enrollment.status == Enrollment.Status.PENDENTE:
             enrollment.status = Enrollment.Status.REJEITADA
             enrollment.save(update_fields=["status"])
             student = enrollment.student
@@ -399,7 +421,11 @@ def painel_enrollment_create(request):
     if request.method == "POST":
         form = AdminEnrollmentForm(request.POST)
         if form.is_valid():
-            user, student, enrollment, password, generated = form.save(request.user)
+            try:
+                user, student, enrollment, password, generated = form.save(request.user)
+            except (ValidationError, IntegrityError) as exc:
+                form.add_error(None, "; ".join(exc.messages) if isinstance(exc, ValidationError) else "O cadastro mudou. Confira o e-mail, a turma e o plano.")
+                return render(request, "painel/enrollment_form.html", {"form": form, "groups": ClassGroup.objects.filter(is_active=True), "plans": Plan.objects.filter(is_active=True)})
             request.session["created_enrollment"] = {
                 "student_id": student.pk,
                 "name": user.full_name,
@@ -465,7 +491,7 @@ def painel_students(request):
             | Q(user__email__icontains=q)
             | Q(nickname__icontains=q)
         )
-    group_id = request.GET.get("turma")
+    group_id = _id_param(request.GET.get("turma"))
     if group_id:
         qs = qs.filter(enrollments__status=Enrollment.Status.ATIVA, enrollments__class_group_id=group_id)
     status = request.GET.get("status")
@@ -508,6 +534,8 @@ def painel_student_detail(request, pk):
                 return redirect("dashboard:student_detail", pk=student.pk)
             messages.error(request, "Não foi possível lançar os pontos. Confira o formulário.")
         else:
+            if not request.user.is_admin_role:
+                raise PermissionDenied("Somente a administração pode alterar o cadastro.")
             edit_form = StudentEditForm(request.POST, instance=student)
             if edit_form.is_valid():
                 edit_form.save()
@@ -526,7 +554,7 @@ def painel_student_detail(request, pk):
             "-session__date"
         )[:10],
         "points": student.points.select_related("rule", "created_by")[:10],
-        "invoices": student.invoices.all()[:8],
+        "invoices": student.invoices.all()[:8] if request.user.is_admin_role else [],
         "position": student_position(student)[0],
         "class_rows": ranking(enrollment.class_group)[:8] if enrollment else [],
     }
@@ -574,6 +602,7 @@ def painel_class_form(request, pk=None):
 @staff_required
 def painel_billing(request):
     competence = _month_param(request)
+    invalid_invoice_form = None
     if request.method == "POST":
         action = request.POST.get("action")
         if action == "generate":
@@ -584,12 +613,16 @@ def painel_billing(request):
                 return redirect(f"{reverse('dashboard:billing')}?competencia={form.cleaned_data['competence']:%Y-%m}")
             messages.error(request, "Informe a competência no formato mês/ano.")
         elif action == "pay":
-            invoice = get_object_or_404(Invoice, pk=request.POST.get("invoice"))
+            invoice = get_object_or_404(Invoice, pk=_id_param(request.POST.get("invoice")))
             method = request.POST.get("method", Invoice.Method.PIX)
-            invoice.mark_paid(user=request.user, method=method, note=request.POST.get("note", ""))
+            try:
+                invoice.mark_paid(user=request.user, method=method, note=request.POST.get("note", ""))
+            except ValidationError as exc:
+                messages.error(request, "; ".join(exc.messages))
+                return redirect("dashboard:billing")
             messages.success(request, f"Mensalidade de {invoice.student.display_name} confirmada.")
         elif action == "reopen":
-            invoice = get_object_or_404(Invoice, pk=request.POST.get("invoice"))
+            invoice = get_object_or_404(Invoice, pk=_id_param(request.POST.get("invoice")))
             invoice.reopen()
             messages.warning(request, "Mensalidade reaberta.")
         elif action == "create":
@@ -598,8 +631,10 @@ def painel_billing(request):
                 form.save()
                 messages.success(request, "Mensalidade criada.")
             else:
-                messages.error(request, "Não foi possível criar a mensalidade.")
-        return redirect(f"{reverse('dashboard:billing')}?competencia={competence:%Y-%m}")
+                invalid_invoice_form = form
+                messages.error(request, "Confira os campos da mensalidade avulsa.")
+        if invalid_invoice_form is None:
+            return redirect(f"{reverse('dashboard:billing')}?competencia={competence:%Y-%m}")
 
     invoices = (
         Invoice.objects.filter(competence=competence)
@@ -622,13 +657,13 @@ def painel_billing(request):
         "prev_month": _shift_month(competence, -1),
         "next_month": _shift_month(competence, 1),
         "generate_form": GenerateInvoicesForm(initial={"competence": competence}),
-        "invoice_form": InvoiceForm(initial={"competence": competence}),
+        "invoice_form": invalid_invoice_form or InvoiceForm(initial={"competence": competence}),
         "status_filter": status_filter or "",
         "q": q,
         "recent_payments": Payment.objects.select_related("invoice__student__user").order_by(
             "-paid_at", "-created_at"
         )[:6],
-        "overdue_total": Invoice.objects.overdue().aggregate(v=Sum("amount"))["v"] or 0,
+        "overdue_total": Invoice.objects.overdue().aggregate(v=Sum(F("amount") - F("discount")))["v"] or 0,
         "current": timezone.localdate().replace(day=1),
     }
     return render(request, "painel/billing.html", context)
@@ -637,12 +672,14 @@ def painel_billing(request):
 @team_required
 def painel_agenda(request):
     if request.method == "POST" and request.POST.get("action") == "generate":
-        created = generate_sessions(weeks=4)
+        created = generate_sessions(weeks=4, groups=accessible_groups(request.user))
         messages.success(request, f"{created} treino(s) gerado(s) a partir dos horários das turmas.")
         return redirect("dashboard:sessions")
 
     try:
         start = date.fromisoformat(request.GET.get("inicio", ""))
+        if not 1970 <= start.year <= 2100:
+            raise ValueError
     except ValueError:
         start = week_bounds()[0]
     start = start - timedelta(days=start.weekday())
@@ -673,7 +710,7 @@ def painel_agenda(request):
 
 @team_required
 def painel_session_form(request, pk=None):
-    session = get_object_or_404(Session, pk=pk) if pk else None
+    session = get_object_or_404(Session.objects.filter(class_group__in=accessible_groups(request.user)), pk=pk) if pk else None
     if request.method == "POST":
         form = SessionForm(request.POST, instance=session, user=request.user)
         if form.is_valid():
@@ -722,7 +759,7 @@ def painel_attendance(request, pk):
             Attendance.objects.update_or_create(
                 session=session,
                 student=student,
-                defaults={"status": status, "note": note, "recorded_by": request.user},
+                defaults={"status": status, "note": note[:160], "recorded_by": request.user},
             )
             saved += 1
         if request.POST.get("mark_done"):
@@ -745,12 +782,15 @@ def painel_attendance(request, pk):
 
 @team_required
 def painel_points(request):
+    point_form = PointEntryForm(user=request.user)
+    bulk_form = BulkPointsForm(user=request.user)
+    rule_form = PointRuleForm()
     if request.method == "POST":
         action = request.POST.get("action", "single")
         if action == "single":
-            form = PointEntryForm(request.POST, user=request.user)
-            if form.is_valid():
-                form.save(user=request.user)
+            point_form = PointEntryForm(request.POST, user=request.user)
+            if point_form.is_valid():
+                point_form.save(user=request.user)
                 messages.success(request, "Pontos lançados para o atleta.")
                 return redirect("dashboard:points_admin")
             messages.error(request, "Confira os dados do lançamento.")
@@ -785,25 +825,28 @@ def painel_points(request):
                 messages.success(request, "Regra de pontuação salva.")
                 return redirect("dashboard:points_admin")
 
-    group_filter = request.GET.get("turma")
-    entries = PointEntry.objects.select_related("student__user", "rule", "created_by")
+    groups = accessible_groups(request.user)
+    group_filter = _id_param(request.GET.get("turma"))
+    entries = PointEntry.objects.select_related("student__user", "rule", "created_by").filter(
+        student__enrollments__status="ativa", student__enrollments__class_group__in=groups,
+    ).distinct()
     if group_filter:
         entries = entries.filter(
             student__enrollments__status=Enrollment.Status.ATIVA,
             student__enrollments__class_group_id=group_filter,
         )
-    selected_group = ClassGroup.objects.filter(pk=group_filter).first() if group_filter else None
-    rows = ranking(selected_group)
+    selected_group = get_object_or_404(groups, pk=group_filter) if group_filter else None
+    rows = ranking(selected_group, groups=groups)
     context = {
-        "point_form": PointEntryForm(user=request.user),
-        "bulk_form": BulkPointsForm(user=request.user),
-        "rule_form": PointRuleForm(),
+        "point_form": point_form,
+        "bulk_form": bulk_form,
+        "rule_form": rule_form,
         "rules": PointRule.objects.all(),
         "entries": entries[:18],
         "ranking": rows,
         "groups": accessible_groups(request.user).filter(is_active=True),
         "group_filter": group_filter or "",
-        "total_points_month": PointEntry.objects.filter(
+        "total_points_month": entries.filter(
             created_at__year=timezone.localdate().year, created_at__month=timezone.localdate().month
         ).aggregate(v=Sum("points"))["v"]
         or 0,
@@ -811,19 +854,30 @@ def painel_points(request):
     return render(request, "painel/points.html", context)
 
 
-@staff_required
+@team_required
 def painel_announcements(request):
+    announcements = Announcement.objects.select_related("author").annotate(sent_count=Count("deliveries", filter=Q(deliveries__status="sent")), pending_count=Count("deliveries", filter=Q(deliveries__status="pending")), failed_count=Count("deliveries", filter=Q(deliveries__status="failed"))).order_by("-created_at")
+    if not request.user.is_admin_role:
+        announcements = announcements.filter(audience="interno", is_published=True, published_at__lte=timezone.now())
     return render(
         request,
         "painel/announcements.html",
         {
-            "announcements": Announcement.objects.select_related("author").order_by("-created_at"),
+            "announcements": announcements,
             "counts": {
-                "publico": Announcement.objects.filter(audience="publico").count(),
+                "interno": Announcement.objects.filter(audience="interno").count(),
                 "alunos": Announcement.objects.filter(audience="alunos").count(),
             },
         },
     )
+
+
+@team_required
+def painel_announcement_detail(request, pk):
+    qs = Announcement.objects.all()
+    if not request.user.is_admin_role:
+        qs = qs.filter(audience="interno", is_published=True, published_at__lte=timezone.now())
+    return render(request, "app/announcement_detail.html", {"announcement": get_object_or_404(qs, pk=pk)})
 
 
 @staff_required
@@ -876,8 +930,8 @@ def painel_reports(request):
         months.append(
             {
                 "label": ref.strftime("%m/%y"),
-                "billed": invoices.aggregate(v=Sum("amount"))["v"] or 0,
-                "paid": invoices.filter(status=Invoice.Status.PAGA).aggregate(v=Sum("amount"))["v"] or 0,
+                "billed": invoices.aggregate(v=Sum(F("amount") - F("discount")))["v"] or 0,
+                "paid": invoices.filter(status=Invoice.Status.PAGA).aggregate(v=Sum(F("amount") - F("discount")))["v"] or 0,
                 "count": invoices.count(),
             }
         )
@@ -906,18 +960,34 @@ def painel_reports(request):
 @staff_required
 def painel_settings(request):
     from core.models import SiteConfiguration
-    from .forms import SiteConfigurationForm, SinglePlanForm
-    config = SiteConfiguration.current()
-    plan = Plan.objects.filter(is_active=True).first()
-    action = request.POST.get("action") if request.method == "POST" else None
-    form = SiteConfigurationForm(request.POST if action == "site" else None, instance=config)
-    plan_form = SinglePlanForm(request.POST if action == "plan" else None, instance=plan, initial={"name": "Plano único"}, auto_id="id_billing_%s")
-    if action == "site" and form.is_valid():
+    from .forms import SiteConfigurationForm
+    form = SiteConfigurationForm(request.POST or None, instance=SiteConfiguration.current())
+    if request.method == "POST" and form.is_valid():
         form.save()
         messages.success(request, "Configurações atualizadas.")
         return redirect("dashboard:settings")
-    if action == "plan" and plan_form.is_valid():
-        plan_form.save()
-        messages.success(request, "Plano único atualizado. Matrículas anteriores mantêm seus valores.")
-        return redirect("dashboard:settings")
-    return render(request, "painel/settings.html", {"form": form, "plan_form": plan_form})
+    return render(request, "painel/settings.html", {"form": form})
+
+
+@staff_required
+def painel_plans(request):
+    return render(request, "painel/plans.html", {"plans": Plan.objects.annotate(
+        enrollment_count=Count("enrollments", filter=Q(enrollments__status="ativa"))
+    ).order_by("-is_active", "name")})
+
+
+@staff_required
+def painel_plan_form(request, pk=None):
+    from .forms import PlanForm
+    plan = get_object_or_404(Plan, pk=pk) if pk else None
+    form = PlanForm(request.POST or None, instance=plan)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Plano salvo. Matrículas existentes mantêm o valor acordado.")
+        return redirect("dashboard:plans")
+    return render(request, "painel/plan_form.html", {"form": form, "plan": plan})
+
+
+@login_required
+def help_guide(request):
+    return render(request, "app/help.html")

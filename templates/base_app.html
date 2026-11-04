@@ -55,6 +55,7 @@
             <svg class="icon"><use href="#i-star"></use></svg><span>Pontuação</span>
           </a>
           {% if user.is_admin_role %}
+            <a class="app-nav__link {% if url_name == 'plans' or url_name == 'plan_create' or url_name == 'plan_edit' %}is-active{% endif %}" href="{% url 'dashboard:plans' %}"><svg class="icon"><use href="#i-wallet"></use></svg><span>Planos</span></a>
             <a class="app-nav__link {% if url_name == 'billing' %}is-active{% endif %}" href="{% url 'dashboard:billing' %}">
               <svg class="icon"><use href="#i-wallet"></use></svg><span>Financeiro</span>
               {% if nav_counts.overdue %}<em class="app-nav__badge app-nav__badge--alert">{{ nav_counts.overdue }}</em>{% endif %}
@@ -69,6 +70,7 @@
               <svg class="icon"><use href="#i-chart"></use></svg><span>Relatórios</span>
             </a>
           {% endif %}
+          {% if user.is_professor %}<a class="app-nav__link {% if url_name == 'announcements_admin' or url_name == 'announcement_team_detail' %}is-active{% endif %}" href="{% url 'dashboard:announcements_admin' %}"><svg class="icon"><use href="#i-megaphone"></use></svg><span>Comunicados</span></a>{% endif %}
         </nav>
       {% else %}
         <nav class="app-nav" aria-label="Área do aluno">
@@ -95,6 +97,7 @@
         </nav>
       {% endif %}
 
+      <a class="app-nav__link {% if url_name == 'help' %}is-active{% endif %}" href="{% url 'dashboard:help' %}"><svg class="icon"><use href="#i-clipboard"></use></svg><span>Como usar o sistema</span></a>
       <div class="app-sidebar__foot">
         <div class="app-user">
           <span class="avatar avatar--sm">{{ user.initials }}</span>
@@ -161,6 +164,7 @@
   <script src="{% static 'js/install.js' %}" defer></script>
   <script src="{% static 'js/app.js' %}" defer></script>
   <script src="{% static 'js/dashboard.js' %}" defer></script>
+  <script src="{% static 'js/notifications.js' %}" defer></script>
   {% include "partials/install_dialog.html" %}
   {% block scripts %}{% endblock %}
 </body>

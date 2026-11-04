@@ -24,18 +24,18 @@ class PublicPagesTests(TestCase):
         self.assertContains(response, "A escolinha organizada.")
         self.assertContains(response, self.group.name)
 
-    def test_home_lists_only_public_news(self):
-        Announcement.objects.create(title="Notícia pública", body="Corpo", audience=Announcement.Audience.PUBLICO)
+    def test_home_never_lists_announcements(self):
+        Announcement.objects.create(title="Notícia pública", body="Corpo", audience=Announcement.Audience.ALUNOS)
         Announcement.objects.create(title="Aviso interno", body="Corpo", audience=Announcement.Audience.INTERNO)
         response = self.client.get(reverse("core:home"))
-        self.assertContains(response, "Notícia pública")
+        self.assertNotContains(response, "Notícia pública")
         self.assertNotContains(response, "Aviso interno")
 
     def test_news_detail_hidden_for_internal_audience(self):
         internal = Announcement.objects.create(
             title="Reunião interna", body="Pauta", audience=Announcement.Audience.INTERNO
         )
-        response = self.client.get(internal.get_absolute_url())
+        response = self.client.get(reverse("core:news_detail", args=[internal.slug]))
         self.assertEqual(response.status_code, 404)
 
     def test_privacy_and_offline_pages(self):
@@ -123,7 +123,7 @@ class ConfigurationTests(TestCase):
     def test_confirmed_contacts_and_private_prices(self):
         make_plan(fee="987.65")
         response = self.client.get("/")
-        for expected in ["5588992671163", "teamfarias_", "Tianguá", "Plano único", "Valores sob consulta"]:
+        for expected in ["5588992671163", "teamfarias_", "Tianguá", "Seu plano de treino", "Valores sob consulta"]:
             self.assertContains(response, expected)
         for removed in ["987", "R$", "Fortaleza", "Beira-Mar", "mailto:", "Ana Sofia", "contato@teamfarias"]:
             self.assertNotContains(response, removed)
@@ -181,18 +181,18 @@ class ConfigurationTests(TestCase):
         plan = make_plan()
         student = make_student(group=make_group(), plan=plan)
         self.client.force_login(self.admin)
-        response = self.client.post("/painel/configuracoes/", {"action": "plan", "name": "Plano único", "description": "", "monthly_fee": "250.00", "due_day": "10", "sessions_per_week": "2"})
+        response = self.client.post(f"/painel/planos/{plan.pk}/editar/", {"is_active": "on", "name": "Plano único", "description": "", "monthly_fee": "250.00", "due_day": "10", "sessions_per_week": "2"})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Plan.objects.filter(is_active=True).count(), 1)
         self.assertEqual(str(student.active_enrollment.monthly_fee), "180.00")
         plan.refresh_from_db()
         self.assertEqual(str(plan.monthly_fee), "250.00")
 
-    def test_database_rejects_second_active_plan(self):
-        from django.db import IntegrityError, transaction
+    def test_database_accepts_multiple_active_plans(self):
+        from billing.models import Plan
         make_plan()
-        with self.assertRaises(IntegrityError), transaction.atomic():
-            make_plan(name="Segundo plano")
+        make_plan(name="Segundo plano")
+        self.assertEqual(Plan.objects.filter(is_active=True).count(), 2)
 
     def test_private_cache_and_htmx_redirect_url(self):
         response = self.client.get("/", HTTP_HX_BOOSTED="true")

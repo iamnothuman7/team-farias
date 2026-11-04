@@ -12,6 +12,7 @@
   </div>
 </header>
 
+{% include "partials/push_settings.html" %}
 <div class="stack-12">
   {% for item in announcements %}
     <a class="card" href="{% url 'dashboard:announcement_detail' item.pk %}">

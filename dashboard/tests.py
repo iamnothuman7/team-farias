@@ -276,7 +276,7 @@ class AnnouncementAdminTests(TestCase):
                 "summary": "Mudança na turma",
                 "body": "A partir de segunda.",
                 "kind": "aviso",
-                "audience": "publico",
+                "audience": "alunos",
                 "is_published": "on",
                 "published_at": timezone.localtime().strftime("%Y-%m-%dT%H:%M"),
             },

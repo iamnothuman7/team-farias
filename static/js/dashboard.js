@@ -112,6 +112,15 @@
   }
 
   function initDashboard() {
+    $$(".table").forEach((table) => {
+      if (table.closest('.billing-table')) return;
+      const labels = $$("thead th", table).map((th) => th.textContent.trim());
+      if (!labels.length) return;
+      table.dataset.mobileCards = "true";
+      $$("tbody tr", table).forEach((row) => {
+        Array.from(row.cells).forEach((cell, i) => { cell.dataset.label = labels[i] || ""; });
+      });
+    });
     bindSidebar();
     bindTabs();
     bindPaymentDialog();

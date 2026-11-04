@@ -198,7 +198,7 @@
     <div class="card__head"><h2 class="card__title">Mensalidade avulsa</h2></div>
     <form method="post" class="card__body">
       {% csrf_token %}
-      <input type="hidden" name="action" value="create">
+      <input type="hidden" name="action" value="create">{{ invoice_form.non_field_errors }}
       <div class="stack-12">
         <div class="form-grid">
           {% include "partials/field.html" with field=invoice_form.student %}

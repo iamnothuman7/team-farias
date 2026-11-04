@@ -4,7 +4,9 @@ import calendar
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
-from django.db.models import DecimalField, IntegerField, Sum, Value
+from django.db.models import DecimalField, IntegerField, Sum, Value, F
+from django.db import transaction
+from django.core.exceptions import ValidationError
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
@@ -60,28 +62,26 @@ def student_position(student: Student) -> tuple[int | None, int]:
 
 
 # --------------------------------------------------------------- treinos
-def generate_sessions(*, weeks: int = 4, start: date | None = None, only_missing: bool = True) -> int:
+def generate_sessions(*, weeks: int = 4, start: date | None = None, only_missing: bool = True, groups=None) -> int:
     """Materializa os treinos a partir dos horários fixos das turmas."""
     start = start or timezone.localdate()
     end = start + timedelta(days=weeks * 7)
     created = 0
     slots = ScheduleSlot.objects.filter(class_group__is_active=True).select_related("class_group", "venue")
+    if groups is not None:
+        slots = slots.filter(class_group__in=groups)
     for slot in slots:
         cursor = start
         while cursor <= end:
             if cursor.weekday() == slot.weekday:
-                exists = Session.objects.filter(
-                    class_group=slot.class_group, date=cursor, start_time=slot.start_time
-                ).exists()
-                if not exists and only_missing:
-                    Session.objects.create(
+                if only_missing:
+                    _, was_created = Session.objects.get_or_create(
                         class_group=slot.class_group,
                         date=cursor,
                         start_time=slot.start_time,
-                        end_time=slot.end_time,
-                        venue=slot.venue or slot.class_group.venue,
+                        defaults={"end_time": slot.end_time, "venue": slot.venue or slot.class_group.venue},
                     )
-                    created += 1
+                    created += int(was_created)
             cursor += timedelta(days=1)
     return created
 
@@ -148,14 +148,12 @@ def generate_invoices(competence: date, *, user=None) -> int:
             continue
         plan = enrollment.plan
         due = suggested_due_date(competence, plan)
-        Invoice.objects.create(
+        _, was_created = Invoice.objects.get_or_create(
             student=enrollment.student,
-            plan=plan,
             competence=competence,
-            amount=enrollment.monthly_fee,
-            due_date=due,
+            defaults={"plan": plan, "amount": enrollment.monthly_fee, "due_date": due},
         )
-        created += 1
+        created += int(was_created)
     return created
 
 
@@ -173,7 +171,22 @@ def first_invoice_for(enrollment: Enrollment, *, user=None) -> Invoice | None:
     return invoice
 
 
+@transaction.atomic
 def approve_enrollment(enrollment: Enrollment, user, *, group: ClassGroup | None = None, plan: Plan | None = None):
+    enrollment = Enrollment.objects.select_for_update().get(pk=enrollment.pk)
+    Student.objects.select_for_update().get(pk=enrollment.student_id)
+    if enrollment.status == Enrollment.Status.ATIVA:
+        return enrollment
+    if enrollment.status != Enrollment.Status.PENDENTE:
+        raise ValidationError("Somente matrículas pendentes podem ser aprovadas.")
+    group = ClassGroup.objects.select_for_update().get(pk=(group or enrollment.class_group).pk)
+    plan = Plan.objects.select_for_update().get(pk=(plan or enrollment.plan).pk)
+    if not group.is_active or group.free_spots <= 0:
+        raise ValidationError("A turma está inativa ou sem vagas.")
+    if not plan.is_active:
+        raise ValidationError("Selecione um plano ativo.")
+    if Enrollment.objects.filter(student=enrollment.student, status="ativa").exists():
+        raise ValidationError("Este aluno já tem uma matrícula ativa.")
     if group:
         enrollment.class_group = group
     if plan:
@@ -189,20 +202,20 @@ def finance_overview(competence: date | None = None) -> dict:
     competence = (competence or timezone.localdate()).replace(day=1)
     invoices = Invoice.objects.filter(competence=competence)
     totals = invoices.aggregate(
-        billed=Coalesce(Sum("amount"), ZERO_MONEY),
+        billed=Coalesce(Sum(F("amount") - F("discount")), ZERO_MONEY),
         discount=Coalesce(Sum("discount"), ZERO_MONEY),
     )
-    paid = invoices.filter(status=Invoice.Status.PAGA).aggregate(v=Coalesce(Sum("amount"), ZERO_MONEY))["v"]
-    open_ = invoices.filter(status=Invoice.Status.ABERTA).aggregate(v=Coalesce(Sum("amount"), ZERO_MONEY))["v"]
+    paid = invoices.filter(status=Invoice.Status.PAGA).aggregate(v=Coalesce(Sum(F("amount") - F("discount")), ZERO_MONEY))["v"]
+    open_ = invoices.filter(status=Invoice.Status.ABERTA).aggregate(v=Coalesce(Sum(F("amount") - F("discount")), ZERO_MONEY))["v"]
     overdue_qs = Invoice.objects.filter(status=Invoice.Status.ABERTA).filter(due_date__lt=timezone.localdate())
     return {
         "competence": competence,
         "count": invoices.count(),
-        "billed": totals["billed"] - totals["discount"],
+        "billed": totals["billed"],
         "paid": paid,
         "open": open_,
         "overdue_count": overdue_qs.count(),
-        "overdue_total": overdue_qs.aggregate(v=Coalesce(Sum("amount"), ZERO_MONEY))["v"],
+        "overdue_total": overdue_qs.aggregate(v=Coalesce(Sum(F("amount") - F("discount")), ZERO_MONEY))["v"],
         "paid_rate": round(float(paid) * 100 / float(totals["billed"] or 1)) if totals["billed"] else 0,
     }
 
@@ -216,8 +229,7 @@ def month_calendar(group: ClassGroup | None, year: int, month: int) -> dict:
     grid_end = last + timedelta(days=6 - last.weekday())
 
     qs = Session.objects.filter(date__gte=grid_start, date__lte=grid_end).select_related("class_group", "venue")
-    if group is not None:
-        qs = qs.filter(class_group=group)
+    qs = qs.filter(class_group=group) if group is not None else qs.none()
     by_day: dict[date, list[Session]] = {}
     for session in qs:
         by_day.setdefault(session.date, []).append(session)
@@ -286,10 +298,10 @@ def panel_metrics(user) -> dict:
         "groups": groups.filter(is_active=True).count(),
         "week_sessions": week_sessions.count(),
         "attendance_rate": round(present_att * 100 / total_att) if total_att else 0,
-        "month_billed": invoices.aggregate(v=Coalesce(Sum("amount"), ZERO_MONEY))["v"],
-        "month_paid": invoices.filter(status=Invoice.Status.PAGA).aggregate(v=Coalesce(Sum("amount"), ZERO_MONEY))["v"],
+        "month_billed": invoices.aggregate(v=Coalesce(Sum(F("amount") - F("discount")), ZERO_MONEY))["v"],
+        "month_paid": invoices.filter(status=Invoice.Status.PAGA).aggregate(v=Coalesce(Sum(F("amount") - F("discount")), ZERO_MONEY))["v"],
         "overdue_count": overdue.count(),
-        "overdue_total": overdue.aggregate(v=Coalesce(Sum("amount"), ZERO_MONEY))["v"],
+        "overdue_total": overdue.aggregate(v=Coalesce(Sum(F("amount") - F("discount")), ZERO_MONEY))["v"],
         "new_students": students.filter(created_at__date__gte=month_start).count(),
         "points_month": PointEntry.objects.filter(
             student__in=students, created_at__date__gte=month_start
@@ -321,10 +333,10 @@ def dashboard_metrics() -> dict:
         "groups": ClassGroup.objects.filter(is_active=True).count(),
         "week_sessions": week_sessions.count(),
         "attendance_rate": round(present_att * 100 / total_att) if total_att else 0,
-        "month_billed": invoices.aggregate(v=Coalesce(Sum("amount"), ZERO_MONEY))["v"],
-        "month_paid": invoices.filter(status=Invoice.Status.PAGA).aggregate(v=Coalesce(Sum("amount"), ZERO_MONEY))["v"],
+        "month_billed": invoices.aggregate(v=Coalesce(Sum(F("amount") - F("discount")), ZERO_MONEY))["v"],
+        "month_paid": invoices.filter(status=Invoice.Status.PAGA).aggregate(v=Coalesce(Sum(F("amount") - F("discount")), ZERO_MONEY))["v"],
         "overdue_count": overdue.count(),
-        "overdue_total": overdue.aggregate(v=Coalesce(Sum("amount"), ZERO_MONEY))["v"],
+        "overdue_total": overdue.aggregate(v=Coalesce(Sum(F("amount") - F("discount")), ZERO_MONEY))["v"],
         "new_students": active.filter(created_at__date__gte=month_start).count(),
         "points_month": PointEntry.objects.filter(created_at__date__gte=month_start).aggregate(
             v=Coalesce(Sum("points"), Value(0))

@@ -307,7 +307,6 @@ class Announcement(models.Model):
         EVENTO = "evento", "Evento"
 
     class Audience(models.TextChoices):
-        PUBLICO = "publico", "Público (site e app)"
         ALUNOS = "alunos", "Somente alunos"
         INTERNO = "interno", "Somente equipe"
 
@@ -316,7 +315,8 @@ class Announcement(models.Model):
     summary = models.CharField("resumo", max_length=240, blank=True)
     body = models.TextField("conteúdo")
     kind = models.CharField("tipo", max_length=12, choices=Kind.choices, default=Kind.AVISO)
-    audience = models.CharField("público", max_length=12, choices=Audience.choices, default=Audience.PUBLICO)
+    audience = models.CharField("público", max_length=12, choices=Audience.choices, default=Audience.ALUNOS)
+    push_queued_at = models.DateTimeField(null=True, blank=True, editable=False)
     is_pinned = models.BooleanField("fixar no topo", default=False)
     is_published = models.BooleanField("publicado", default=True)
     published_at = models.DateTimeField("publicado em", default=timezone.now)
@@ -344,7 +344,7 @@ class Announcement(models.Model):
         super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
-        return reverse("core:news_detail", args=[self.slug])
+        return reverse("dashboard:announcement_detail", args=[self.pk])
 
     @property
     def readable_date(self) -> str:
@@ -355,3 +355,26 @@ def slugify_pt(value: str) -> str:
     from django.utils.text import slugify
 
     return slugify(value, allow_unicode=False)
+
+
+class PushSubscription(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="push_subscriptions")
+    endpoint = models.URLField(max_length=2048, unique=True)
+    p256dh = models.CharField(max_length=128)
+    auth = models.CharField(max_length=64)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class PushDelivery(models.Model):
+    announcement = models.ForeignKey(Announcement, on_delete=models.CASCADE, related_name="deliveries")
+    subscription = models.ForeignKey(PushSubscription, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    status = models.CharField(max_length=12, default="pending")
+    attempts = models.PositiveSmallIntegerField(default=0)
+    next_attempt = models.DateTimeField(default=timezone.now)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    last_code = models.CharField(max_length=24, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["announcement", "subscription"], name="unique_announcement_device")]
+        indexes = [models.Index(fields=["status", "next_attempt"])]

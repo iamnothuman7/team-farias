@@ -8,3 +8,4 @@ gunicorn==23.0.0
 
 # Driver PostgreSQL
 psycopg[binary]==3.3.7
+pywebpush==2.5.0

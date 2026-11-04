@@ -10,6 +10,7 @@ const PRECACHE = [
   "{% static 'js/app.js' %}",
   "{% static 'js/install.js' %}",
   "{% static 'js/dashboard.js' %}",
+  "{% static 'js/notifications.js' %}",
   "{% static 'js/vendor/htmx.min.js' %}",
   "{% static 'img/logo-sm.webp' %}",
   "{% static 'img/icon-192.png' %}",
@@ -24,6 +25,24 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE.map((url) => new Request(url, { credentials: "omit" })))).then(() => self.skipWaiting())
   );
+});
+
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data?.json() || {}; } catch (_) {}
+  const url = typeof data.url === 'string' && /^\/app\/comunicados\/\d+\/$/.test(data.url) ? data.url : '/app/comunicados/';
+  event.waitUntil(self.registration.showNotification('Team Farias', {
+    body:'Você tem um novo comunicado da escolinha. Abra sua conta para ler.',
+    icon:"{% static 'img/icon-192.png' %}", tag:data.tag || 'team-farias-comunicado',
+    data:{url},
+  }));
+});
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const path = event.notification.data?.url || '/app/comunicados/';
+  const url = new URL(path, self.location.origin);
+  if(url.origin !== self.location.origin || !url.pathname.startsWith('/app/comunicados/')) return;
+  event.waitUntil(self.clients.openWindow(url.href));
 });
 
 self.addEventListener("activate", (event) => {

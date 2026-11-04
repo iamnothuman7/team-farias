@@ -11,5 +11,5 @@ urlpatterns = [
         views.LoginView.as_view(),
         name="login",
     ),
-    path("sair/", auth_views.LogoutView.as_view(), name="logout"),
+    path("sair/", views.LogoutView.as_view(), name="logout"),
 ]

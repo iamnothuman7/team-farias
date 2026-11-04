@@ -5,6 +5,14 @@ from .forms import EmailAuthenticationForm
 from core.models import SiteConfiguration
 
 
+class LogoutView(auth_views.LogoutView):
+    def post(self, request, *args, **kwargs):
+        from school.models import PushSubscription
+        if request.user.is_authenticated:
+            PushSubscription.objects.filter(pk=request.session.get("push_subscription_id"), user=request.user).delete()
+        return super().post(request, *args, **kwargs)
+
+
 class LoginView(auth_views.LoginView):
     template_name = "accounts/login.html"
     authentication_form = EmailAuthenticationForm

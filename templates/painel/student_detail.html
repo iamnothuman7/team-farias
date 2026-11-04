@@ -45,9 +45,9 @@
     <p class="stat-card__meta">{{ attendance.present }}/{{ attendance.total }} (90 dias)</p>
   </article>
   <article class="stat-card">
-    <span class="stat-card__label">Mensalidade</span>
+    {% if user.is_admin_role %}<span class="stat-card__label">Mensalidade</span>
     <p class="stat-card__value" style="font-size:1.3rem">R$ {{ enrollment.monthly_fee|floatformat:"2"|default:"—" }}</p>
-    <p class="stat-card__meta">{{ enrollment.plan.name|default:"Sem matrícula" }}</p>
+    <p class="stat-card__meta">{{ enrollment.plan.name|default:"Sem matrícula" }}</p>{% else %}<span class="stat-card__label">Turma</span><p class="stat-card__value" style="font-size:1.1rem">{{ enrollment.class_group.name|default:"Sem matrícula" }}</p>{% endif %}
   </article>
 </div>
 

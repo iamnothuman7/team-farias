@@ -141,6 +141,9 @@ LOGOUT_REDIRECT_URL = "core:home"
 # Marca, contatos e conteúdo são editados em /painel/configuracoes/.
 
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
+WEBPUSH_PRIVATE_KEY = os.getenv("WEBPUSH_PRIVATE_KEY", "")
+WEBPUSH_PUBLIC_KEY = os.getenv("WEBPUSH_PUBLIC_KEY", "")
+WEBPUSH_SUBJECT = os.getenv("WEBPUSH_SUBJECT", "https://teamfarias.nabio.pro")
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

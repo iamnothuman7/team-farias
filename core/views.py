@@ -5,7 +5,7 @@ import json
 from django.contrib import messages
 from django.conf import settings
 from django.db import connection, DatabaseError
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -26,17 +26,13 @@ def _public_groups():
     )
 
 
-def _public_announcements():
-    return Announcement.objects.filter(is_published=True, audience=Announcement.Audience.PUBLICO)
-
-
 CATEGORY_ORDER = {"sub13": 0, "sub15": 1, "sub17": 2, "livre": 3, "adulto": 4}
 
 
 def home(request):
     groups = sorted(_public_groups(), key=lambda g: (CATEGORY_ORDER.get(g.category, 9), g.name))
 
-    news = list(_public_announcements()[:3])
+    news = []
     today = timezone.localdate()
     context = {
         "groups": groups,
@@ -57,22 +53,11 @@ def home(request):
 
 
 def news_list(request):
-    announcements = _public_announcements()
-    kind = request.GET.get("tipo")
-    if kind in dict(Announcement.Kind.choices):
-        announcements = announcements.filter(kind=kind)
-    context = {
-        "announcements": announcements,
-        "active_kind": kind or "",
-        "kinds": Announcement.Kind.choices,
-    }
-    return render(request, "core/news_list.html", context)
+    raise Http404("Comunicados disponíveis na área do aluno.")
 
 
 def news_detail(request, slug):
-    announcement = get_object_or_404(_public_announcements(), slug=slug)
-    related = _public_announcements().exclude(pk=announcement.pk)[:3]
-    return render(request, "core/news_detail.html", {"announcement": announcement, "related": related})
+    raise Http404("Comunicados disponíveis na área do aluno.")
 
 
 def enroll_redirect(request):
@@ -107,7 +92,7 @@ def manifest(request):
 def service_worker(request):
     """Service worker na raiz para controlar todo o escopo do site."""
     response = HttpResponse(
-        render_to_string("core/sw.js", {"version": "v7", "development": settings.DEBUG}),
+        render_to_string("core/sw.js", {"version": "v8", "development": settings.DEBUG}),
         content_type="application/javascript",
     )
     response["Service-Worker-Allowed"] = "/"

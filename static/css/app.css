@@ -668,10 +668,11 @@ p { text-wrap: pretty; }
 
 /* --------------------------------------------------------------- system */
 .system-grid { display: grid; gap: 20px; }
+.system-grid > *, .student-panel > *, .feature-list li > div { min-width: 0; }
 
 .student-panel {
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
   gap: clamp(28px, 4vw, 56px);
   padding: clamp(28px, 4vw, 48px);
   border: 1px solid var(--line);
@@ -2136,3 +2137,23 @@ html.is-loading .site-main { opacity: 0.72; transition: opacity 0.2s; }
   .install-status__copy strong { font-size: .7rem; }
   .install-status > .btn { padding: 9px 11px; font-size: .68rem; }
 }
+/* Layout por contexto: apresentação pública em notebook, tablet e celular. */
+.routine-preview { width:100%; max-width:340px; padding:28px; border:1px solid var(--line); border-radius:28px; background:linear-gradient(145deg,#211035,#0c0515); position:relative; z-index:1; }
+.routine-preview h4 { font-family:var(--font-display); font-size:2rem; line-height:1.1; margin:12px 0 24px; }
+.routine-preview__item { display:flex; gap:12px; align-items:center; padding:17px 0; border-top:1px solid var(--line); }
+.routine-preview__item > div { min-width:0; }
+.routine-preview__item .icon { flex-shrink:0; color:var(--violet-400); }
+.routine-preview__item strong { font-size:.9rem; }
+.routine-preview__item p { color:var(--muted); font-size:.78rem; margin:3px 0 0; }
+.routine-preview .btn { margin-top:20px; }
+.student-panel__copy h3 { line-height:1.15; text-wrap:balance; }
+.student-panel__device .device-note { text-align:center; border:0; background:none; }
+@media(min-width:1081px) { .student-panel { align-items:center; } .student-panel__copy .feature-list { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 22px; } .feature-list li { grid-template-columns:24px minmax(0,1fr); gap:8px; } }
+@media(min-width:721px) and (max-width:1080px) { .student-panel { grid-template-columns:minmax(0,1fr) minmax(0,.8fr); padding:28px; gap:24px; } .student-panel__copy h3 { font-size:1.8rem; } }
+@media(max-width:720px) { .student-panel { grid-template-columns:minmax(0,1fr); padding:22px 18px; gap:26px; } .student-panel__copy h3 { font-size:clamp(1.5rem,7vw,2rem); } .student-panel__device { width:100%; } .routine-preview { max-width:100%; padding:22px; } .feature-list li { grid-template-columns:26px minmax(0,1fr); gap:10px; } .site-header__actions { flex-shrink:0; } }
+/* Turmas públicas: vagas e ação empilham antes de comprimir o texto. */
+.groups-grid > *, .group-card > * { min-width:0; }
+.group-card { overflow-wrap:anywhere; }
+.group-card__meta li { align-items:flex-start; }
+.group-card__meta .icon { flex-shrink:0; margin-top:3px; }
+@media(max-width:720px) { .groups-grid { grid-template-columns:minmax(0,1fr); } .group-card__foot { flex-wrap:wrap; gap:14px; } .group-card__foot .btn { width:100%; white-space:normal; } .group-card__head .badge { white-space:normal; } }

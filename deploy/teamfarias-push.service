@@ -1,0 +1,17 @@
+[Unit]
+Description=Team Farias private web push delivery
+After=network-online.target postgresql.service
+
+[Service]
+Type=oneshot
+User=teamfarias
+Group=teamfarias
+WorkingDirectory=/var/www/apps/teamfarias/current
+EnvironmentFile=/var/www/apps/teamfarias/shared/.env
+ExecStart=/var/www/apps/teamfarias/current/.venv/bin/python manage.py send_push
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+MemoryMax=256M
+TimeoutStartSec=900

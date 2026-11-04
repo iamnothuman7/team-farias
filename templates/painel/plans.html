@@ -1,0 +1,10 @@
+{% extends "base_app.html" %}
+{% block title %}Planos — {{ site.name }}{% endblock %}
+{% block topbar_title %}Planos{% endblock %}
+{% block content %}
+<header class="page-head-app"><div><p class="eyebrow">Matrícula e condições</p><h1>Planos</h1><p class="page-head-app__lead">Cadastre os planos que a equipe poderá escolher na matrícula. Os valores são internos; no site, a consulta continua pelo WhatsApp.</p></div><a class="btn btn--primary" href="{% url 'dashboard:plan_create' %}">Criar plano</a></header>
+<div class="plan-management">
+{% for plan in plans %}<article class="card"><div class="card__body"><span class="badge badge--{% if plan.is_active %}green{% else %}outline{% endif %}">{% if plan.is_active %}Ativo{% else %}Inativo{% endif %}</span><h2>{{ plan.name }}</h2><p class="muted">{{ plan.description }}</p><p class="plan-management__price">R$ {{ plan.monthly_fee|floatformat:2 }} <small>/ mês</small></p><dl class="plan-facts"><div><dt>Treinos por semana</dt><dd>{{ plan.sessions_per_week }}</dd></div><div><dt>Vencimento</dt><dd>Dia {{ plan.due_day }}</dd></div><div><dt>Matrículas ativas</dt><dd>{{ plan.enrollment_count }}</dd></div></dl><a class="btn btn--ghost btn--block" href="{% url 'dashboard:plan_edit' plan.pk %}">Editar plano</a></div></article>
+{% empty %}<div class="empty-state"><h2>Cadastre seu primeiro plano</h2><p>Defina nome, valor, vencimento e frequência antes de matricular um aluno.</p><a class="btn btn--primary" href="{% url 'dashboard:plan_create' %}">Criar plano</a></div>{% endfor %}
+</div>
+{% endblock %}

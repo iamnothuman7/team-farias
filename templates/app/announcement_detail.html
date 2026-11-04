@@ -4,7 +4,7 @@
 {% block topbar_title %}Comunicado{% endblock %}
 
 {% block content %}
-<a class="back-link" href="{% url 'dashboard:announcements' %}">
+<a class="back-link" href="{% if user.is_team_member %}{% url 'dashboard:announcements_admin' %}{% else %}{% url 'dashboard:announcements' %}{% endif %}">
   <svg class="icon"><use href="#i-chevron-left"></use></svg> Todos os comunicados
 </a>
 

@@ -1,10 +1,17 @@
 from django.urls import path
 
 from . import views
+from . import push_views
 
 app_name = "dashboard"
 
 urlpatterns = [
+    path("app/notificacoes/config/", push_views.configuration, name="push_config"),
+    path("app/notificacoes/aparelho/", push_views.subscription, name="push_subscription"),
+    path("ajuda/", views.help_guide, name="help"),
+    path("painel/planos/", views.painel_plans, name="plans"),
+    path("painel/planos/novo/", views.painel_plan_form, name="plan_create"),
+    path("painel/planos/<int:pk>/editar/", views.painel_plan_form, name="plan_edit"),
     path("painel/configuracoes/", views.painel_settings, name="settings"),
     path("inicio/", views.role_redirect, name="redirect"),
     # ------------------------------------------------------------ área do aluno
@@ -33,6 +40,7 @@ urlpatterns = [
     path("painel/pontos/", views.painel_points, name="points_admin"),
     path("painel/financeiro/", views.painel_billing, name="billing"),
     path("painel/comunicados/", views.painel_announcements, name="announcements_admin"),
+    path("painel/comunicados/<int:pk>/", views.painel_announcement_detail, name="announcement_team_detail"),
     path("painel/comunicados/novo/", views.painel_announcement_form, name="announcement_create"),
     path("painel/comunicados/<int:pk>/editar/", views.painel_announcement_form, name="announcement_edit"),
     path("painel/comunicados/<int:pk>/publicar/", views.painel_announcement_toggle, name="announcement_toggle"),

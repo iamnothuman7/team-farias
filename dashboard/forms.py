@@ -136,6 +136,10 @@ class AdminEnrollmentForm(StyledFormMixin, forms.Form):
         password, generated = self.build_credentials()
 
         with transaction.atomic():
+            group = ClassGroup.objects.select_for_update().get(pk=data["class_group"].pk)
+            plan = Plan.objects.select_for_update().get(pk=data["plan"].pk)
+            if not group.is_active or group.free_spots <= 0 or not plan.is_active:
+                raise ValidationError("A turma ou o plano mudou. Confira as vagas e selecione novamente.")
             user = User.objects.create_user(
                 email=data["email"],
                 password=password,
@@ -166,10 +170,9 @@ class AdminEnrollmentForm(StyledFormMixin, forms.Form):
                 joined_at=timezone.localdate(),
             )
 
-            plan = data["plan"]
             enrollment = Enrollment.objects.create(
                 student=student,
-                class_group=data["class_group"],
+                class_group=group,
                 plan=plan,
                 status=Enrollment.Status.ATIVA,
                 monthly_fee=plan.monthly_fee,
@@ -261,6 +264,12 @@ class ClassGroupForm(StyledFormMixin, forms.ModelForm):
 
 
 class ScheduleSlotForm(StyledFormMixin, forms.ModelForm):
+    def clean(self):
+        data = super().clean()
+        if data.get("start_time") and data.get("end_time") and data["end_time"] <= data["start_time"]:
+            self.add_error("end_time", "O fim deve ser depois do início.")
+        return data
+
     class Meta:
         model = ScheduleSlot
         fields = ["weekday", "start_time", "end_time", "venue"]
@@ -286,6 +295,12 @@ ScheduleSlotFormSet = inlineformset_factory(
 
 # ------------------------------------------------------------------ agenda
 class SessionForm(StyledFormMixin, forms.ModelForm):
+    def clean(self):
+        data = super().clean()
+        if data.get("start_time") and data.get("end_time") and data["end_time"] <= data["start_time"]:
+            self.add_error("end_time", "O fim deve ser depois do início.")
+        return data
+
     class Meta:
         model = Session
         fields = ["class_group", "date", "start_time", "end_time", "venue", "theme", "status", "notes"]
@@ -336,7 +351,7 @@ class PointEntryForm(StyledFormMixin, forms.ModelForm):
 
 class BulkPointsForm(StyledFormMixin, forms.Form):
     class_group = forms.ModelChoiceField(label="Turma", queryset=ClassGroup.objects.all())
-    points = forms.IntegerField(label="Pontos", initial=10, help_text="Use valores negativos para descontar.")
+    points = forms.IntegerField(label="Pontos", initial=10, min_value=-2147483648, max_value=2147483647, help_text="Use valores negativos para descontar.")
     reason = forms.CharField(label="Motivo", max_length=160, initial="Presença no treino")
     rule = forms.ModelChoiceField(label="Regra", queryset=PointRule.objects.filter(is_active=True), required=False)
     source = forms.ChoiceField(label="Origem", choices=PointEntry.Source.choices, initial=PointEntry.Source.PRESENCA)
@@ -376,9 +391,21 @@ class GenerateInvoicesForm(StyledFormMixin, forms.Form):
 
 
 class InvoiceForm(StyledFormMixin, forms.ModelForm):
+    def clean_competence(self):
+        return self.cleaned_data["competence"].replace(day=1)
+
+    def clean(self):
+        data = super().clean()
+        amount, discount = data.get("amount"), data.get("discount")
+        if amount is not None and amount < 0:
+            self.add_error("amount", "Informe um valor maior ou igual a zero.")
+        if discount is not None and (discount < 0 or (amount is not None and discount > amount)):
+            self.add_error("discount", "O desconto deve ficar entre zero e o valor da mensalidade.")
+        return data
+
     class Meta:
         model = Invoice
-        fields = ["student", "plan", "competence", "amount", "discount", "due_date", "status", "notes"]
+        fields = ["student", "plan", "competence", "amount", "discount", "due_date", "notes"]
         widgets = {
             "competence": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "due_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
@@ -426,7 +453,7 @@ class EnrollmentReviewForm(StyledFormMixin, forms.Form):
 class SiteConfigurationForm(StyledFormMixin, forms.ModelForm):
     class Meta:
         model = SiteConfiguration
-        exclude = ["id", "updated_at"]
+        exclude = ["id", "updated_at", "show_news"]
         widgets = {"accent_color": forms.TextInput(attrs={"type": "color"})}
 
     def __init__(self, *args, **kwargs):
@@ -442,10 +469,10 @@ class SiteConfigurationForm(StyledFormMixin, forms.ModelForm):
         return [(title, [self[name] for name in fields]) for title, fields in CONFIGURATION_GROUPS]
 
 
-class SinglePlanForm(StyledFormMixin, forms.ModelForm):
+class PlanForm(StyledFormMixin, forms.ModelForm):
     class Meta:
         model = Plan
-        fields = ["name", "description", "monthly_fee", "due_day", "sessions_per_week"]
+        fields = ["name", "description", "monthly_fee", "due_day", "sessions_per_week", "is_active"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

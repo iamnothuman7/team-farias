@@ -1,0 +1,5 @@
+<section class="push-settings" data-push-settings data-enabled="{{ push_enabled|yesno:'true,false' }}" data-config-url="{% url 'dashboard:push_config' %}" data-subscription-url="{% url 'dashboard:push_subscription' %}">
+  <div><strong>Comunicados no seu celular</strong><p data-push-status role="status" aria-live="polite">Ative os avisos neste aparelho para saber quando a equipe publicar um comunicado.</p></div>
+  <button type="button" class="btn btn--primary btn--sm" data-push-toggle>Ativar notificações</button>
+  <form hidden>{% csrf_token %}</form>
+</section>

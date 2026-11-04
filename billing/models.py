@@ -6,7 +6,8 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.db import models
+from django.db import models, transaction
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils import timezone
 
@@ -23,7 +24,6 @@ class Plan(models.Model):
         verbose_name = "plano"
         verbose_name_plural = "planos"
         ordering = ["monthly_fee"]
-        constraints = [models.UniqueConstraint(fields=["is_active"], condition=models.Q(is_active=True), name="one_active_plan")]
 
     def __str__(self) -> str:
         return f"{self.name} — R$ {self.monthly_fee}"
@@ -126,7 +126,17 @@ class Invoice(models.Model):
     def reference_month(self) -> str:
         return self.competence.strftime("%Y-%m")
 
+    @transaction.atomic
     def mark_paid(self, *, user=None, method: str = "", paid_at: date | None = None, note: str = ""):
+        locked = Invoice.objects.select_for_update().get(pk=self.pk)
+        if locked.status == self.Status.PAGA:
+            self.refresh_from_db()
+            return self
+        if locked.status != self.Status.ABERTA:
+            raise ValidationError("Somente mensalidades em aberto podem receber pagamento.")
+        if method and method not in self.Method.values:
+            raise ValidationError("Forma de pagamento inválida.")
+        self.refresh_from_db()
         paid_at = paid_at or timezone.localdate()
         self.status = self.Status.PAGA
         self.paid_at = paid_at
@@ -139,12 +149,15 @@ class Invoice(models.Model):
             amount=self.total,
             paid_at=paid_at,
             method=self.payment_method or Payment.Method.PIX,
-            note=note,
+            note=note[:200],
             created_by=user,
         )
         return self
 
+    @transaction.atomic
     def reopen(self):
+        Invoice.objects.select_for_update().get(pk=self.pk)
+        self.refresh_from_db()
         self.status = self.Status.ABERTA
         self.paid_at = None
         self.payment_method = ""

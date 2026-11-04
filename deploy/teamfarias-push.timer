@@ -1,0 +1,11 @@
+[Unit]
+Description=Check Team Farias announcements every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitInactiveSec=1min
+AccuracySec=5s
+Unit=teamfarias-push.service
+
+[Install]
+WantedBy=timers.target
