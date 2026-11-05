@@ -15,7 +15,7 @@
 
 ## Testes automatizados
 
-111 testes Django em PostgreSQL e 25 testes Node passaram. Incluem permissões por perfil, matrículas e planos, cobrança e reabertura, agenda, presença, pontuação, notificações, instalação, catálogo, upload de fotos, opções inválidas, CSRF, produtos não publicados, mensagem codificada e confirmação de ações.
+111 testes Django em PostgreSQL e 25 testes Node passaram. A suíte Django foi repetida com a versão de produção de [Pillow 12.3.0](https://pypi.org/project/pillow/12.3.0/), incluindo a conversão e validação de fotos. Incluem permissões por perfil, matrículas e planos, cobrança e reabertura, agenda, presença, pontuação, notificações, instalação, catálogo, upload de fotos, opções inválidas, CSRF, produtos não publicados, mensagem codificada e confirmação de ações.
 
 A confirmação de pagamento, reabertura e novo pagamento verificam que há apenas um pagamento vigente. Cancelar a confirmação não altera a cobrança. A reabertura desfaz a baixa anterior e volta a mensalidade para aberto; não é um estorno bancário.
 
