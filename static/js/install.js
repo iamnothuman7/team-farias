@@ -1,6 +1,7 @@
 /* Estado de instalação por navegador. Não usa ausência de prompt como prova. */
 (() => {
   "use strict";
+  if (window.TeamFariasInstall) { window.TeamFariasInstall.refresh(); return; }
   const KEY = "tf_pwa_install_v1";
   const ua = navigator.userAgent || "";
   const ios = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -15,6 +16,20 @@
   let pendingTimer = null;
   let checking = false;
   let generation = 0;
+  let dismissed = false;
+  function dismissAuto() {
+    dismissed = true;
+    try { sessionStorage.setItem("tf_pwa_prompt_dismissed", "1"); } catch {}
+  }
+  function autoDismissed() {
+    try { return dismissed || sessionStorage.getItem("tf_pwa_prompt_dismissed") === "1"; }
+    catch { return dismissed; }
+  }
+  function closeDialog() { $("[data-install-dialog]")?.close(); }
+  function installed(source) {
+    remember("confirmed", source); pending = false; deferred = null;
+    clearTimeout(pendingTimer); dismissAuto(); closeDialog();
+  }
   function readRecord() {
     try {
       const value = JSON.parse(localStorage.getItem(KEY));
@@ -36,7 +51,8 @@
     const confirmed = record?.status === "confirmed";
     const label = inAppMode ? "Você está no app" : confirmed ? "App instalado" : known ? "Atalho informado" : pending ? "Confirmar instalação" : "Adicionar como app";
     document.documentElement.classList.toggle("is-standalone", inAppMode);
-    all("[data-install-status]").forEach((el) => { el.hidden = inAppMode; });
+    all("[data-install-status]").forEach((el) => { el.hidden = inAppMode || known; });
+    if (inAppMode) closeDialog();
     all(".install-cta").forEach((el) => { el.hidden = inAppMode; });
     all("[data-install-open]").forEach((button) => {
       let text = button.querySelector("[data-install-label]");
@@ -69,6 +85,8 @@
     });
   }
   function openDialog() {
+    if (standalone()) { installed("standalone"); render(); return; }
+    dismissAuto();
     render();
     const dialog = $("[data-install-dialog]");
     if (dialog && !dialog.open) dialog.showModal();
@@ -111,10 +129,9 @@
   function refresh() {
     bind("[data-install-open], [data-install-native]", install);
     bind("[data-install-later], [data-install-dialog] [data-dialog-close]", () => {
-      try { sessionStorage.setItem("tf_pwa_prompt_dismissed", "1"); } catch {}
-      $("[data-install-dialog]")?.close();
+      dismissAuto(); closeDialog();
     });
-    bind("[data-install-remember]", () => { remember("manual", "user"); pending = false; render(); $("[data-install-dialog]")?.close(); });
+    bind("[data-install-remember]", () => { remember("manual", "user"); pending = false; dismissAuto(); render(); closeDialog(); });
     bind("[data-install-reset]", () => { remember(null); pending = false; setText("[data-install-feedback]", ""); render(); });
     bind("[data-copy-link]", async () => {
       const url = `${window.location.origin}/entrar/`;
@@ -124,13 +141,15 @@
     const dialog = $("[data-install-dialog]");
     if (dialog && !dialog.dataset.installBound) {
       dialog.dataset.installBound = "1";
-      dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
+      dialog.addEventListener("click", (event) => { if (event.target === dialog) { dismissAuto(); closeDialog(); } });
+      dialog.addEventListener("cancel", dismissAuto);
+      dialog.addEventListener("close", dismissAuto);
     }
     render();
   }
   async function checkInstalled() {
     if (standalone()) {
-      remember("confirmed", "standalone"); pending = false; deferred = null; refresh(); return;
+      installed("standalone"); refresh(); return;
     }
     if (checking || typeof navigator.getInstalledRelatedApps !== "function") return;
     checking = true;
@@ -140,7 +159,10 @@
       const id = new URL("/app/", window.location.origin).href;
       const manifest = new URL("/manifest.webmanifest", window.location.origin).href;
       const installed = apps.some((app) => app.platform === "webapp" && ((app.id && new URL(app.id, window.location.origin).href === id) || (app.url && new URL(app.url, window.location.origin).href === manifest)));
-      if (version === generation && installed) { remember("confirmed", "related"); deferred = null; pending = false; }
+      if (version === generation && installed) {
+        remember("confirmed", "related"); deferred = null; pending = false;
+        clearTimeout(pendingTimer); dismissAuto(); closeDialog();
+      }
       // [] não é prova universal de desinstalação. beforeinstallprompt corrige registros antigos.
     } catch { /* Sem suporte ou acesso negado: mantém somente o que foi confirmado. */ }
     finally { checking = false; refresh(); }
@@ -154,11 +176,10 @@
     deferred = event; pending = false; clearTimeout(pendingTimer); refresh();
   });
   window.addEventListener("appinstalled", () => {
-    remember("confirmed", "event"); deferred = null; pending = false;
-    clearTimeout(pendingTimer);
+    installed("event");
     setText("[data-install-feedback]", "Instalação confirmada pelo navegador."); refresh(); $("[data-install-dialog]")?.close();
   });
-  window.addEventListener("storage", (event) => { if (event.key === KEY) { generation += 1; record = readRecord(); refresh(); } });
+  window.addEventListener("storage", (event) => { if (event.key === KEY) { generation += 1; record = readRecord(); if (record) { dismissAuto(); closeDialog(); } refresh(); } });
   window.addEventListener("pageshow", checkInstalled);
   window.addEventListener("focus", checkInstalled);
   window.matchMedia("(display-mode: standalone)").addEventListener?.("change", checkInstalled);
@@ -166,10 +187,10 @@
   document.addEventListener("htmx:afterSwap", refresh);
   function boot() {
     refresh(); checkInstalled();
-    let dismissed = false;
-    try { dismissed = sessionStorage.getItem("tf_pwa_prompt_dismissed") === "1"; } catch {}
-    if ($("[data-install-auto]") && !dismissed) {
-      setTimeout(() => { if (!record && !standalone()) openDialog(); }, 1400);
+    if ($("[data-install-auto]") && !autoDismissed()) {
+      setTimeout(() => {
+        if ($("[data-install-auto]") && !record && !standalone() && !checking && !pending && !autoDismissed()) openDialog();
+      }, 1400);
     }
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);

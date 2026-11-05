@@ -6,7 +6,7 @@ class EmailAuthenticationForm(AuthenticationForm):
     username = forms.EmailField(
         label="E-mail",
         widget=forms.EmailInput(
-            attrs={"autofocus": True, "autocomplete": "email", "placeholder": "voce@email.com", "class": "input"}
+            attrs={"autocomplete": "email", "placeholder": "voce@email.com", "class": "input"}
         ),
     )
     password = forms.CharField(

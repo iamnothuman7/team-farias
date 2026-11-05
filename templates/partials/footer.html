@@ -56,12 +56,10 @@
         <a href="https://wa.me/{{ site.whatsapp }}" target="_blank" rel="noopener">Matrícula com a equipe</a>
         <a href="{% url 'core:privacy' %}">Política de privacidade</a>
         <a href="{% url 'dashboard:painel' %}">Painel da equipe</a>
-        <button class="footer__install install-cta" type="button" data-install-open>
-          <svg class="icon"><use href="#i-download"></use></svg> Instalar o app
-        </button>
       </div>
     </div>
 
+    <div class="footer__app">{% include "partials/install_status.html" %}</div>
     <div class="footer__bottom">
       <p>© {{ current_year }} {{ site.name }} — Vôlei de Praia. Todos os direitos reservados.</p>
       <p class="footer__credit">

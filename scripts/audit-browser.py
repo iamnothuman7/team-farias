@@ -51,6 +51,7 @@ def layout(page, route, width, role):
     page.set_viewport_size({'width': width, 'height': 850})
     response=page.goto(BASE + route, wait_until='networkidle')
     assert response.status == 200, (route,response.status)
+    assert page.evaluate('window.htmx.config.globalViewTransitions') is False
     page.add_style_tag(content='*,*::before,*::after{animation:none!important;transition:none!important}')
     page.evaluate('document.fonts.ready')
     issues=page.evaluate('''() => {
@@ -74,7 +75,7 @@ def login(page,user):
     page.goto(BASE+'/entrar/',wait_until='networkidle')
     page.locator('input[name="username"]').fill(user.email)
     page.locator('input[name="password"]').fill(password)
-    page.get_by_role('button',name='Entrar',exact=True).click()
+    page.get_by_role('button',name='Entrar na minha conta',exact=True).click()
     page.wait_for_url('**/painel/' if user.role != 'aluno' else '**/app/')
 
 try:
@@ -84,7 +85,7 @@ try:
         plan=make_plan(name=tag+' Plano de treinamento com acompanhamento completo')
         group=make_group(name=tag+' Turma de vôlei de praia para iniciantes',professor=professor)
         student=make_student(email=tag+'-student@example.invalid',group=group,plan=plan)
-        student.user.set_password(password);student.user.save(update_fields=['password']);user_ids.append(student.user.pk)
+        student.user.first_name='Ana Carolina';student.user.last_name='Albuquerque de Farias e Silva';student.user.save();student.user.set_password(password);student.user.save(update_fields=['password']);user_ids.append(student.user.pk)
         session=make_session(group)
         invoice=make_invoice(student);invoice.mark_paid(user=admin)
         product=Product.objects.create(name='Camisa Team Farias personalizada — teste de apresentação',description='Produto sintético usado somente na auditoria local. Teste com texto longo, tamanhos e personalização.',category='Camisas',is_active=True,sizes='PP, P, M, G, GG',colors='Roxa, Preta',customize_name=True,customize_number=True)
@@ -93,7 +94,7 @@ try:
     print('Fixtures ready; launching isolated browser.',flush=True)
     with sync_playwright() as playwright:
         browser=playwright.chromium.launch(channel='msedge',headless=True)
-        context=browser.new_context(viewport={'width':390,'height':850},reduced_motion='reduce')
+        context=browser.new_context(viewport={'width':390,'height':850},reduced_motion='no-preference')
         page=context.new_page()
         page.set_default_navigation_timeout(60000)
         page.on('pageerror',lambda error:report['errors'].append(str(error)))

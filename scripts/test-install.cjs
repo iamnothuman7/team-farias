@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '../static/js/install.js'), 
 const KEY = 'tf_pwa_install_v1';
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
-function setup({store = new Map(), mode = false, related, blocked = false} = {}) {
+function setup({store = new Map(), mode = false, related, blocked = false, auto = false} = {}) {
   const events = {}, docEvents = {}, timers = [];
   function element() {
     return {dataset: {}, childNodes: [], hidden: false, textContent: '', handlers: {},
@@ -17,9 +17,11 @@ function setup({store = new Map(), mode = false, related, blocked = false} = {})
       async click() { for (const fn of this.handlers.click || []) await fn({target: this}); }
     };
   }
+  const later = element();
   const open = element(), native = element(), remember = element(), reset = element(), bar = element(), title = element(), feedback = element();
   const dialog = {...element(), open: false, showModal() { this.open = true; }, close() { this.open = false; }};
   const selectors = {
+    '[data-install-later], [data-install-dialog] [data-dialog-close]': [later],
     '[data-install-open]': [open], '[data-install-open], [data-install-native]': [open, native],
     '[data-install-native]': [native], '[data-install-remember]': [remember], '[data-install-reset]': [reset],
     '[data-install-status]': [bar], '[data-install-status-title]': [title], '[data-install-feedback]': [feedback],
@@ -27,7 +29,7 @@ function setup({store = new Map(), mode = false, related, blocked = false} = {})
   };
   const document = {readyState: 'complete', visibilityState: 'visible',
     documentElement: {classList: {toggle() {}}}, createElement: element,
-    querySelectorAll: s => selectors[s] || [], querySelector: s => s === '[data-install-dialog]' ? dialog : null,
+    querySelectorAll: s => selectors[s] || [], querySelector: s => s === '[data-install-dialog]' ? dialog : s === '[data-install-auto]' && auto ? element() : null,
     addEventListener: (name, fn) => { docEvents[name] = fn; }
   };
   const storage = {getItem: k => {if(blocked) throw Error('denied'); return store.get(k) ?? null;},
@@ -39,7 +41,7 @@ function setup({store = new Map(), mode = false, related, blocked = false} = {})
     addEventListener: (name, fn) => {events[name] = fn;}};
   vm.runInNewContext(source, {window, document, navigator, localStorage: storage, sessionStorage: storage, URL, Date,
     setTimeout: fn => {timers.push(fn); return timers.length;}, clearTimeout() {}});
-  return {window, events, docEvents, store, open, native, remember, reset, bar, title, feedback, timers, dialog,
+  return {setMode: value => {mode=value;}, setAuto: value => {auto=value;}, later, window, events, docEvents, store, open, native, remember, reset, bar, title, feedback, timers, dialog,
     saved: () => store.has(KEY) ? JSON.parse(store.get(KEY)) : null};
 }
 
@@ -89,4 +91,43 @@ test('HTMX não duplica handlers e sincronização de abas atualiza o rótulo', 
 test('instalação sem confirmação sai de pendente sem inventar sucesso', async () => {
   const c=setup(); c.events.beforeinstallprompt({preventDefault(){},async prompt(){},userChoice:Promise.resolve({outcome:'accepted'})});
   await c.open.click(); c.timers.forEach(fn=>fn()); assert.equal(c.saved(),null); assert.equal(c.open.label.textContent,'Adicionar como app');
+});
+
+
+test('instalação persistida oculta card e não abre convite ao retornar', () => {
+  const first=setup();first.events.appinstalled();
+  const next=setup({store:first.store,auto:true});next.timers.forEach(fn=>fn());
+  assert.equal(next.bar.hidden,true);assert.equal(next.dialog.open,false);
+  next.docEvents['htmx:afterSwap']();assert.equal(next.bar.hidden,true);
+});
+
+test('atalho manual também remove o card e evita novo convite', async () => {
+  const c=setup({auto:true});await c.remember.click();c.timers.forEach(fn=>fn());
+  assert.equal(c.bar.hidden,true);assert.equal(c.dialog.open,false);
+  const next=setup({store:c.store,auto:true});next.timers.forEach(fn=>fn());assert.equal(next.dialog.open,false);
+});
+
+test('detecção lenta não abre convite enquanto verifica instalação', async () => {
+  let resolve;const c=setup({auto:true,related:()=>new Promise(r=>resolve=r)});
+  c.timers.forEach(fn=>fn());assert.equal(c.dialog.open,false);
+  resolve([{platform:'webapp',id:'/app/'}]);await tick();assert.equal(c.bar.hidden,true);
+});
+
+test('detecção tardia e outra aba fecham convite já aberto', async () => {
+  let resolve;const c=setup({related:()=>new Promise(r=>resolve=r)});
+  await c.open.click();assert.equal(c.dialog.open,true);
+  resolve([{platform:'webapp',id:'/app/'}]);await tick();assert.equal(c.dialog.open,false);
+  const other=setup();await other.open.click();other.store.set(KEY,JSON.stringify({status:'confirmed'}));
+  other.events.storage({key:KEY});assert.equal(other.dialog.open,false);assert.equal(other.bar.hidden,true);
+});
+
+test('abrir pelo ícone fecha a janela e remove o card mesmo sem armazenamento', async () => {
+  const c=setup({blocked:true});await c.open.click();assert.equal(c.dialog.open,true);
+  c.setMode(true);await c.events.focus();assert.equal(c.dialog.open,false);assert.equal(c.bar.hidden,true);
+  await c.open.click();assert.equal(c.dialog.open,false);
+});
+
+test('fechar antes do timer e navegar para outra tela impedem reabertura automática', async () => {
+  const c=setup({auto:true});await c.open.click();await c.later.click();c.timers.forEach(fn=>fn());assert.equal(c.dialog.open,false);
+  const next=setup({auto:true});next.setAuto(false);next.timers.forEach(fn=>fn());assert.equal(next.dialog.open,false);
 });

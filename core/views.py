@@ -92,7 +92,7 @@ def manifest(request):
 def service_worker(request):
     """Service worker na raiz para controlar todo o escopo do site."""
     response = HttpResponse(
-        render_to_string("core/sw.js", {"version": "v10", "development": settings.DEBUG}),
+        render_to_string("core/sw.js", {"version": "v11", "development": settings.DEBUG}),
         content_type="application/javascript",
     )
     response["Service-Worker-Allowed"] = "/"

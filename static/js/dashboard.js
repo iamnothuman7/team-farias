@@ -6,6 +6,16 @@
 
   const state = { globalBound: false };
 
+  function updateKeyboard() {
+    const active = document.activeElement;
+    const editing = active?.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),textarea,[contenteditable=true]');
+    const covered = window.visualViewport && window.innerHeight - window.visualViewport.height > 150;
+    document.documentElement.classList.toggle('has-keyboard', !!(editing && covered));
+  }
+  window.visualViewport?.addEventListener('resize', updateKeyboard);
+  document.addEventListener('focusin', updateKeyboard);
+  document.addEventListener('focusout', () => setTimeout(updateKeyboard, 0));
+
   function setSidebar(open) {
     const sidebar = $("[data-sidebar]");
     const toggle = $("[data-sidebar-toggle]");
@@ -112,6 +122,7 @@
   }
 
   function initDashboard() {
+    updateKeyboard();
     $$(".table").forEach((table) => {
       if (table.closest('.billing-table')) return;
       const labels = $$("thead th", table).map((th) => th.textContent.trim());

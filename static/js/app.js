@@ -249,6 +249,24 @@
   function syncHead(xhr) {
     try {
       const doc = new DOMParser().parseFromString(xhr.responseText, "text/html");
+      // Uma PWA pode ficar aberta durante um deploy. Atualiza também os estilos
+      // com hash, sem interromper formulários nem depender de fechar o app.
+      const currentStyles = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]'));
+      const desiredStyles = Array.from(doc.head.querySelectorAll('link[rel="stylesheet"]'));
+      const desiredUrls = new Set(desiredStyles.map(link => new URL(link.getAttribute('href'), window.location.href).href));
+      for (const link of desiredStyles) {
+        const href = new URL(link.getAttribute('href'), window.location.href);
+        if (currentStyles.some(current => current.href === href.href)) continue;
+        if (href.origin !== window.location.origin) continue;
+        const replacement = link.cloneNode(true);
+        replacement.href = href.href;
+        replacement.addEventListener('load', () => {
+          if (Array.from(document.head.querySelectorAll('link[rel="stylesheet"]')).filter(item => desiredUrls.has(item.href)).every(item => item.sheet)) {
+            currentStyles.filter(item => !desiredUrls.has(item.href)).forEach(item => item.remove());
+          }
+        });
+        document.head.appendChild(replacement);
+      }
       const robots = doc.head.querySelector('meta[name="robots"]');
       document.querySelectorAll('meta[name="robots"]').forEach((node) => node.remove());
       if (robots) document.head.appendChild(robots.cloneNode(true));
@@ -294,7 +312,7 @@
     htmx.config.allowScriptTags = false;
     htmx.config.allowEval = false;
     htmx.config.selfRequestsOnly = true;
-    htmx.config.globalViewTransitions = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    htmx.config.globalViewTransitions = false;
     htmx.config.historyCacheSize = 0;
     htmx.config.historyRestoreAsHxRequest = false;
     try { localStorage.removeItem("htmx-history-cache"); } catch {}

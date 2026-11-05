@@ -44,3 +44,17 @@ A janela compartilhada pelo site e pelo sistema usa uma superfície mais simples
 A logo original transparente da NaBio foi incorporada ao rodapé com o texto “Feito por:” e link externo para https://nabio.pro/, em nova aba. O arquivo original foi preservado.
 
 Validação deste ajuste: 25 testes Node aprovados, verificação Django sem problemas e cinco combinações de viewport (320×640, 390×844, 768×900, 1366×768 e 844×390) em navegador isolado. Foram verificados os limites da janela e do rodapé, as instruções por dispositivo, lembrar/redefinir atalho e fechamento por botão e Escape. A aparência da confirmação nativa de instalação continua sendo controlada pelo navegador.
+
+## Revisão do app no celular, login e primeira tela
+
+Corrigida uma configuração JavaScript que reativava `globalViewTransitions` apesar do valor falso no HTML. A auditoria anterior usava movimento reduzido e não exercitava esse caminho. A auditoria agora usa a preferência normal e verifica explicitamente que a captura da página está desativada.
+
+O cabeçalho público passa a ser fixo, com superfície opaca ao formar a cápsula, recorte apenas no conteúdo interno e menu separado. O layout respeita áreas seguras e mantém os controles dentro do cabeçalho. A primeira tela mantém a montagem inteira em seis viewports, incluindo 1366×768 e 1920×1080; o convite de instalação fica somente no rodapé do site, sem abertura automática na entrada. A rolagem permanece disponível com barra discreta.
+
+Login reconstruído com formulário único, identificação da marca, campos de 54 px, mostrar/ocultar senha, ajuda e retorno ao site. Removido o foco automático que acionava o teclado na abertura. No sistema mobile, revisados cabeçalho fixo, navegação inferior, drawer, cards, formulários, nomes longos, tabelas em lista e ações. A barra inferior se esconde quando o teclado reduz a área visível durante a edição.
+
+O card de instalação é ocultado após confirmação ou indicação manual do atalho. A janela fecha ao detectar o modo app, confirmação tardia ou instalação reconhecida em outra aba. O temporizador não ignora dispensas recentes nem navegação para outra página. A [detecção de instalação varia entre navegadores](https://web.dev/learn/pwa/detection); por isso o reconhecimento considera o modo de exibição, os eventos e o registro deste navegador, sem marcar todos os aparelhos do aluno como instalados.
+
+O HTMX atualiza os arquivos CSS com hash após uma publicação, sem reenviar formulários ou interromper a navegação.
+
+Validação: 111 testes Django e 31 testes Node aprovados; 27 testes de core repetidos após o ajuste final da home. Auditoria de 128 combinações sem overflow e com os fluxos de cobrança, produtos, login e navegação aprovados. `scripts/audit-mobile.py` verificou cinco viewports em Chromium e WebKit, com modo standalone e áreas seguras simulados, retorno ao app, login/logout, menu e persistência da instalação. Uma rodada final em Chromium verificou também teclado e atualização dos estilos via HTMX. Capturas de login, perfil e home foram inspecionadas. Não foi utilizado um iPhone físico; WebKit no Windows não reproduz todas as particularidades do Safari no aparelho.
