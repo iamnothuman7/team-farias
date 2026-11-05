@@ -8,12 +8,14 @@
   <meta name="theme-color" content="#07010E">
   <meta name="color-scheme" content="dark">
   <meta name="robots" content="noindex">
-  <meta name="htmx-config" content='{"allowScriptTags": false, "allowEval": false, "selfRequestsOnly": true, "globalViewTransitions": true, "historyCacheSize": 0}'>
+  <meta name="htmx-config" content='{"allowScriptTags": false, "allowEval": false, "selfRequestsOnly": true, "globalViewTransitions": false, "historyCacheSize": 0}'>
   {% include "partials/pwa_head.html" %}
   <link rel="preload" href="{% static 'fonts/archivo-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="{% static 'fonts/jakarta-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/shop.css' %}">
+  <link rel="stylesheet" href="{% static 'css/refinements.css' %}">
 </head>
 <body style="--violet-500: {{ site.accent_color }}; --grad-brand: linear-gradient(135deg, {{ site.accent_color }}, var(--violet-600));" class="app-body" hx-boost="true" hx-history="false">
   <div class="page-progress" aria-hidden="true"><span></span></div>
@@ -97,6 +99,7 @@
         </nav>
       {% endif %}
 
+      <a class="app-nav__link {% if url_name == 'products' or url_name == 'product_create' or url_name == 'product_edit' or url_name == 'shop' or url_name == 'shop_product' %}is-active{% endif %}" href="{% if user.is_admin_role %}{% url 'dashboard:products' %}{% else %}{% url 'dashboard:shop' %}{% endif %}"><svg class="icon"><use href="#i-bag"></use></svg><span>Produtos Team Farias</span></a>
       <a class="app-nav__link {% if url_name == 'help' %}is-active{% endif %}" href="{% url 'dashboard:help' %}"><svg class="icon"><use href="#i-clipboard"></use></svg><span>Como usar o sistema</span></a>
       <div class="app-sidebar__foot">
         <div class="app-user">
@@ -166,6 +169,7 @@
   <script src="{% static 'js/dashboard.js' %}" defer></script>
   <script src="{% static 'js/notifications.js' %}" defer></script>
   {% include "partials/install_dialog.html" %}
+  {% include "partials/confirm_dialog.html" %}
   {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -2,10 +2,16 @@ from django.urls import path
 
 from . import views
 from . import push_views
+from core import product_views
 
 app_name = "dashboard"
 
 urlpatterns = [
+    path("app/produtos/", product_views.app_catalog, name="shop"),
+    path("app/produtos/<int:pk>/", product_views.app_product_detail, name="shop_product"),
+    path("painel/produtos/", product_views.manage_products, name="products"),
+    path("painel/produtos/novo/", product_views.edit_product, name="product_create"),
+    path("painel/produtos/<int:pk>/editar/", product_views.edit_product, name="product_edit"),
     path("app/notificacoes/config/", push_views.configuration, name="push_config"),
     path("app/notificacoes/aparelho/", push_views.subscription, name="push_subscription"),
     path("ajuda/", views.help_guide, name="help"),

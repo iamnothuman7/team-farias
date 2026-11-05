@@ -1,0 +1,20 @@
+{% extends base_template %}
+{% block title %}{{ product.name }} — {{ site.name }}{% endblock %}
+{% block topbar_title %}Produtos Team Farias{% endblock %}
+{% block content %}
+<div class="shop-page {% if not internal_catalog %}shell{% endif %}">
+  <a class="back-link" href="{% if internal_catalog %}{% url 'dashboard:shop' %}{% else %}{% url 'core:products' %}{% endif %}">← Voltar aos produtos</a>
+  <div class="product-detail">
+    <div class="product-detail__visual">{% if product.image %}<img src="{{ product.image.url }}" width="900" height="900" alt="{{ product.name }}">{% endif %}<p>TEAM FARIAS · {{ product.category|upper }}</p></div>
+    <section class="product-detail__copy">
+      <p class="eyebrow">{{ product.category }}</p><h1>{{ product.name }}</h1><div class="product-description">{{ product.description|linebreaks }}</div>
+      <p class="product-price">{% if product.price != None %}R$ {{ product.price|floatformat:2 }} <small>por unidade · valor de referência</small>{% else %}Valor sob consulta{% endif %}</p>
+      {% if order_message %}
+        <section class="order-review" aria-labelledby="review-title"><p class="eyebrow">Tudo do seu jeito?</p><h2 id="review-title">Confira seu pedido.</h2><pre>{{ order_message }}</pre><p class="help">Nada foi enviado ainda. O botão abre o WhatsApp com esta mensagem; você confirma o envio por lá.</p><a class="btn btn--primary btn--block" href="{{ whatsapp_url }}" target="_blank" rel="noopener noreferrer" hx-boost="false"><svg class="icon"><use href="#i-whatsapp"></use></svg>Continuar no WhatsApp</a><form method="post">{% csrf_token %}<input type="hidden" name="action" value="edit">{% for field in form %}{{ field.as_hidden }}{% endfor %}<button type="submit" class="btn btn--ghost btn--block">Editar detalhes</button></form></section>
+      {% elif product.order_enabled %}
+        <form method="post" class="product-order" novalidate>{% csrf_token %}<h2>Monte a sua versão.</h2><p class="help">Preencha os detalhes para preparar sua mensagem.</p>{{ form.non_field_errors }}<div class="form-grid">{% for field in form %}{% include 'partials/field.html' with field=field %}{% endfor %}</div><button class="btn btn--primary btn--block" type="submit">Revisar pedido <span aria-hidden="true">→</span></button><p class="help">Sem cobrança nesta etapa. Valor final, personalização e prazo serão confirmados pela equipe.</p></form>
+      {% else %}<div class="shop-empty shop-empty--small"><h2>Pedidos pausados</h2><p>Este produto está temporariamente indisponível para novos pedidos.</p></div>{% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

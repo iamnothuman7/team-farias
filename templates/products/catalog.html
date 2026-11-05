@@ -1,0 +1,24 @@
+{% extends base_template %}
+{% block title %}Produtos Team Farias — {{ site.name }}{% endblock %}
+{% block description %}Conheça os produtos Team Farias. Escolha sua versão, personalize e combine seu pedido com a equipe pelo WhatsApp.{% endblock %}
+{% block topbar_title %}Produtos Team Farias{% endblock %}
+{% block content %}
+<div class="shop-page {% if not internal_catalog %}shell{% endif %}">
+  <header class="shop-intro">
+    <div><p class="eyebrow">Dentro e fora da quadra</p><h1>Vista o seu <span>time.</span></h1><p>Produtos Team Farias, do seu jeito. Escolha os detalhes e fale direto com a equipe para combinar seu pedido.</p></div>
+    <div class="shop-intro__mark" aria-hidden="true"><svg viewBox="0 0 160 160" fill="none"><circle cx="80" cy="80" r="66" stroke="currentColor" stroke-width="1"/><path d="M53 35 30 47 42 73 54 67v60h52V67l12 6 12-26-23-12c-8 15-45 15-54 0Z" stroke="currentColor" stroke-width="2"/><path d="M65 82h30M80 67v30" stroke="currentColor" stroke-width="2"/></svg><span>TEAM FARIAS / CE</span></div>
+  </header>
+  <div class="shop-steps" aria-label="Como pedir"><span><b>01</b> Escolha</span><span><b>02</b> Personalize</span><span><b>03</b> Combine no WhatsApp</span></div>
+  <div class="product-grid">
+    {% for product in products %}
+      <article class="product-card">
+        <a class="product-card__photo" href="{% if internal_catalog %}{% url 'dashboard:shop_product' product.pk %}{% else %}{{ product.get_absolute_url }}{% endif %}">{% if product.image %}<img src="{{ product.image.url }}" alt="{{ product.name }}" width="640" height="640" loading="lazy" decoding="async">{% endif %}<span class="product-card__category">{{ product.category }}</span></a>
+        <div class="product-card__body"><h2><a href="{% if internal_catalog %}{% url 'dashboard:shop_product' product.pk %}{% else %}{{ product.get_absolute_url }}{% endif %}">{{ product.name }}</a></h2><p>{{ product.description|truncatechars:125 }}</p><div class="product-card__foot"><strong>{% if product.price != None %}R$ {{ product.price|floatformat:2 }}{% else %}Valor sob consulta{% endif %}</strong><a class="btn btn--ghost btn--sm" href="{% if internal_catalog %}{% url 'dashboard:shop_product' product.pk %}{% else %}{{ product.get_absolute_url }}{% endif %}">{% if product.order_enabled %}Escolher detalhes{% else %}Ver produto{% endif %}<span aria-hidden="true"> ↗</span></a></div></div>
+      </article>
+    {% empty %}
+      <div class="shop-empty"><p class="eyebrow">Em preparação</p><h2>O próximo uniforme começa aqui.</h2><p>Assim que a equipe publicar os produtos, você poderá escolher tamanhos e personalizar seu pedido neste espaço.</p>{% if user.is_admin_role %}<a class="btn btn--primary" href="{% url 'dashboard:product_create' %}">Cadastrar primeiro produto</a>{% endif %}</div>
+    {% endfor %}
+  </div>
+  <p class="shop-note">O pedido é combinado com a equipe pelo WhatsApp. Disponibilidade, pagamento e entrega são confirmados na conversa.</p>
+</div>
+{% endblock %}

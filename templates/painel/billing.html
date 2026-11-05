@@ -84,7 +84,7 @@
             <svg class="icon"><use href="#i-check"></use></svg> Baixar
           </button>
         {% else %}
-          <form method="post" data-confirm="Reabrir a mensalidade de {{ invoice.student.display_name }}?">
+          <form method="post" data-confirm="Reabrir a mensalidade de {{ invoice.student.display_name }}? Ela voltará a ficar em aberto e a baixa registrada será desfeita.">
             {% csrf_token %}
             <input type="hidden" name="action" value="reopen">
             <input type="hidden" name="invoice" value="{{ invoice.pk }}">
@@ -142,7 +142,7 @@
                     <svg class="icon"><use href="#i-check"></use></svg> Baixar
                   </button>
                 {% else %}
-                  <form method="post" data-confirm="Reabrir a mensalidade de {{ invoice.student.display_name }}?">
+                  <form method="post" data-confirm="Reabrir a mensalidade de {{ invoice.student.display_name }}? Ela voltará a ficar em aberto e a baixa registrada será desfeita.">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="reopen">
                     <input type="hidden" name="invoice" value="{{ invoice.pk }}">

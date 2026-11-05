@@ -1,6 +1,43 @@
 
 from django.core.validators import RegexValidator, MaxValueValidator, URLValidator
 from django.db import models
+from django.urls import reverse
+
+
+class Product(models.Model):
+    name = models.CharField("nome do produto", max_length=120)
+    description = models.TextField("descrição", max_length=3000, blank=True)
+    category = models.CharField("categoria", max_length=40, default="Camisas")
+    image = models.ImageField("foto do produto", upload_to="products/", blank=True)
+    price = models.DecimalField("valor de referência (R$)", max_digits=9, decimal_places=2, null=True, blank=True, help_text="Deixe vazio para consultar pelo WhatsApp.")
+    sizes = models.CharField("tamanhos disponíveis", max_length=250, blank=True, help_text="Separe por vírgula: PP, P, M, G, GG. Deixe vazio se não houver tamanho.")
+    colors = models.CharField("cores disponíveis", max_length=350, blank=True, help_text="Separe por vírgula. Deixe vazio se houver uma única versão.")
+    customize_name = models.BooleanField("pedir nome para estampar", default=False)
+    customize_number = models.BooleanField("pedir número para estampar", default=False)
+    order_enabled = models.BooleanField("aceitar pedidos", default=True)
+    is_active = models.BooleanField("publicar no catálogo", default=False)
+    position = models.PositiveSmallIntegerField("ordem de exibição", default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["position", "name", "pk"]
+        verbose_name = "produto"
+        verbose_name_plural = "produtos"
+        constraints = [models.CheckConstraint(condition=models.Q(price__isnull=True) | models.Q(price__gte=0), name="product_nonnegative_price")]
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def size_options(self):
+        return [item.strip() for item in self.sizes.split(",") if item.strip()]
+
+    @property
+    def color_options(self):
+        return [item.strip() for item in self.colors.split(",") if item.strip()]
+
+    def get_absolute_url(self):
+        return reverse("core:product", args=[self.pk])
 
 
 class SiteConfiguration(models.Model):

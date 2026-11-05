@@ -7,6 +7,8 @@ const PAGE_CACHE = `tf-pages-${VERSION}`;
 const PRECACHE = [
   "{% static 'css/app.css' %}",
   "{% static 'css/dashboard.css' %}",
+  "{% static 'css/shop.css' %}",
+  "{% static 'css/refinements.css' %}",
   "{% static 'js/app.js' %}",
   "{% static 'js/install.js' %}",
   "{% static 'js/dashboard.js' %}",

@@ -45,6 +45,40 @@
     closeSiteNav();
   }
 
+  function updateHeader() {
+    document.querySelector("[data-header]")?.classList.toggle("is-scrolled", window.scrollY > 32);
+  }
+
+  const confirmedForms = new WeakSet();
+  function confirmAction(event) {
+    const form = event.target.closest("form[data-confirm]");
+    if (!form) return;
+    if (confirmedForms.has(form)) { confirmedForms.delete(form); return; }
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const dialog = document.getElementById("action-confirm");
+    if (!dialog || dialog.open) return;
+    const submitter = event.submitter;
+    const accept = dialog.querySelector("[data-confirm-accept]");
+    const cancel = dialog.querySelectorAll("[data-confirm-cancel]");
+    dialog.querySelector("[data-confirm-message]").textContent = form.getAttribute("data-confirm");
+    accept.textContent = form.querySelector('[name="action"]')?.value === 'reopen' ? 'Confirmar reabertura' : 'Confirmar';
+    const cleanup = () => { accept.removeEventListener('click', yes); cancel.forEach(button => button.removeEventListener('click', no)); };
+    const no = () => dialog.close();
+    const yes = () => {
+      dialog.close();
+      if (!form.isConnected) return;
+      confirmedForms.add(form);
+      if (submitter && submitter.form === form) form.requestSubmit(submitter);
+      else form.requestSubmit();
+    };
+    accept.addEventListener('click', yes);
+    cancel.forEach(button => button.addEventListener('click', no));
+    dialog.addEventListener('close', cleanup, { once: true });
+    dialog.showModal();
+    cancel[0]?.focus();
+  }
+
   /* ----------------------------------------------------------- page bindings */
   function bindHeader() {
     const header = $("[data-header]");
@@ -199,6 +233,7 @@
   }
 
   function initPage({ initial = false } = {}) {
+    updateHeader();
     bindSiteNav();
     bindToasts();
     bindReveal();
@@ -326,26 +361,8 @@
     if (state.booted) return;
     state.booted = true;
 
-    const header = $("[data-header]");
-    if (header) {
-      const onScroll = () => header.classList.toggle("is-scrolled", window.scrollY > 8);
-      onScroll();
-      window.addEventListener("scroll", onScroll, { passive: true });
-    }
-
-    // confirmação de ações (captura antes do htmx)
-    document.addEventListener(
-      "submit",
-      (event) => {
-        const form = event.target.closest("form[data-confirm]");
-        if (!form) return;
-        if (!window.confirm(form.getAttribute("data-confirm"))) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-        }
-      },
-      true
-    );
+    window.addEventListener("scroll", updateHeader, { passive: true });
+    document.addEventListener("submit", confirmAction, true);
 
     // Esc fecha menu/drawer
     document.addEventListener("keydown", (event) => {

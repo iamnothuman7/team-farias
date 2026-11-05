@@ -289,3 +289,7 @@ Se já estiver em execução, basta iniciar o Django. Para encerrar somente esse
 O SQLite anterior foi preservado como arquivo local e não foi importado; o PostgreSQL começa limpo,
 sem alunos, contas de demonstração, notícias ou preços fictícios. Crie o administrador com
 `python manage.py createsuperuser` e cadastre o valor interno do plano em Configurações.
+
+## Produtos Team Farias
+
+O catálogo público fica em `/produtos/`, o catálogo interno em `/app/produtos/` e o cadastro administrativo em `/painel/produtos/`. Produtos reais são cadastrados pela equipe, com fotos otimizadas e opções de personalização. O pedido é revisado e encaminhado pelo próprio cliente ao WhatsApp; não há checkout automático. Veja `docs/auditoria-2026-11-05.md`.
