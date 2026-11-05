@@ -64,7 +64,12 @@
 
     <div class="footer__bottom">
       <p>© {{ current_year }} {{ site.name }} — Vôlei de Praia. Todos os direitos reservados.</p>
-      <p class="footer__signature">Feito na areia de {{ site.city }}/{{ site.state }}</p>
+      <p class="footer__credit">
+        <span>Feito por:</span>
+        <a class="footer__maker" href="https://nabio.pro/" target="_blank" rel="noopener noreferrer" hx-boost="false" aria-label="NaBio — abrir site em nova aba">
+          <img src="{% static 'img/nabio-logo.png' %}" width="3360" height="1890" alt="NaBio" loading="lazy" decoding="async">
+        </a>
+      </p>
     </div>
   </div>
 </footer>

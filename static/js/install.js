@@ -52,7 +52,9 @@
     });
     setText("[data-install-status-title]", confirmed ? "Seu app já está instalado." : known ? "Atalho lembrado neste navegador." : "Seu time, a um toque.");
     setText("[data-install-status-detail]", known ? "Abra pelo ícone na sua tela inicial." : "Adicione o app à sua tela inicial.");
-    all("[data-install-panel]").forEach((el) => { el.hidden = known || el.dataset.installPanel !== platform; });
+    all("[data-install-panel]").forEach((el) => { el.hidden = known || (!!deferred && window.isSecureContext) || el.dataset.installPanel !== platform; });
+    setText("#install-title", known ? "Seu time já está por perto." : "Seu time, sempre perto.");
+    setText("#install-description", known ? "Abra pelo ícone na sua tela inicial." : "Treinos e novidades a um toque. Adicione à sua tela inicial.");
     all("[data-install-inapp]").forEach((el) => { el.hidden = !inApp; });
     all("[data-install-insecure]").forEach((el) => { el.hidden = window.isSecureContext; });
     all("[data-install-native]").forEach((el) => {
@@ -63,7 +65,7 @@
     all("[data-install-reset]").forEach((el) => { el.hidden = !known; });
     all("[data-install-confirmed]").forEach((el) => {
       el.hidden = !known;
-      el.textContent = confirmed ? "Instalação reconhecida neste navegador. Abra o Team Farias pelo ícone na tela inicial ou na lista de aplicativos." : "Você informou que adicionou o atalho. Abra pelo ícone para confirmar o modo app; alguns navegadores não permitem verificar a instalação pela aba comum.";
+      el.textContent = confirmed ? "Instalação reconhecida neste navegador. Seu app está na tela inicial ou na lista de aplicativos." : "Atalho lembrado neste navegador. Abra pelo ícone para confirmar o modo app.";
     });
   }
   function openDialog() {

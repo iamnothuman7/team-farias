@@ -36,3 +36,11 @@ A administração entra em **Produtos Team Farias → Novo produto**, usa uma fo
 O cliente usa **Escolher detalhes → Revisar pedido → Continuar no WhatsApp**. A mensagem permanece editável antes do envio. A equipe confirma o valor final, disponibilidade e entrega na conversa.
 
 A alteração solicitada de acesso administrativo é feita diretamente no banco, preservando a conta e suas permissões. Credenciais não fazem parte do código, das migrações ou dos arquivos de teste versionados.
+
+## Refinamento da instalação e crédito NaBio
+
+A janela compartilhada pelo site e pelo sistema usa uma superfície mais simples, ações secundárias discretas e instruções específicas para iOS, Android e computador. No celular aparece próxima à borda inferior; em telas maiores fica centralizada. A rolagem interna atende telas baixas, com foco visível e respeito à preferência por movimento reduzido. Quando o navegador disponibiliza instalação direta, as instruções manuais ficam ocultas.
+
+A logo original transparente da NaBio foi incorporada ao rodapé com o texto “Feito por:” e link externo para https://nabio.pro/, em nova aba. O arquivo original foi preservado.
+
+Validação deste ajuste: 25 testes Node aprovados, verificação Django sem problemas e cinco combinações de viewport (320×640, 390×844, 768×900, 1366×768 e 844×390) em navegador isolado. Foram verificados os limites da janela e do rodapé, as instruções por dispositivo, lembrar/redefinir atalho e fechamento por botão e Escape. A aparência da confirmação nativa de instalação continua sendo controlada pelo navegador.
