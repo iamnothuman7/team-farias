@@ -196,9 +196,10 @@
 
   <section class="card">
     <div class="card__head"><h2 class="card__title">Mensalidade avulsa</h2></div>
-    <form method="post" class="card__body">
+    <form method="post" class="card__body management-form" novalidate>
       {% csrf_token %}
-      <input type="hidden" name="action" value="create">{{ invoice_form.non_field_errors }}
+      <input type="hidden" name="action" value="create">
+      {% if invoice_form.non_field_errors %}<div class="form-errors" role="alert">{% for error in invoice_form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
       <div class="stack-12">
         <div class="form-grid">
           {% include "partials/field.html" with field=invoice_form.student %}
@@ -214,14 +215,14 @@
   </section>
 </div>
 
-<dialog id="pay-dialog" data-dialog>
+<dialog id="pay-dialog" class="management-dialog" data-dialog aria-labelledby="pay-title">
   <form method="post">
     {% csrf_token %}
     <input type="hidden" name="action" value="pay">
     <input type="hidden" name="invoice">
     <div class="dialog__head">
-      <h2>Confirmar pagamento</h2>
-      <button class="icon-btn" type="button" data-dialog-close aria-label="Fechar"><svg class="icon"><use href="#i-x"></use></svg></button>
+      <h2 id="pay-title">Confirmar pagamento</h2>
+      <button class="icon-btn" type="button" data-dialog-close aria-label="Fechar" autofocus><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
     </div>
     <div class="dialog__body">
       <div class="dialog__summary">
@@ -239,7 +240,7 @@
       </div>
       <div class="field">
         <label for="pay-note">Observação (opcional)</label>
-        <input class="input" type="text" name="note" id="pay-note" placeholder="Ex.: comprovante enviado no WhatsApp">
+        <textarea class="textarea" name="note" id="pay-note" rows="2" maxlength="200" placeholder="Ex.: comprovante enviado no WhatsApp"></textarea>
       </div>
     </div>
     <div class="dialog__foot">

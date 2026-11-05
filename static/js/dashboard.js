@@ -7,12 +7,28 @@
   const state = { globalBound: false };
 
   function updateKeyboard() {
+    const viewport = window.visualViewport;
+    document.documentElement.style.setProperty('--visual-height', `${Math.round(viewport?.height || window.innerHeight)}px`);
+    document.documentElement.style.setProperty('--visual-top', `${Math.round(viewport?.offsetTop || 0)}px`);
     const active = document.activeElement;
     const editing = active?.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),textarea,[contenteditable=true]');
     const covered = window.visualViewport && window.innerHeight - window.visualViewport.height > 150;
-    document.documentElement.classList.toggle('has-keyboard', !!(editing && covered));
+    // Mantém o popup estável entre o toque no botão e o teclado recolher.
+    const keyboard = covered && (editing || document.documentElement.classList.contains('has-keyboard'));
+    document.documentElement.classList.toggle('has-keyboard', !!keyboard);
+    if (keyboard && editing && active.closest('.management-dialog')) {
+      requestAnimationFrame(() => {
+        const body = active.closest('.dialog__body');
+        if (!body || !active.isConnected) return;
+        const field = (active.closest('.field') || active).getBoundingClientRect();
+        const area = body.getBoundingClientRect();
+        if (field.bottom > area.bottom) body.scrollTop += field.bottom - area.bottom + 12;
+        else if (field.top < area.top) body.scrollTop -= area.top - field.top + 12;
+      });
+    }
   }
   window.visualViewport?.addEventListener('resize', updateKeyboard);
+  window.visualViewport?.addEventListener('scroll', updateKeyboard);
   document.addEventListener('focusin', updateKeyboard);
   document.addEventListener('focusout', () => setTimeout(updateKeyboard, 0));
 
@@ -101,6 +117,7 @@
       if (button.dataset.bound) return;
       button.dataset.bound = "1";
       button.addEventListener("click", () => {
+        dialog.querySelector('form')?.reset();
         const input = dialog.querySelector('input[name="invoice"]');
         if (input) input.value = button.dataset.invoice || "";
         dialog.querySelector("[data-dialog-student]")?.replaceChildren(
@@ -123,6 +140,23 @@
 
   function initDashboard() {
     updateKeyboard();
+    $$('.management-form select[name="class_group"], .management-form select[name="plan"], .management-form select[name="student"]').forEach((select) => {
+      if (select.dataset.choiceBound || !select.id) return;
+      select.dataset.choiceBound = '1';
+      const caption = document.createElement('p');
+      caption.id = `${select.id}-selection`;
+      caption.className = 'selection-caption';
+      select.insertAdjacentElement('afterend', caption);
+      const describedBy = select.getAttribute('aria-describedby') || '';
+      select.setAttribute('aria-describedby', `${describedBy} ${caption.id}`.trim());
+      const update = () => {
+        const text = select.selectedOptions[0]?.textContent.trim() || '';
+        caption.textContent = text;
+        caption.hidden = !select.value;
+      };
+      select.addEventListener('change', update);
+      update();
+    });
     $$(".table").forEach((table) => {
       if (table.closest('.billing-table')) return;
       const labels = $$("thead th", table).map((th) => th.textContent.trim());

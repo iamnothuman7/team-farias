@@ -4,5 +4,14 @@
 {% block content %}
 <a class="back-link" href="{% url 'dashboard:plans' %}">← Voltar aos planos</a>
 <header class="page-head-app"><div><h1>{% if plan %}Editar plano{% else %}Criar plano{% endif %}</h1><p class="page-head-app__lead">Desative um plano para impedir novas matrículas nele. O histórico e os valores das matrículas existentes são preservados.</p></div></header>
-<form method="post" class="panel form-panel" novalidate>{% csrf_token %}{{ form.non_field_errors }}<div class="form-grid">{% for field in form %}{% include 'partials/field.html' with field=field %}{% endfor %}</div><div class="form-actions"><button class="btn btn--primary" type="submit">Salvar plano</button><a class="btn btn--ghost" href="{% url 'dashboard:plans' %}">Cancelar</a></div></form>
+<form method="post" class="panel form-panel management-form plan-form" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="form-errors" role="alert">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+  <div class="form-grid">
+    {% for field in form %}
+      {% if field.name == 'description' %}{% include 'partials/field.html' with field=field wide=True %}{% else %}{% include 'partials/field.html' with field=field %}{% endif %}
+    {% endfor %}
+  </div>
+  <div class="form-actions"><button class="btn btn--primary" type="submit">Salvar plano</button><a class="btn btn--ghost" href="{% url 'dashboard:plans' %}">Cancelar</a></div>
+</form>
 {% endblock %}

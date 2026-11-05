@@ -61,7 +61,7 @@
             </dl>
 
             <div class="stack-12">
-              <form method="post" class="card" style="background:rgba(255,255,255,.02)">
+              <form method="post" class="card management-form" style="background:rgba(255,255,255,.02)">
                 {% csrf_token %}
                 <input type="hidden" name="enrollment" value="{{ enrollment.pk }}">
                 <input type="hidden" name="action" value="approve">

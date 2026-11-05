@@ -473,6 +473,7 @@ class PlanForm(StyledFormMixin, forms.ModelForm):
     class Meta:
         model = Plan
         fields = ["name", "description", "monthly_fee", "due_day", "sessions_per_week", "is_active"]
+        widgets = {"description": forms.Textarea(attrs={"rows": 3})}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

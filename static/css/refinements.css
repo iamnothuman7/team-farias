@@ -333,3 +333,64 @@ html { scrollbar-width:thin; scrollbar-color:#655575 #100919; }
  .hero__tags { display:none; }
  .hero__actions { margin-top:16px; }
 }
+
+/* Formulários de gestão e confirmações usam a mesma linguagem do app. */
+.management-form .form-errors { margin-bottom:20px; }
+.management-form .field { min-width:0; align-content:start; }
+.management-form :where(label,.help,.error,.errorlist,.form-actions__note) { overflow-wrap:anywhere; line-height:1.55; }
+.management-form .selection-caption { display:none; }
+.plan-form { max-width:920px; }
+.management-dialog {
+ width:min(460px,calc(100% - 24px)); max-width:none;
+ max-height:calc(100dvh - var(--safe-top) - var(--safe-bottom) - 32px);
+ margin:auto; padding:0; overflow:hidden; border:1px solid #ffffff16; border-radius:26px;
+ background:#1c1625; color:var(--text); box-shadow:0 24px 80px #0008;
+}
+.management-dialog[open],.management-dialog > form { display:flex; flex-direction:column; min-height:0; }
+.management-dialog > form { max-height:inherit; }
+.management-dialog::backdrop { background:#090510b3; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+html:has(.management-dialog[open]) { overflow:hidden; }
+.management-dialog .dialog__head { flex:none; padding:18px 20px; gap:12px; align-items:center; }
+.management-dialog .dialog__head h2 { min-width:0; font-family:var(--font-body); font-size:1.08rem; letter-spacing:-.025em; line-height:1.35; overflow-wrap:anywhere; }
+.management-dialog .icon-btn { width:44px; height:44px; flex:none; border-radius:13px; background:#ffffff07; }
+.management-dialog .dialog__body { min-height:0; overflow:auto; overscroll-behavior:contain; padding:20px; gap:20px; line-height:1.65; }
+.management-dialog .dialog__body :where(p,span,strong,label) { min-width:0; overflow-wrap:anywhere; }
+.management-dialog .dialog__summary { display:grid; gap:10px; padding:16px; border:1px solid #ffffff0c; border-radius:16px; background:#ffffff04; }
+.management-dialog .dialog__summary span { color:var(--muted); line-height:1.5; font-size:.85rem; }
+.management-dialog .dialog__summary strong { font-family:var(--font-body); font-size:1.4rem; line-height:1.25; font-variant-numeric:tabular-nums; }
+.management-dialog .field { min-width:0; }
+.management-dialog .input,.management-dialog .select,.management-dialog .textarea { width:100%; min-width:0; max-width:100%; font-size:16px; border-radius:13px; background:#ffffff04; }
+.management-dialog .input,.management-dialog .select { min-height:48px; }
+.management-dialog .textarea { min-height:88px; resize:vertical; }
+.management-dialog .dialog__foot { flex:none; display:grid; grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr); padding:16px 20px; gap:10px; }
+.management-dialog .dialog__foot .btn { min-width:0; width:100%; min-height:48px; border-radius:13px; white-space:normal; text-align:center; font-size:.8rem; padding:12px; line-height:1.35; box-shadow:none; }
+.management-dialog .dialog__foot .btn .icon { display:none; }
+.has-keyboard .management-dialog { top:calc(var(--visual-top,0px) + 8px); bottom:auto; margin:0 auto; max-height:calc(var(--visual-height,100dvh) - 16px); }
+@media(max-width:1024px) {
+ .management-form .selection-caption:not([hidden]) { display:block; margin-top:6px; font-size:.74rem; line-height:1.55; color:var(--muted); overflow-wrap:anywhere; }
+ .management-form .form-section__title { font-size:.85rem; text-transform:none; letter-spacing:0; line-height:1.5; color:#dac9ef; }
+ .management-form .form-section__title .icon { flex:none; }
+ .management-form .form-actions { gap:12px; }
+ .management-form .form-actions__note { max-width:none; }
+ .management-form :where(.input,.select,.textarea) { width:100%; min-width:0; max-width:100%; }
+ .management-form .form-grid { align-items:start; row-gap:20px; }
+ .management-form .form-grid > .field:has(input[type=checkbox]) { align-self:start; }
+ .enroll-aside { position:static; }
+ .plan-management h2 { font-family:var(--font-body); font-size:1.2rem; line-height:1.35; letter-spacing:-.025em; }
+ .plan-management__price { font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+ .management-dialog { border-radius:24px; }
+}
+@media(max-width:360px) {
+ .management-dialog .dialog__head,.management-dialog .dialog__body { padding:16px; }
+ .management-dialog .dialog__foot { padding:12px 16px; }
+ .management-dialog .dialog__head h2 { font-size:.98rem; }
+ .management-dialog .dialog__foot .btn { font-size:.75rem; padding-inline:8px; }
+}
+@media(max-width:1024px) {
+ .app-body .toasts { left:16px; right:16px; bottom:calc(96px + var(--safe-bottom)); max-width:420px; margin-left:auto; }
+ .app-body .toast p { min-width:0; overflow-wrap:anywhere; }
+ .app-body .toast__icon,.app-body .toast__close { flex:none; }
+}
+@media(max-width:1024px) {
+ .app-body .toast__close { display:grid; place-items:center; width:44px; min-height:44px; padding:0; margin-top:-8px; margin-right:-8px; }
+}

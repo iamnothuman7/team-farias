@@ -20,11 +20,11 @@
 </header>
 
 <div class="enroll">
-  <form class="panel form-panel" method="post" novalidate>
+  <form class="panel form-panel management-form" method="post" novalidate>
     {% csrf_token %}
 
     {% if form.non_field_errors %}
-      <div class="form-errors">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+      <div class="form-errors" role="alert">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
     {% endif %}
 
     <fieldset class="form-section form-section--first">
