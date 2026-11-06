@@ -1,0 +1,24 @@
+{% extends "base_app.html" %}
+{% block title %}{% if record %}Editar{% else %}Criar{% endif %} {{ label }} — {{ site.name }}{% endblock %}
+{% block topbar_title %}Cadastros{% endblock %}
+{% block content %}
+<div class="record-form">
+  <a class="back-link" href="{{ back_url }}">← Voltar</a>
+  <header class="page-head-app"><div><p class="eyebrow">Gestão da escolinha</p><h1>{% if record %}Editar{% else %}Criar{% endif %} {{ label }}</h1>{% if kind == 'enrollment' %}<p class="page-head-app__lead">{{ record.student.full_name }} · Alterações de plano e valor valem para as próximas cobranças.</p>{% elif kind == 'point' or kind == 'rule' %}<p class="page-head-app__lead">Editar uma pontuação atualiza o ranking. Alterar uma regra não modifica pontos já concedidos.</p>{% endif %}</div></header>
+  <form method="post" class="card management-form" novalidate>
+    {% csrf_token %}
+    <div class="card__body">
+      {% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+      <div class="form-grid">
+        {% for field in form %}
+          {% if field.is_hidden %}{{ field }}{% elif field.field.widget.input_type == 'checkbox' %}
+          <div class="field"><label class="checkbox" for="{{ field.id_for_label }}">{{ field }} <span>{{ field.label }}</span></label>{% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}{% for error in field.errors %}<span class="error">{{ error }}</span>{% endfor %}</div>
+          {% else %}{% include 'partials/field.html' with field=field %}{% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card__foot"><button class="btn btn--primary" type="submit">Salvar {{ label }}</button><a class="btn btn--ghost" href="{{ back_url }}">Cancelar</a></div>
+  </form>
+  {% if record %}<a class="btn btn--ghost mt-16" href="{% url 'dashboard:record_delete' kind record.pk %}">Excluir {{ label }}</a>{% endif %}
+</div>
+{% endblock %}

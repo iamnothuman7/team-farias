@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="{% static 'css/shop.css' %}">
   <link rel="stylesheet" href="{% static 'css/refinements.css' %}">
   <link rel="stylesheet" href="{% static 'css/finance.css' %}">
+  <link rel="stylesheet" href="{% static 'css/management.css' %}">
 </head>
 <body style="--violet-500: {{ site.accent_color }}; --grad-brand: linear-gradient(135deg, {{ site.accent_color }}, var(--violet-600));" class="app-body" hx-boost="true" hx-history="false">
   <div class="page-progress" aria-hidden="true"><span></span></div>
@@ -66,6 +67,7 @@
             <a class="app-nav__link {% if url_name == 'announcements_admin' or url_name == 'announcement_create' or url_name == 'announcement_edit' %}is-active{% endif %}" href="{% url 'dashboard:announcements_admin' %}">
               <svg class="icon"><use href="#i-megaphone"></use></svg><span>Comunicados</span>
             </a>
+            <a class="app-nav__link {% if url_name == 'directory' %}is-active{% endif %}" href="{% url 'dashboard:directory' %}"><svg class="icon"><use href="#i-users"></use></svg><span>Locais e equipe</span></a>
             <a class="app-nav__link {% if url_name == 'settings' %}is-active{% endif %}" href="{% url 'dashboard:settings' %}">
               <svg class="icon"><use href="#i-clipboard"></use></svg><span>Configurações</span>
             </a>
@@ -169,6 +171,7 @@
   <script src="{% static 'js/app.js' %}" defer></script>
   <script src="{% static 'js/dashboard.js' %}" defer></script>
   <script src="{% static 'js/finance.js' %}" defer></script>
+  <script src="{% static 'js/management.js' %}" defer></script>
   <script src="{% static 'js/notifications.js' %}" defer></script>
   {% include "partials/install_dialog.html" %}
   {% include "partials/confirm_dialog.html" %}

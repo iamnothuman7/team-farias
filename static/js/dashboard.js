@@ -140,7 +140,7 @@
 
   function initDashboard() {
     updateKeyboard();
-    $$('.management-form select[name="class_group"], .management-form select[name="plan"], .management-form select[name="student"]').forEach((select) => {
+    $$('.management-form select[name="class_group"], .management-form select[name="plan"], .management-form select[name="student"], .management-form select[name="professor"], .management-form select[name="venue"], .management-form select[name$="-venue"], .management-form select[name="rule"]').forEach((select) => {
       if (select.dataset.choiceBound || !select.id) return;
       select.dataset.choiceBound = '1';
       const caption = document.createElement('p');
@@ -173,6 +173,7 @@
 
   document.addEventListener("htmx:afterSwap", initDashboard);
   document.addEventListener("htmx:historyRestore", initDashboard);
+  document.addEventListener("management:scheduleAdded", initDashboard);
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initDashboard);

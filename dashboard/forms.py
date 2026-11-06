@@ -253,14 +253,25 @@ class ClassGroupForm(StyledFormMixin, forms.ModelForm):
     class Meta:
         model = ClassGroup
         fields = ["name", "category", "level", "professor", "venue", "capacity", "description", "is_active"]
+        widgets = {"description": forms.Textarea(attrs={"rows": 3})}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        from django.db.models import Q
         self.fields["professor"].queryset = User.objects.filter(
-            role__in=[User.Role.PROFESSOR, User.Role.ADMIN], is_active=True
+            Q(role__in=[User.Role.PROFESSOR, User.Role.ADMIN], is_active=True) | Q(pk=self.instance.professor_id)
         )
-        self.fields["venue"].queryset = Venue.objects.filter(is_active=True)
+        self.fields["venue"].queryset = Venue.objects.filter(Q(is_active=True) | Q(pk=self.instance.venue_id))
+        self.fields["capacity"].min_value = 1
         self._style()
+
+    def clean_capacity(self):
+        capacity = self.cleaned_data["capacity"]
+        if capacity < 1:
+            raise ValidationError("Informe pelo menos uma vaga.")
+        if self.instance.pk and capacity < self.instance.occupied:
+            raise ValidationError("As vagas não podem ser menores que o número de alunos ativos.")
+        return capacity
 
 
 class ScheduleSlotForm(StyledFormMixin, forms.ModelForm):
@@ -274,22 +285,43 @@ class ScheduleSlotForm(StyledFormMixin, forms.ModelForm):
         model = ScheduleSlot
         fields = ["weekday", "start_time", "end_time", "venue"]
         widgets = {
-            "start_time": forms.TimeInput(attrs={"type": "time"}),
-            "end_time": forms.TimeInput(attrs={"type": "time"}),
+            "start_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            "end_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["venue"].queryset = Venue.objects.filter(is_active=True)
+        from django.db.models import Q
+        self.fields["venue"].queryset = Venue.objects.filter(Q(is_active=True) | Q(pk=self.instance.venue_id))
         self._style()
+
+
+class ScheduleSlotBaseFormSet(forms.BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        slots = []
+        for form in self.forms:
+            data = form.cleaned_data
+            if not data or data.get("DELETE"):
+                continue
+            for day, start, end in slots:
+                if day == data["weekday"] and start < data["end_time"] and data["start_time"] < end:
+                    raise ValidationError("Há horários sobrepostos no mesmo dia. Ajuste o início ou o fim dos treinos.")
+            slots.append((data["weekday"], data["start_time"], data["end_time"]))
 
 
 ScheduleSlotFormSet = inlineformset_factory(
     ClassGroup,
     ScheduleSlot,
     form=ScheduleSlotForm,
-    extra=2,
+    formset=ScheduleSlotBaseFormSet,
+    extra=1,
     can_delete=True,
+    max_num=50,
+    validate_max=True,
+    absolute_max=100,
 )
 
 
@@ -305,9 +337,9 @@ class SessionForm(StyledFormMixin, forms.ModelForm):
         model = Session
         fields = ["class_group", "date", "start_time", "end_time", "venue", "theme", "status", "notes"]
         widgets = {
-            "date": forms.DateInput(attrs={"type": "date"}),
-            "start_time": forms.TimeInput(attrs={"type": "time"}),
-            "end_time": forms.TimeInput(attrs={"type": "time"}),
+            "date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "start_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            "end_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
             "notes": forms.Textarea(attrs={"rows": 2}),
         }
 
@@ -317,7 +349,8 @@ class SessionForm(StyledFormMixin, forms.ModelForm):
 
         groups = accessible_groups(user) if user else ClassGroup.objects.all()
         self.fields["class_group"].queryset = groups
-        self.fields["venue"].queryset = Venue.objects.filter(is_active=True)
+        from django.db.models import Q
+        self.fields["venue"].queryset = Venue.objects.filter(Q(is_active=True) | Q(pk=self.instance.venue_id))
         self._style()
 
 
@@ -339,6 +372,10 @@ class PointEntryForm(StyledFormMixin, forms.ModelForm):
         self.fields["student"].empty_label = "Selecione o atleta"
         self.fields["rule"].queryset = PointRule.objects.filter(is_active=True)
         self.fields["rule"].empty_label = "Sem regra específica"
+        if self.instance.pk and user and user.is_admin_role:
+            from django.db.models import Q
+            self.fields["student"].queryset = Student.objects.filter(Q(status=Student.Status.ATIVO) | Q(pk=self.instance.student_id)).select_related("user")
+            self.fields["rule"].queryset = PointRule.objects.filter(Q(is_active=True) | Q(pk=self.instance.rule_id))
         self._style()
 
     def save(self, commit=True, user=None):
@@ -415,6 +452,10 @@ class InvoiceForm(StyledFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["student"].queryset = Student.objects.filter(status=Student.Status.ATIVO).select_related("user")
         self.fields["plan"].queryset = Plan.objects.filter(is_active=True)
+        if self.instance.pk:
+            from django.db.models import Q
+            self.fields["student"].queryset = Student.objects.filter(Q(status=Student.Status.ATIVO) | Q(pk=self.instance.student_id)).select_related("user")
+            self.fields["plan"].queryset = Plan.objects.filter(Q(is_active=True) | Q(pk=self.instance.plan_id))
         self._style()
 
 

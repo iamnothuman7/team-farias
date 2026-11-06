@@ -1,0 +1,21 @@
+{% extends "base_app.html" %}
+{% block title %}Excluir {{ label }} — {{ site.name }}{% endblock %}
+{% block topbar_title %}Revisar exclusão{% endblock %}
+{% block content %}
+<div class="record-confirm">
+  <a class="back-link" href="{{ back_url }}">← Voltar</a>
+  <header class="page-head-app"><div><p class="eyebrow">Conferir antes de continuar</p><h1>Excluir {{ label }}</h1></div></header>
+  <section class="card"><div class="card__body">
+    <p class="record-name">{{ record }}</p>
+    {% if error %}<div class="form-errors" role="alert">{{ error }}</div>{% endif %}
+    {% if blocked %}<div class="form-errors">{% for reason in blocked %}<p>{{ reason }}</p>{% endfor %}</div>
+    {% else %}<p>{% if kind == 'entry' %}Confira o que acontece ao excluir:{% else %}A exclusão é definitiva. Confira o que será alterado:{% endif %}</p><ul>{% for impact in impacts %}<li>{{ impact }}</li>{% empty %}<li>O cadastro será removido do sistema.</li>{% endfor %}</ul>{% endif %}
+    {% if alternative %}<p class="mt-16"><strong>{{ alternative.1 }}</strong><br>{{ alternative.2 }}</p>{% endif %}
+  </div>
+  <form method="post" class="card__foot">{% csrf_token %}
+    <a class="btn btn--ghost" href="{{ back_url }}">Voltar sem alterar</a>
+    {% if alternative %}<button class="btn btn--outline" name="action" value="{{ alternative.0 }}" type="submit">{{ alternative.1 }}</button>{% endif %}
+    {% if not blocked %}<button class="btn record-danger" name="action" value="delete" type="submit">Confirmar exclusão</button>{% endif %}
+  </form></section>
+</div>
+{% endblock %}

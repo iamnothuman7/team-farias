@@ -91,7 +91,7 @@
               <form method="post" data-confirm="Recusar a matrícula de {{ enrollment.student.full_name }}?">
                 {% csrf_token %}
                 <input type="hidden" name="enrollment" value="{{ enrollment.pk }}">
-                <input type="hidden" name="action" value="reject">
+                <input type="hidden" name="action" value="reject"><a class="btn btn--ghost btn--block" href="{% url 'dashboard:record_edit' 'enrollment' enrollment.pk %}">Editar matrícula</a>
                 <button class="btn btn--danger btn--block btn--sm" type="submit">
                   <svg class="icon"><use href="#i-x"></use></svg> Recusar inscrição
                 </button>
@@ -138,7 +138,7 @@
               <td>
                 <span class="badge badge--{% if enrollment.status == 'ativa' %}green{% elif enrollment.status == 'pendente' %}amber{% else %}outline{% endif %}">{{ enrollment.get_status_display }}</span>
               </td>
-              <td class="is-right"><a class="btn btn--ghost btn--sm" href="{% url 'dashboard:student_detail' enrollment.student.pk %}">Abrir</a></td>
+              <td class="is-right"><a class="btn btn--ghost btn--sm" href="{% url 'dashboard:record_edit' 'enrollment' enrollment.pk %}">Editar matrícula</a><a class="btn btn--ghost btn--sm" href="{% url 'dashboard:student_detail' enrollment.student.pk %}">Abrir</a></td>
             </tr>
           {% empty %}
             <tr><td colspan="7"><div class="empty-state"><p>Nenhuma matrícula neste status.</p></div></td></tr>

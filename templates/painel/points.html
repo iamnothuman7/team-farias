@@ -101,13 +101,13 @@
   <div class="card__head">
     <div>
       <h2 class="card__title">Últimos lançamentos</h2>
-      <p class="card__subtitle">40 registros mais recentes</p>
+      <p class="card__subtitle">Histórico de pontuações · {{ points_page.paginator.count }} registros</p>
     </div>
   </div>
   <div class="table-wrap">
     <table class="table table--stack">
       <thead>
-        <tr><th>Aluno</th><th>Motivo</th><th>Origem</th><th>Regra</th><th>Quem lançou</th><th class="is-right">Pontos</th></tr>
+        <tr><th>Aluno</th><th>Motivo</th><th>Origem</th><th>Regra</th><th>Quem lançou</th><th class="is-right">Pontos</th>{% if user.is_admin_role %}<th>Ações</th>{% endif %}</tr>
       </thead>
       <tbody>
         {% for entry in entries %}
@@ -122,7 +122,7 @@
             <td data-label="Origem"><span class="badge badge--outline">{{ entry.get_source_display }}</span></td>
             <td class="table__muted hide-sm" data-label="Regra">{{ entry.rule.name|default:"—" }}</td>
             <td class="table__muted hide-sm" data-label="Quem lançou">{{ entry.created_by.first_name_display|default:"—" }}</td>
-            <td class="is-right" data-label="Pontos"><strong class="table__num" style="color:{% if entry.points >= 0 %}var(--green){% else %}var(--red){% endif %}">{{ entry.points|stringformat:"+d" }}</strong></td>
+            <td class="is-right" data-label="Pontos"><strong class="table__num" style="color:{% if entry.points >= 0 %}var(--green){% else %}var(--red){% endif %}">{{ entry.points|stringformat:"+d" }}</strong></td>{% if user.is_admin_role %}<td><a class="btn btn--ghost btn--sm" href="{% url 'dashboard:record_edit' 'point' entry.pk %}">Editar</a></td>{% endif %}
           </tr>
         {% empty %}
           <tr><td colspan="6"><div class="empty-state"><p>Nenhum lançamento ainda.</p></div></td></tr>
@@ -132,6 +132,7 @@
   </div>
 </section>
 
+{% if points_page.has_other_pages %}<nav class="record-actions mt-16" aria-label="Páginas de pontuações">{% if points_page.has_previous %}<a class="btn btn--ghost" href="?turma={{ group_filter }}&page={{ points_page.previous_page_number }}">Anterior</a>{% endif %}<span>{{ points_page.number }} de {{ points_page.paginator.num_pages }}</span>{% if points_page.has_next %}<a class="btn btn--ghost" href="?turma={{ group_filter }}&page={{ points_page.next_page_number }}">Próxima</a>{% endif %}</nav>{% endif %}
 <div class="grid-2 mt-24">
   <section class="card">
     <div class="card__head">
@@ -153,7 +154,7 @@
                 <strong class="table__num" style="color:{% if rule.points >= 0 %}var(--green){% else %}var(--red){% endif %}">{{ rule.points|stringformat:"+d" }}</strong>
               </td>
               <td class="is-right">
-                {% if rule.is_active %}<span class="badge badge--green">Ativa</span>{% else %}<span class="badge badge--outline">Inativa</span>{% endif %}
+                {% if user.is_admin_role %}<a class="btn btn--ghost btn--sm" href="{% url 'dashboard:record_edit' 'rule' rule.pk %}">Editar</a>{% endif %}{% if rule.is_active %}<span class="badge badge--green">Ativa</span>{% else %}<span class="badge badge--outline">Inativa</span>{% endif %}
               </td>
             </tr>
           {% endfor %}
@@ -162,7 +163,7 @@
     </div>
   </section>
 
-  <section class="card">
+  {% if user.is_admin_role %}<section class="card">
     <div class="card__head">
       <h2 class="card__title">Nova regra</h2>
     </div>
@@ -179,6 +180,6 @@
         <button class="btn btn--ghost btn--block" type="submit">Salvar regra</button>
       </div>
     </form>
-  </section>
+  </section>{% endif %}
 </div>
 {% endblock %}

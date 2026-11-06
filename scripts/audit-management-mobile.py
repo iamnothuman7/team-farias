@@ -54,9 +54,9 @@ def goto(page,path):
 try:
  with sync_playwright() as p:
   for engine in ['chromium','webkit']:
-   browser=p.chromium.launch(channel='msedge',headless=True) if engine=='chromium' else p.webkit.launch(headless=True)
    for width,height in [(320,740),(390,844),(844,390)]:
     if os.getenv('MANAGEMENT_WIDTH') and width!=int(os.environ['MANAGEMENT_WIDTH']):continue
+    browser=p.chromium.launch(channel='msedge',headless=True) if engine=='chromium' else p.webkit.launch(headless=True)
     context=browser.new_context(viewport={'width':width,'height':height},service_workers='block',reduced_motion='no-preference')
     context.add_init_script("Object.defineProperty(navigator,'standalone',{get:()=>true});document.addEventListener('DOMContentLoaded',()=>{document.documentElement.style.setProperty('--safe-top','47px');document.documentElement.style.setProperty('--safe-bottom','34px')});")
     page=context.new_page();page.set_default_timeout(30000);page.set_default_navigation_timeout(60000)
@@ -123,8 +123,7 @@ try:
      report['flows'].append(engine+': erro/desconto válido, cancelar pagamento, pagar, cancelar reabertura e reabrir')
     else:page.keyboard.press('Escape');expect(page.locator('#pay-dialog')).not_to_be_visible()
     assert not report['errors'],report['errors']
-    print(engine,width,'passed',flush=True);context.close()
-   browser.close()
+    print(engine,width,'passed',flush=True);context.close();browser.close()
 finally:
  User.objects.filter(email__startswith=tag).delete()
  group.delete()

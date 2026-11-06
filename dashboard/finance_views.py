@@ -15,7 +15,7 @@ from django.utils import timezone
 from django.utils.cache import add_never_cache_headers
 from django.views.decorators.http import require_http_methods
 
-from billing.finance import finance_movements, finance_summary, save_financial_entry
+from billing.finance import finance_movements, finance_summary, save_financial_entry, transition_financial_entry
 from billing.models import FinancialCategory, FinancialEntry
 from .decorators import staff_required
 from .finance_forms import FinancialCategoryForm, FinancialEntryForm, FinanceFilterForm, SettlementForm
@@ -67,7 +67,7 @@ def _export(rows, start, end):
             row["date"].strftime("%d/%m/%Y"), row["due_date"].strftime("%d/%m/%Y"),
             "Entrada" if row["kind"] == "income" else "Saída", _csv_text(row["category"]),
             _csv_text(row["description"]), _csv_text(row["counterparty"]), format(row["amount"], ".2f").replace(".", ","),
-            {"pending": "Pendente", "settled": "Realizado", "cancelled": "Cancelado"}.get(row["status"], row["status"]),
+            {"pending": "Pendente", "settled": "Realizado", "cancelled": "Cancelado", "archived": "Excluído"}.get(row["status"], row["status"]),
             _csv_text(row["method"]), "Lançamento" if row["source"] == "entry" else "Mensalidade",
         ])
     return response
@@ -138,6 +138,10 @@ def finance_detail(request, pk):
                     entry.settle(user=request.user, date=settle_form.cleaned_data["date"], method=settle_form.cleaned_data["method"])
                     messages.success(request, "Recebimento confirmado." if entry.kind == "income" else "Pagamento confirmado.")
                     return redirect("dashboard:finance_detail", pk=pk)
+            elif action == "restore":
+                transition_financial_entry(pk, "restored", user=request.user)
+                messages.success(request, "Lançamento restaurado como pendente.")
+                return redirect("dashboard:finance_detail", pk=pk)
             elif action in ("reopen", "cancel"):
                 getattr(entry, action)(user=request.user)
                 messages.success(request, "Lançamento reaberto." if action == "reopen" else "Lançamento cancelado. O histórico foi preservado.")

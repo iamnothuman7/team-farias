@@ -41,4 +41,5 @@
     <button class="btn btn--primary" type="submit">Salvar comunicado</button>
   </div>
 </form>
+{% if announcement and user.is_admin_role %}<a class="btn btn--ghost mt-16" href="{% url 'dashboard:record_delete' 'announcement' announcement.pk %}">Excluir comunicado</a>{% endif %}
 {% endblock %}

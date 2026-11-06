@@ -18,7 +18,7 @@ from .models import FinancialCategory, FinancialEntry, FinancialEvent, Invoice, 
 
 ZERO = Decimal("0.00")
 EDITABLE_FIELDS = ("kind", "category_id", "description", "counterparty", "amount", "due_date", "notes")
-SNAPSHOT_FIELDS = (*EDITABLE_FIELDS, "status", "settled_at", "method")
+SNAPSHOT_FIELDS = (*EDITABLE_FIELDS, "status", "settled_at", "method", "is_archived")
 
 
 def _snapshot(entry):
@@ -41,7 +41,7 @@ def _repeated_submission(existing, candidate):
     created = existing.events.filter(action=FinancialEvent.Action.CREATED).first()
     original = created.details["after"] if created else _snapshot(existing)
     proposed = _snapshot(candidate)
-    if any(original.get(field) != proposed.get(field) for field in SNAPSHOT_FIELDS):
+    if any(original.get(field, False if field == "is_archived" else None) != proposed.get(field) for field in SNAPSHOT_FIELDS):
         raise ValidationError("Este formulário já foi usado. Abra Novo lançamento para registrar outra entrada ou despesa.")
     return existing
 
@@ -106,7 +106,21 @@ def save_financial_entry(entry, *, user, expected_updated_at=None):
 def transition_financial_entry(pk, action, *, user=None, settled_at=None, method=""):
     entry = FinancialEntry.objects.select_for_update(of=("self",)).select_related("category").get(pk=pk)
     before = _snapshot(entry)
-    if action == FinancialEvent.Action.SETTLED:
+    if action == FinancialEvent.Action.ARCHIVED:
+        if entry.is_archived:
+            return entry
+        if entry.status == FinancialEntry.Status.SETTLED:
+            raise ValidationError("Reabra o lançamento realizado antes de excluir.")
+        entry.is_archived = True
+        entry.status = FinancialEntry.Status.CANCELLED
+    elif action == FinancialEvent.Action.RESTORED:
+        if not entry.is_archived:
+            return entry
+        entry.is_archived = False
+        entry.status = FinancialEntry.Status.PENDING
+    elif entry.is_archived:
+        raise ValidationError("Restaure o lançamento da lixeira antes de alterá-lo.")
+    elif action == FinancialEvent.Action.SETTLED:
         if entry.status == FinancialEntry.Status.SETTLED:
             return entry
         if entry.status != FinancialEntry.Status.PENDING:
@@ -216,12 +230,13 @@ def finance_movements(start, end, kind="", status="", category="", q=""):
     today = timezone.localdate()
     q = (q or "").strip()[:160]
     kind, status, category = str(kind or ""), str(status or ""), str(category or "")
-    if kind not in ("", *FinancialEntry.Kind.values) or status not in ("", "pending", "settled", "cancelled", "overdue"):
+    if kind not in ("", *FinancialEntry.Kind.values) or status not in ("", "pending", "settled", "cancelled", "overdue", "archived"):
         return []
     entries = FinancialEntry.objects.select_related("category").filter(
         Q(status=FinancialEntry.Status.SETTLED, settled_at__range=(start, min(end, today)))
         | Q(status__in=[FinancialEntry.Status.PENDING, FinancialEntry.Status.CANCELLED], due_date__range=(start, end))
     )
+    entries = entries.filter(is_archived=(status == "archived"))
     invoices = Invoice.objects.filter(status=Invoice.Status.ABERTA, due_date__range=(start, end)).select_related("student__user", "plan")
     payments = Payment.objects.filter(invoice__status=Invoice.Status.PAGA, paid_at__range=(start, min(end, today))).select_related("invoice__student__user", "invoice__plan")
     if kind:
@@ -232,7 +247,7 @@ def finance_movements(start, end, kind="", status="", category="", q=""):
         if status == "overdue":
             entries = entries.filter(status=FinancialEntry.Status.PENDING, due_date__lt=today)
             invoices = invoices.filter(due_date__lt=today)
-        else:
+        elif status != "archived":
             entries = entries.filter(status=status)
         if status not in ("pending", "overdue"):
             invoices = invoices.none()
@@ -262,7 +277,7 @@ def finance_movements(start, end, kind="", status="", category="", q=""):
             "due_date": entry.due_date, "description": entry.description,
             "counterparty": entry.counterparty, "kind": entry.kind,
             "category": entry.category.name, "category_id": entry.category_id,
-            "amount": entry.amount, "status": entry.status, "status_label": entry.status_label,
+            "amount": entry.amount, "status": "archived" if entry.is_archived else entry.status, "status_label": entry.status_label,
             "is_overdue": entry.is_overdue, "method": entry.get_method_display() if entry.method else "—",
             "method_key": entry.method, "notes": entry.notes,
         })

@@ -1,0 +1,12 @@
+<fieldset class="schedule-card">
+  <legend>Horário de treino</legend>
+  {% for hidden in slot_form.hidden_fields %}{{ hidden }}{% for error in hidden.errors %}<p class="error">{{ error }}</p>{% endfor %}{% endfor %}
+  {% if slot_form.non_field_errors %}<div class="form-errors" role="alert">{{ slot_form.non_field_errors }}</div>{% endif %}
+  <div class="form-grid">
+    {% include "partials/field.html" with field=slot_form.weekday %}
+    {% include "partials/field.html" with field=slot_form.venue %}
+    {% include "partials/field.html" with field=slot_form.start_time %}
+    {% include "partials/field.html" with field=slot_form.end_time %}
+  </div>
+  <label class="checkbox mt-16">{{ slot_form.DELETE }} <span>Remover este horário ao salvar</span></label>
+</fieldset>

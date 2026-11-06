@@ -4,6 +4,7 @@
 {% block topbar_title %}Turmas{% endblock %}
 
 {% block content %}
+<div class="record-form">
 <a class="back-link" href="{% url 'dashboard:classes' %}">
   <svg class="icon"><use href="#i-chevron-left"></use></svg> Turmas
 </a>
@@ -16,7 +17,7 @@
   </div>
 </header>
 
-<form method="post" class="card">
+<form method="post" class="card management-form" novalidate>
   {% csrf_token %}
   <div class="card__body">
     {% if form.non_field_errors %}
@@ -39,34 +40,15 @@
       {% if formset.non_form_errors %}
         <div class="form-errors">{% for error in formset.non_form_errors %}<p>{{ error }}</p>{% endfor %}</div>
       {% endif %}
-      <div class="table-wrap">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Dia</th>
-              <th>Início</th>
-              <th>Fim</th>
-              <th>Local</th>
-              <th class="is-right">Remover</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for slot_form in formset %}
-              <tr>
-                {{ slot_form.id }}
-                <td>{{ slot_form.weekday }}</td>
-                <td>{{ slot_form.start_time }}</td>
-                <td>{{ slot_form.end_time }}</td>
-                <td>{{ slot_form.venue }}</td>
-                <td class="is-right">
-                  {% if slot_form.instance.pk %}{{ slot_form.DELETE }}{% endif %}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div data-schedule-editor data-prefix="{{ formset.prefix }}">
+        <div class="schedule-list" data-schedule-list>
+          {% for slot_form in formset %}{% include "partials/schedule_form.html" %}{% endfor %}
+        </div>
+        <template data-schedule-template>{% include "partials/schedule_form.html" with slot_form=formset.empty_form %}</template>
+        <button class="btn btn--outline btn--sm mt-16" type="button" data-add-schedule>Adicionar horário</button>
+        <p class="faint" data-schedule-status role="status"></p>
       </div>
-      <p class="faint mt-16" style="font-size:.77rem">Deixe os campos em branco para não criar um horário. Marque "Remover" para apagar um horário existente.</p>
+      <p class="faint mt-16">Deixe um bloco inteiro em branco para não criar um horário. Alterações na grade valem para os próximos treinos gerados; os treinos já criados são editados na Agenda.</p>
     </div>
   </div>
   <div class="card__foot row" style="justify-content:flex-end;gap:8px">
@@ -74,4 +56,6 @@
     <button class="btn btn--primary" type="submit">Salvar turma</button>
   </div>
 </form>
+{% if group %}<a class="btn btn--ghost mt-16" href="{% url 'dashboard:record_delete' 'class' group.pk %}">Excluir turma</a>{% endif %}
+</div>
 {% endblock %}

@@ -77,7 +77,9 @@
       <div class="invoice-item__amount">R$ {{ invoice.total|floatformat:"2" }}</div>
       <span class="badge badge--{% if invoice.status == 'paga' %}green{% elif invoice.is_overdue %}red{% elif invoice.status == 'isenta' %}blue{% else %}amber{% endif %}">{{ invoice.situacao }}</span>
       <div class="invoice-mobile__action">
-        {% if invoice.status == 'aberta' %}
+        <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:record_delete' 'invoice' invoice.pk %}">Excluir</a>
+{% if invoice.status == 'aberta' %}
+<a class="btn btn--ghost btn--sm" href="{% url 'dashboard:record_edit' 'invoice' invoice.pk %}">Editar</a>
           <button class="btn btn--success btn--sm" type="button"
             data-dialog-open="pay-dialog"
             data-invoice="{{ invoice.pk }}"
@@ -135,7 +137,9 @@
             </td>
             <td>
               <div class="table__actions">
-                {% if invoice.status == 'aberta' %}
+                <a class="btn btn--ghost btn--sm" href="{% url 'dashboard:record_delete' 'invoice' invoice.pk %}">Excluir</a>
+{% if invoice.status == 'aberta' %}
+<a class="btn btn--ghost btn--sm" href="{% url 'dashboard:record_edit' 'invoice' invoice.pk %}">Editar</a>
                   <button class="btn btn--success btn--sm" type="button"
                     data-dialog-open="pay-dialog"
                     data-invoice="{{ invoice.pk }}"

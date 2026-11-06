@@ -11,13 +11,14 @@
       <dl class="finance-facts"><div><dt>Vencimento</dt><dd>{{ entry.due_date|date:"d/m/Y" }}</dd></div><div><dt>Categoria</dt><dd>{{ entry.category.name }}</dd></div>{% if entry.settled_at %}<div><dt>{% if entry.kind == 'income' %}Recebido em{% else %}Pago em{% endif %}</dt><dd>{{ entry.settled_at|date:"d/m/Y" }}</dd></div><div><dt>Forma de pagamento</dt><dd>{{ entry.get_method_display }}</dd></div>{% endif %}<div><dt>Cadastrado em</dt><dd>{{ entry.created_at|date:"d/m/Y H:i" }}</dd></div></dl>
       {% if entry.notes %}<div class="finance-detail__notes"><h2>Observações</h2><p>{{ entry.notes|linebreaksbr }}</p></div>{% endif %}
       <div class="finance-detail__actions">
-        {% if entry.status == 'pending' %}
+        {% if entry.is_archived %}<form method="post" data-confirm="Restaurar este lançamento como pendente?">{% csrf_token %}<input type="hidden" name="action" value="restore"><button class="btn btn--primary" type="submit">Restaurar lançamento</button></form>{% elif entry.status == 'pending' %}
           <button class="btn btn--primary" type="button" data-finance-dialog-open="settle-dialog">{% if entry.kind == 'income' %}Confirmar recebimento{% else %}Confirmar pagamento{% endif %}</button>
           <a class="btn btn--ghost" href="{% url 'dashboard:finance_edit' entry.pk %}">Editar lançamento</a>
           <form method="post" data-confirm="Cancelar este lançamento? Ele será retirado das pendências e permanecerá no histórico.">{% csrf_token %}<input type="hidden" name="action" value="cancel"><button class="btn btn--ghost" type="submit">Cancelar lançamento</button></form>
         {% else %}
           <form method="post" data-confirm="Reabrir este lançamento? Ele voltará a ficar pendente.{% if entry.status == 'settled' %} O valor deixará de compor o saldo confirmado.{% endif %}">{% csrf_token %}<input type="hidden" name="action" value="reopen"><button class="btn btn--ghost" type="submit">Reabrir lançamento</button></form>
         {% endif %}
+        {% if not entry.is_archived %}<a class="btn btn--ghost" href="{% url 'dashboard:record_delete' 'entry' entry.pk %}">Excluir lançamento</a>{% endif %}
       </div>
       <p class="finance-note">{% if entry.status == 'settled' %}Para corrigir os dados, reabra o lançamento antes de editar. O histórico das alterações será preservado.{% elif entry.status == 'cancelled' %}Este lançamento não participa do saldo nem das pendências.{% else %}Confirme somente depois de conferir o recebimento ou pagamento. Esta ação não movimenta uma conta bancária.{% endif %}</p>
     </section>

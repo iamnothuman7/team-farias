@@ -108,7 +108,7 @@ class FinanceFilterForm(StyledFormMixin, forms.Form):
     start = forms.DateField(label="De", widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"))
     end = forms.DateField(label="Até", widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"))
     kind = forms.ChoiceField(label="Tipo", required=False, choices=[("", "Entradas e saídas"), ("income", "Entradas"), ("expense", "Saídas")])
-    status = forms.ChoiceField(label="Situação", required=False, choices=[("", "Todas"), ("pending", "Pendentes"), ("settled", "Recebidos / pagos"), ("overdue", "Em atraso"), ("cancelled", "Cancelados")])
+    status = forms.ChoiceField(label="Situação", required=False, choices=[("", "Todas"), ("pending", "Pendentes"), ("settled", "Recebidos / pagos"), ("overdue", "Em atraso"), ("cancelled", "Cancelados"), ("archived", "Excluídos (lixeira)")])
     category = forms.ChoiceField(label="Categoria", required=False)
     q = forms.CharField(label="Buscar", required=False, max_length=160, widget=forms.TextInput(attrs={"type": "search", "placeholder": "Descrição ou pessoa"}))
 

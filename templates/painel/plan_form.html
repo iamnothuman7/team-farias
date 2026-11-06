@@ -14,4 +14,5 @@
   </div>
   <div class="form-actions"><button class="btn btn--primary" type="submit">Salvar plano</button><a class="btn btn--ghost" href="{% url 'dashboard:plans' %}">Cancelar</a></div>
 </form>
+{% if plan and user.is_admin_role %}<a class="btn btn--ghost mt-16" href="{% url 'dashboard:record_delete' 'plan' plan.pk %}">Excluir plano</a>{% endif %}
 {% endblock %}

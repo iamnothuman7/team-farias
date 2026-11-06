@@ -16,7 +16,7 @@
   </div>
 </header>
 
-<form method="post" class="card">
+<form method="post" class="card management-form" novalidate>
   {% csrf_token %}
   <div class="card__body">
     <div class="form-grid">
@@ -35,4 +35,5 @@
     <button class="btn btn--primary" type="submit">Salvar treino</button>
   </div>
 </form>
+{% if session and user.is_admin_role %}<a class="btn btn--ghost mt-16" href="{% url 'dashboard:record_delete' 'session' session.pk %}">Excluir treino</a>{% endif %}
 {% endblock %}

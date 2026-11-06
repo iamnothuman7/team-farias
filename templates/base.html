@@ -25,6 +25,7 @@
   <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
   <link rel="stylesheet" href="{% static 'css/shop.css' %}">
   <link rel="stylesheet" href="{% static 'css/refinements.css' %}">
+  <link rel="stylesheet" href="{% static 'css/management.css' %}">
 </head>
 <body style="--violet-500: {{ site.accent_color }}; --grad-brand: linear-gradient(135deg, {{ site.accent_color }}, var(--violet-600));" class="{% block body_class %}site-body{% endblock %}" hx-boost="true" hx-history="false">
   <a class="skip-link" href="#main" hx-boost="false">Ir para o conteúdo</a>
@@ -43,6 +44,7 @@
   <script src="{% static 'js/app.js' %}" defer></script>
   <script src="{% static 'js/dashboard.js' %}" defer></script>
   <script src="{% static 'js/finance.js' %}" defer></script>
+  <script src="{% static 'js/management.js' %}" defer></script>
   <script src="{% static 'js/notifications.js' %}" defer></script>
   {% block scripts %}{% endblock %}
 </body>

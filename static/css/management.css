@@ -1,0 +1,52 @@
+/* Cadastros: todos os filhos podem encolher e o conteúdo continua legível. */
+.app-body .app-content, .app-body .card, .app-body .card__body,
+.app-body .form-grid, .app-body .field, .app-body .form-section,
+.management-form, .management-form fieldset { min-width:0; }
+.app-body .form-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.app-body .field, .app-body .field > *, .app-body .input, .app-body .select { max-width:100%; min-width:0; }
+.app-body .input, .app-body .select { width:100%; box-sizing:border-box; }
+.app-body textarea { resize:vertical; overflow-wrap:anywhere; }
+.app-body .page-head-app h1, .app-body .card__title, .app-body .field label,
+.app-body .help, .app-body .error, .app-body .form-errors, .record-name { overflow-wrap:anywhere; }
+.app-body .form-errors ul { padding-left:18px; }
+.app-body .card__foot, .record-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.record-actions .btn { white-space:normal; text-align:center; }
+.schedule-list { display:grid; gap:16px; }
+.schedule-card { margin:0; padding:20px; border:1px solid #b794df24; border-radius:20px; background:#a66bea07; }
+.schedule-card legend { padding:0 8px; color:#d9c7ee; font-size:.8rem; font-weight:600; }
+.schedule-card:has(input[name$="-DELETE"]:checked) { border-style:dashed; opacity:.7; }
+.record-form { max-width:880px; margin-inline:auto; }
+.record-confirm { max-width:660px; margin-inline:auto; }
+.record-confirm .record-name { font-size:1.2rem; font-weight:650; margin-bottom:16px; }
+.record-confirm p, .record-confirm li { line-height:1.65; overflow-wrap:anywhere; }
+.record-confirm ul { padding-left:20px; }
+.record-danger { color:#ffbcc9; border:1px solid #ffbcc92b; background:#ffbcc908; }
+.management-directory { display:grid; gap:24px; }
+.management-item { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px; padding:18px 0; border-bottom:1px solid #ffffff0b; }
+.management-item > div { min-width:0; overflow-wrap:anywhere; }
+.management-item:last-child { border:0; }
+/* Login: marca transparente, painéis violeta e controles amplos. */
+.auth-body::before { background:radial-gradient(ellipse at 50% 15%,#7133ba2e,transparent 65%); }
+.login-screen { gap:18px; }
+.login-card { max-width:440px; border-color:#bc87fb29; background:linear-gradient(160deg,#29163d,#1c102b 60%,#211031); box-shadow:0 28px 90px #0005,inset 0 1px #ffffff09; }
+.login-intro { gap:10px; margin-bottom:24px; }
+.login-intro img { width:144px; height:110px; border-radius:0; object-fit:contain; margin:0; filter:drop-shadow(0 8px 22px #b961ff25); }
+.login-brand { color:#d6b7f2; }
+.login-form .input { background:#a369db0d; border-color:#bc87fb29; }
+.login-form .input:focus { background:#a369db17; }
+.login-form .btn { background:linear-gradient(135deg,#aa67f5,#7e3bc7); box-shadow:0 8px 24px #853fc52b; }
+.login-support { border-color:#bc87fb20; }
+@media(max-width:640px) {
+ .app-body .form-grid { grid-template-columns:minmax(0,1fr); }
+ .schedule-card { padding:16px; border-radius:16px; }
+ .app-body .form-grid > *, .app-body .field--wide { grid-column:auto; }
+ .app-body .card__foot > .btn, .record-actions > .btn { flex:1 1 auto; min-height:44px; }
+ .record-confirm .card__foot { flex-direction:column-reverse; align-items:stretch; }
+ .management-item { align-items:flex-start; }
+ .management-item .record-actions { width:100%; }
+ .login-screen { padding-inline:16px; }
+ .login-card { padding:24px; border-radius:28px; }
+ .login-intro img { width:124px; height:94px; }
+ .login-location { text-align:center; }
+}
+@media(max-width:360px) { .login-screen { padding-inline:12px; } .login-card { padding:22px 18px; } }

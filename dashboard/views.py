@@ -476,13 +476,15 @@ def painel_enrollment_created(request, pk):
 def painel_students(request):
     groups = accessible_groups(request.user)
     qs = (
-        Student.objects.filter(enrollments__class_group__in=groups)
+        Student.objects.all()
         .select_related("user", "guardian")
         .prefetch_related("enrollments__class_group")
         .annotate(points_total=Sum("points__points"))
         .distinct()
         .order_by("user__first_name")
     )
+    if not request.user.is_admin_role:
+        qs = qs.filter(enrollments__class_group__in=groups)
     q = request.GET.get("q", "").strip()
     if q:
         qs = qs.filter(
@@ -586,12 +588,22 @@ def painel_class_form(request, pk=None):
     if request.method == "POST":
         form = ClassGroupForm(request.POST, instance=group)
         formset = ScheduleSlotFormSet(request.POST, instance=group)
-        if form.is_valid() and formset.is_valid():
-            group = form.save()
-            formset.instance = group
-            formset.save()
-            messages.success(request, "Turma salva com sucesso.")
-            return redirect("dashboard:classes")
+        valid_form, valid_slots = form.is_valid(), formset.is_valid()
+        if valid_form and valid_slots:
+            try:
+                with transaction.atomic():
+                    if group:
+                        get_object_or_404(ClassGroup.objects.select_for_update(), pk=group.pk)
+                        if form.cleaned_data["capacity"] < group.occupied:
+                            raise ValidationError("A turma recebeu novas matrículas. Confira a quantidade de vagas.")
+                    group = form.save()
+                    formset.instance = group
+                    formset.save()
+            except (IntegrityError, ValidationError) as exc:
+                form.add_error(None, "; ".join(exc.messages) if isinstance(exc, ValidationError) else "Um horário já foi cadastrado. Confira os dias e horários.")
+            else:
+                messages.success(request, "Turma salva com sucesso.")
+                return redirect("dashboard:classes")
         messages.error(request, "Confira os dados da turma e dos horários.")
     else:
         form = ClassGroupForm(instance=group)
@@ -819,6 +831,8 @@ def painel_points(request):
                 return redirect("dashboard:points_admin")
             messages.error(request, "Confira os dados do lançamento coletivo.")
         elif action == "rule":
+            if not request.user.is_admin_role:
+                raise PermissionDenied("Somente a administração pode alterar as regras.")
             rule_form = PointRuleForm(request.POST)
             if rule_form.is_valid():
                 rule_form.save()
@@ -827,9 +841,9 @@ def painel_points(request):
 
     groups = accessible_groups(request.user)
     group_filter = _id_param(request.GET.get("turma"))
-    entries = PointEntry.objects.select_related("student__user", "rule", "created_by").filter(
-        student__enrollments__status="ativa", student__enrollments__class_group__in=groups,
-    ).distinct()
+    entries = PointEntry.objects.select_related("student__user", "rule", "created_by").all()
+    if not request.user.is_admin_role:
+        entries = entries.filter(student__enrollments__status="ativa", student__enrollments__class_group__in=groups).distinct()
     if group_filter:
         entries = entries.filter(
             student__enrollments__status=Enrollment.Status.ATIVA,
@@ -837,12 +851,14 @@ def painel_points(request):
         )
     selected_group = get_object_or_404(groups, pk=group_filter) if group_filter else None
     rows = ranking(selected_group, groups=groups)
+    points_page = Paginator(entries, 40).get_page(request.GET.get("page"))
     context = {
         "point_form": point_form,
         "bulk_form": bulk_form,
         "rule_form": rule_form,
         "rules": PointRule.objects.all(),
-        "entries": entries[:18],
+        "entries": points_page,
+        "points_page": points_page,
         "ranking": rows,
         "groups": accessible_groups(request.user).filter(is_active=True),
         "group_filter": group_filter or "",

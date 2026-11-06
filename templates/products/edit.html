@@ -4,4 +4,5 @@
 {% block content %}
 <a class="back-link" href="{% url 'dashboard:products' %}">← Voltar aos produtos</a><header class="page-head-app"><div><h1>{% if product %}Editar{% else %}Novo{% endif %} produto</h1><p class="page-head-app__lead">Configure apenas as opções oferecidas para este produto. Desmarque Publicar para retirá-lo do catálogo.</p></div></header>
 <form method="post" enctype="multipart/form-data" hx-encoding="multipart/form-data" class="panel form-panel" novalidate>{% csrf_token %}{{ form.non_field_errors }}{% if product.image %}<img class="product-edit-photo" src="{{ product.image.url }}" alt="Foto atual de {{ product.name }}" width="200" height="200">{% endif %}<div class="form-grid">{% for field in form %}{% include 'partials/field.html' with field=field %}{% endfor %}</div><div class="form-actions"><button class="btn btn--primary" type="submit">Salvar produto</button><a class="btn btn--ghost" href="{% url 'dashboard:products' %}">Cancelar</a></div></form>
+{% if product and user.is_admin_role %}<a class="btn btn--ghost mt-16" href="{% url 'dashboard:record_delete' 'product' product.pk %}">Excluir produto</a>{% endif %}
 {% endblock %}

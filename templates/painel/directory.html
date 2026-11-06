@@ -1,0 +1,10 @@
+{% extends "base_app.html" %}
+{% block title %}Locais e equipe — {{ site.name }}{% endblock %}
+{% block topbar_title %}Locais e equipe{% endblock %}
+{% block content %}
+<header class="page-head-app"><div><p class="eyebrow">Cadastros</p><h1>Locais e equipe</h1><p class="page-head-app__lead">Organize os locais de treino e os acessos dos professores.</p></div></header>
+<div class="management-directory">
+  <section class="card"><div class="card__head"><h2 class="card__title">Locais de treino</h2><a class="btn btn--primary btn--sm" href="{% url 'dashboard:record_create' 'venue' %}">Criar local</a></div><div class="card__body">{% for venue in venues %}<article class="management-item"><div><strong>{{ venue.name }}</strong><p class="faint">{{ venue.address }}</p><span class="badge badge--outline">{% if venue.is_active %}Ativo{% else %}Inativo{% endif %}</span></div><div class="record-actions"><a class="btn btn--ghost btn--sm" href="{% url 'dashboard:record_edit' 'venue' venue.pk %}">Editar</a><a class="btn btn--ghost btn--sm" href="{% url 'dashboard:record_delete' 'venue' venue.pk %}">Excluir</a></div></article>{% empty %}<p class="faint">Nenhum local cadastrado.</p>{% endfor %}</div></section>
+  <section class="card"><div class="card__head"><h2 class="card__title">Professores</h2><a class="btn btn--primary btn--sm" href="{% url 'dashboard:record_create' 'professor' %}">Criar professor</a></div><div class="card__body">{% for professor in professors %}<article class="management-item"><div><strong>{{ professor.full_name }}</strong><p class="faint">{{ professor.email }}</p><span class="badge badge--outline">{% if professor.is_active %}Acesso liberado{% else %}Acesso desativado{% endif %}</span></div><div class="record-actions"><a class="btn btn--ghost btn--sm" href="{% url 'dashboard:record_edit' 'professor' professor.pk %}">Editar</a><a class="btn btn--ghost btn--sm" href="{% url 'dashboard:record_delete' 'professor' professor.pk %}">Excluir</a></div></article>{% empty %}<p class="faint">Nenhum professor cadastrado.</p>{% endfor %}</div></section>
+</div>
+{% endblock %}

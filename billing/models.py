@@ -233,6 +233,7 @@ class FinancialEntry(models.Model):
         CANCELLED = "cancelled", "Cancelado"
 
     submission_key = models.UUIDField(default=uuid4, unique=True, editable=False)
+    is_archived = models.BooleanField("na lixeira", default=False, editable=False)
     kind = models.CharField("tipo", max_length=10, choices=Kind.choices)
     category = models.ForeignKey(FinancialCategory, on_delete=models.PROTECT, related_name="entries", verbose_name="categoria")
     description = models.CharField("descrição", max_length=160)
@@ -258,6 +259,7 @@ class FinancialEntry(models.Model):
         ]
         constraints = [
             models.CheckConstraint(condition=models.Q(amount__gt=0), name="finance_entry_positive_amount"),
+            models.CheckConstraint(condition=models.Q(is_archived=False) | models.Q(status="cancelled"), name="finance_archived_cancelled"),
             models.CheckConstraint(
                 condition=(
                     models.Q(status="settled", settled_at__isnull=False, method__in=Payment.Method.values)
@@ -277,6 +279,8 @@ class FinancialEntry(models.Model):
 
     @property
     def status_label(self):
+        if self.is_archived:
+            return "Excluído"
         if self.status == self.Status.CANCELLED:
             return "Cancelado"
         if self.status == self.Status.SETTLED:
@@ -326,6 +330,8 @@ class FinancialEntry(models.Model):
 
 class FinancialEvent(models.Model):
     class Action(models.TextChoices):
+        ARCHIVED = "archived", "Movido para a lixeira"
+        RESTORED = "restored", "Restaurado da lixeira"
         CREATED = "created", "Lançamento criado"
         UPDATED = "updated", "Lançamento atualizado"
         SETTLED = "settled", "Baixa registrada"

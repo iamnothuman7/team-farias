@@ -3,11 +3,16 @@ from django.urls import path
 from . import views
 from . import push_views
 from . import finance_views
+from . import management_views
 from core import product_views
 
 app_name = "dashboard"
 
 urlpatterns = [
+    path("painel/cadastros/", management_views.directory, name="directory"),
+    path("painel/cadastros/<slug:kind>/novo/", management_views.record_edit, name="record_create"),
+    path("painel/cadastros/<slug:kind>/<int:pk>/editar/", management_views.record_edit, name="record_edit"),
+    path("painel/cadastros/<slug:kind>/<int:pk>/excluir/", management_views.record_delete, name="record_delete"),
     path("painel/caixa/", finance_views.finance, name="finance"),
     path("painel/caixa/novo/", finance_views.finance_edit, name="finance_create"),
     path("painel/caixa/categorias/", finance_views.finance_categories, name="finance_categories"),

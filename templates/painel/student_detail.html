@@ -28,6 +28,7 @@
   </div>
 </section>
 
+<div class="record-actions mt-16">{% if user.is_admin_role %}<a class="btn btn--outline" href="{% url 'dashboard:record_edit' 'student' student.pk %}">Editar cadastro completo</a><a class="btn btn--ghost" href="{% url 'dashboard:record_delete' 'student' student.pk %}">Excluir aluno</a>{% endif %}</div>
 <div class="stat-grid mt-24">
   <article class="stat-card">
     <span class="stat-card__label">Pontos</span>
