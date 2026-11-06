@@ -2,11 +2,18 @@ from django.urls import path
 
 from . import views
 from . import push_views
+from . import finance_views
 from core import product_views
 
 app_name = "dashboard"
 
 urlpatterns = [
+    path("painel/caixa/", finance_views.finance, name="finance"),
+    path("painel/caixa/novo/", finance_views.finance_edit, name="finance_create"),
+    path("painel/caixa/categorias/", finance_views.finance_categories, name="finance_categories"),
+    path("painel/caixa/categorias/<int:pk>/editar/", finance_views.finance_categories, name="finance_category_edit"),
+    path("painel/caixa/<int:pk>/", finance_views.finance_detail, name="finance_detail"),
+    path("painel/caixa/<int:pk>/editar/", finance_views.finance_edit, name="finance_edit"),
     path("app/produtos/", product_views.app_catalog, name="shop"),
     path("app/produtos/<int:pk>/", product_views.app_product_detail, name="shop_product"),
     path("painel/produtos/", product_views.manage_products, name="products"),

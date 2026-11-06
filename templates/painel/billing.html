@@ -1,13 +1,13 @@
 {% extends "base_app.html" %}
 
-{% block title %}Financeiro — Painel Team Farias{% endblock %}
+{% block title %}Mensalidades — Painel Team Farias{% endblock %}
 {% block topbar_title %}Financeiro{% endblock %}
 
 {% block content %}
 <header class="page-head-app">
   <div>
-    <p class="eyebrow">Mensalidades</p>
-    <h1>Financeiro</h1>
+    <p class="eyebrow">Financeiro</p>
+    <h1>Mensalidades</h1>
     <p class="page-head-app__lead">{{ overview.count }} mensalidade{{ overview.count|pluralize }} na competência {{ competence|date:"m/Y" }}. Baixa manual, sem processamento automático.</p>
   </div>
   <div class="page-head-app__actions">
@@ -16,6 +16,8 @@
     <a class="icon-btn" href="?competencia={{ next_month|date:'Y-m' }}" aria-label="Próximo mês"><svg class="icon"><use href="#i-chevron-right"></use></svg></a>
   </div>
 </header>
+
+{% include 'partials/finance_nav.html' %}
 
 <div class="stat-grid">
   <article class="stat-card">

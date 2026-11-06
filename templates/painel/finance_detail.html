@@ -1,0 +1,37 @@
+{% extends "base_app.html" %}
+{% block title %}Lançamento financeiro — {{ site.name }}{% endblock %}
+{% block topbar_title %}Financeiro{% endblock %}
+{% block content %}
+<div class="finance-page">
+  <a class="back-link" href="{% url 'dashboard:finance' %}">← Voltar ao caixa</a>
+  <header class="page-head-app"><div><p class="eyebrow">{{ entry.get_kind_display }} · {{ entry.category.name }}</p><h1>{{ entry.description }}</h1>{% if entry.counterparty %}<p class="page-head-app__lead">{{ entry.counterparty }}</p>{% endif %}</div></header>
+  <div class="finance-detail-grid">
+    <section class="card finance-detail">
+      <div class="finance-detail__amount"><span>{% if entry.kind == 'income' %}Valor da entrada{% else %}Valor da despesa{% endif %}</span><strong>R$ {{ entry.amount|floatformat:"2g" }}</strong><span class="badge badge--{% if entry.status == 'settled' %}green{% elif entry.status == 'cancelled' %}outline{% elif entry.is_overdue %}red{% else %}amber{% endif %}">{{ entry.status_label }}</span></div>
+      <dl class="finance-facts"><div><dt>Vencimento</dt><dd>{{ entry.due_date|date:"d/m/Y" }}</dd></div><div><dt>Categoria</dt><dd>{{ entry.category.name }}</dd></div>{% if entry.settled_at %}<div><dt>{% if entry.kind == 'income' %}Recebido em{% else %}Pago em{% endif %}</dt><dd>{{ entry.settled_at|date:"d/m/Y" }}</dd></div><div><dt>Forma de pagamento</dt><dd>{{ entry.get_method_display }}</dd></div>{% endif %}<div><dt>Cadastrado em</dt><dd>{{ entry.created_at|date:"d/m/Y H:i" }}</dd></div></dl>
+      {% if entry.notes %}<div class="finance-detail__notes"><h2>Observações</h2><p>{{ entry.notes|linebreaksbr }}</p></div>{% endif %}
+      <div class="finance-detail__actions">
+        {% if entry.status == 'pending' %}
+          <button class="btn btn--primary" type="button" data-finance-dialog-open="settle-dialog">{% if entry.kind == 'income' %}Confirmar recebimento{% else %}Confirmar pagamento{% endif %}</button>
+          <a class="btn btn--ghost" href="{% url 'dashboard:finance_edit' entry.pk %}">Editar lançamento</a>
+          <form method="post" data-confirm="Cancelar este lançamento? Ele será retirado das pendências e permanecerá no histórico.">{% csrf_token %}<input type="hidden" name="action" value="cancel"><button class="btn btn--ghost" type="submit">Cancelar lançamento</button></form>
+        {% else %}
+          <form method="post" data-confirm="Reabrir este lançamento? Ele voltará a ficar pendente.{% if entry.status == 'settled' %} O valor deixará de compor o saldo confirmado.{% endif %}">{% csrf_token %}<input type="hidden" name="action" value="reopen"><button class="btn btn--ghost" type="submit">Reabrir lançamento</button></form>
+        {% endif %}
+      </div>
+      <p class="finance-note">{% if entry.status == 'settled' %}Para corrigir os dados, reabra o lançamento antes de editar. O histórico das alterações será preservado.{% elif entry.status == 'cancelled' %}Este lançamento não participa do saldo nem das pendências.{% else %}Confirme somente depois de conferir o recebimento ou pagamento. Esta ação não movimenta uma conta bancária.{% endif %}</p>
+    </section>
+    <section class="card finance-history" aria-labelledby="finance-history-title"><h2 id="finance-history-title">Histórico do lançamento</h2><ol>{% for event in events %}<li><strong>{{ event.get_action_display }}</strong><time datetime="{{ event.created_at|date:'c' }}">{{ event.created_at|date:"d/m/Y · H:i" }}</time><span>{% if event.actor %}{{ event.actor.get_full_name|default:event.actor.email }}{% else %}Sistema{% endif %}</span>{% if event.summary %}<p>{{ event.summary }}</p>{% endif %}{% if event.changes %}<details class="finance-changes"><summary>Ver alterações</summary>{% for change in event.changes %}<div><strong>{{ change.label }}</strong><dl><div><dt>Antes</dt><dd>{{ change.before|default:"—" }}</dd></div><div><dt>Depois</dt><dd>{{ change.after|default:"—" }}</dd></div></dl></div>{% endfor %}</details>{% endif %}</li>{% empty %}<li><p>Nenhuma alteração registrada.</p></li>{% endfor %}</ol></section>
+  </div>
+</div>
+{% if entry.status == 'pending' %}
+<dialog id="settle-dialog" class="management-dialog" data-finance-dialog {% if settle_form.errors %}data-finance-dialog-auto{% endif %} aria-labelledby="settle-title">
+  <form method="post" novalidate>
+    {% csrf_token %}<input type="hidden" name="action" value="settle">
+    <div class="dialog__head"><h2 id="settle-title">{% if entry.kind == 'income' %}Confirmar recebimento{% else %}Confirmar pagamento{% endif %}</h2><button class="icon-btn" type="button" data-finance-dialog-close aria-label="Fechar" autofocus><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button></div>
+    <div class="dialog__body"><div class="dialog__summary"><span>{{ entry.description }}</span><strong>R$ {{ entry.amount|floatformat:"2g" }}</strong></div>{% if settle_form.non_field_errors %}<div class="form-errors" role="alert">{% for error in settle_form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}{% include 'partials/field.html' with field=settle_form.date %}{% include 'partials/field.html' with field=settle_form.method %}</div>
+    <div class="dialog__foot"><button class="btn btn--ghost" type="button" data-finance-dialog-close>Voltar</button><button class="btn btn--primary" type="submit">Confirmar baixa</button></div>
+  </form>
+</dialog>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,7 @@
+{% with current=request.resolver_match.url_name %}
+<nav class="finance-nav" aria-label="Áreas do financeiro">
+  <a href="{% url 'dashboard:finance' %}" {% if current != 'billing' and current != 'finance_categories' and current != 'finance_category_edit' %}aria-current="page"{% endif %}>Caixa</a>
+  <a href="{% url 'dashboard:billing' %}" {% if current == 'billing' %}aria-current="page"{% endif %}>Mensalidades</a>
+  <a href="{% url 'dashboard:finance_categories' %}" {% if current == 'finance_categories' or current == 'finance_category_edit' %}aria-current="page"{% endif %}>Categorias</a>
+</nav>
+{% endwith %}

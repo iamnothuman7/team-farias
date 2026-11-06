@@ -7,13 +7,15 @@ def site(request):
     counts = {}
     user = getattr(request, "user", None)
     if user and user.is_authenticated and user.is_admin_role:
-        from billing.models import Invoice
+        from billing.models import FinancialEntry, Invoice
         from school.models import Enrollment
 
         counts = {
             "pending": Enrollment.objects.filter(status=Enrollment.Status.PENDENTE).count(),
             "overdue": Invoice.objects.filter(
                 status=Invoice.Status.ABERTA, due_date__lt=timezone.localdate()
+            ).count() + FinancialEntry.objects.filter(
+                status=FinancialEntry.Status.PENDING, due_date__lt=timezone.localdate()
             ).count(),
         }
 

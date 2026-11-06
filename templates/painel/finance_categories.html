@@ -1,0 +1,13 @@
+{% extends "base_app.html" %}
+{% block title %}Categorias financeiras — {{ site.name }}{% endblock %}
+{% block topbar_title %}Financeiro{% endblock %}
+{% block content %}
+<div class="finance-page">
+  <header class="page-head-app"><div><p class="eyebrow">Organização</p><h1>Categorias financeiras</h1><p class="page-head-app__lead">Separe receitas e despesas para encontrar cada lançamento com facilidade.</p></div></header>
+  {% include 'partials/finance_nav.html' %}
+  <div class="finance-category-grid">
+    <section class="card finance-category-create"><h2>Nova categoria</h2><form method="post" class="management-form" novalidate>{% csrf_token %}{% if form.non_field_errors %}<div class="form-errors" role="alert">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}<div class="stack-16">{% for field in form %}{% if field.name == 'is_active' %}<div class="field finance-toggle-field"><label class="finance-toggle" for="{{ field.id_for_label }}"><span>{{ field.label }}</span>{{ field }}</label>{% if field.help_text %}<span class="help" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</span>{% endif %}{% for error in field.errors %}<span class="error">{{ error }}</span>{% endfor %}</div>{% else %}{% include 'partials/field.html' with field=field %}{% endif %}{% endfor %}</div><button class="btn btn--primary btn--block" type="submit">Criar categoria</button></form></section>
+    <section class="finance-categories" aria-label="Categorias cadastradas">{% for category in categories %}<article class="finance-category"><div><span class="finance-origin">{{ category.get_kind_display }}</span><h2>{{ category.name }}</h2><span class="badge badge--{% if category.is_active %}green{% else %}outline{% endif %}">{% if category.is_active %}Ativa{% else %}Inativa{% endif %}</span></div><a class="btn btn--ghost btn--sm" href="{% url 'dashboard:finance_category_edit' category.pk %}" aria-label="Editar categoria: {{ category.name }}">Editar</a></article>{% empty %}<div class="empty-state"><p>Cadastre uma categoria para começar.</p></div>{% endfor %}<p class="finance-note">Categorias inativas saem dos novos lançamentos. O histórico continua disponível. Mensalidades usam uma categoria automática.</p></section>
+  </div>
+</div>
+{% endblock %}

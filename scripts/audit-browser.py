@@ -143,7 +143,7 @@ try:
             database(invoice.refresh_from_db)
             if invoice.status!='paga':database(lambda: invoice.mark_paid(user=admin))
             page.set_viewport_size({'width':width,'height':850});page.goto(BASE+'/painel/financeiro/',wait_until='networkidle')
-            button=page.get_by_role('button',name='Reabrir',exact=True).filter(visible=True).first
+            button=page.locator('form[data-confirm]').filter(has=page.locator('input[name="invoice"][value="'+str(invoice.pk)+'"]')).filter(visible=True).get_by_role('button',name='Reabrir',exact=True)
             button.click();expect(page.locator('#action-confirm')).to_be_visible()
             page.locator('#action-confirm').get_by_role('button',name='Cancelar',exact=True).click()
             database(invoice.refresh_from_db);assert invoice.status=='paga'

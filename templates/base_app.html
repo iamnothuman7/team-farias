@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
   <link rel="stylesheet" href="{% static 'css/shop.css' %}">
   <link rel="stylesheet" href="{% static 'css/refinements.css' %}">
+  <link rel="stylesheet" href="{% static 'css/finance.css' %}">
 </head>
 <body style="--violet-500: {{ site.accent_color }}; --grad-brand: linear-gradient(135deg, {{ site.accent_color }}, var(--violet-600));" class="app-body" hx-boost="true" hx-history="false">
   <div class="page-progress" aria-hidden="true"><span></span></div>
@@ -58,9 +59,9 @@
           </a>
           {% if user.is_admin_role %}
             <a class="app-nav__link {% if url_name == 'plans' or url_name == 'plan_create' or url_name == 'plan_edit' %}is-active{% endif %}" href="{% url 'dashboard:plans' %}"><svg class="icon"><use href="#i-wallet"></use></svg><span>Planos</span></a>
-            <a class="app-nav__link {% if url_name == 'billing' %}is-active{% endif %}" href="{% url 'dashboard:billing' %}">
+            <a class="app-nav__link {% if url_name == 'billing' or url_name|slice:':7' == 'finance' %}is-active{% endif %}" href="{% url 'dashboard:finance' %}">
               <svg class="icon"><use href="#i-wallet"></use></svg><span>Financeiro</span>
-              {% if nav_counts.overdue %}<em class="app-nav__badge app-nav__badge--alert">{{ nav_counts.overdue }}</em>{% endif %}
+              {% if nav_counts.overdue %}<em class="app-nav__badge app-nav__badge--alert" title="Compromissos vencidos em todos os períodos" aria-label="{{ nav_counts.overdue }} compromisso{{ nav_counts.overdue|pluralize }} vencido{{ nav_counts.overdue|pluralize }} em todos os períodos">{{ nav_counts.overdue }}</em>{% endif %}
             </a>
             <a class="app-nav__link {% if url_name == 'announcements_admin' or url_name == 'announcement_create' or url_name == 'announcement_edit' %}is-active{% endif %}" href="{% url 'dashboard:announcements_admin' %}">
               <svg class="icon"><use href="#i-megaphone"></use></svg><span>Comunicados</span>
@@ -151,7 +152,7 @@
       <a class="{% if url_name == 'painel' %}is-active{% endif %}" href="{% url 'dashboard:painel' %}"><svg class="icon"><use href="#i-home"></use></svg><span>Painel</span></a>
       {% if user.is_admin_role %}<a class="{% if url_name == 'enrollments' %}is-active{% endif %}" href="{% url 'dashboard:enrollments' %}"><svg class="icon"><use href="#i-clipboard"></use></svg><span>Matrículas</span></a>{% endif %}
       <a class="{% if url_name == 'sessions' or url_name == 'session_attendance' %}is-active{% endif %}" href="{% url 'dashboard:sessions' %}"><svg class="icon"><use href="#i-calendar"></use></svg><span>Agenda</span></a>
-      {% if user.is_admin_role %}<a class="{% if url_name == 'billing' %}is-active{% endif %}" href="{% url 'dashboard:billing' %}"><svg class="icon"><use href="#i-wallet"></use></svg><span>Financeiro</span></a>{% endif %}
+      {% if user.is_admin_role %}<a class="{% if url_name == 'billing' or url_name|slice:':7' == 'finance' %}is-active{% endif %}" href="{% url 'dashboard:finance' %}"><svg class="icon"><use href="#i-wallet"></use></svg><span>Financeiro</span></a>{% endif %}
       <a class="{% if url_name == 'students' %}is-active{% endif %}" href="{% url 'dashboard:students' %}"><svg class="icon"><use href="#i-users"></use></svg><span>Alunos</span></a>
     {% else %}
       <a class="{% if url_name == 'home' %}is-active{% endif %}" href="{% url 'dashboard:home' %}"><svg class="icon"><use href="#i-home"></use></svg><span>Início</span></a>
@@ -167,6 +168,7 @@
   <script src="{% static 'js/install.js' %}" defer></script>
   <script src="{% static 'js/app.js' %}" defer></script>
   <script src="{% static 'js/dashboard.js' %}" defer></script>
+  <script src="{% static 'js/finance.js' %}" defer></script>
   <script src="{% static 'js/notifications.js' %}" defer></script>
   {% include "partials/install_dialog.html" %}
   {% include "partials/confirm_dialog.html" %}

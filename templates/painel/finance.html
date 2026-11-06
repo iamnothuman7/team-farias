@@ -1,0 +1,55 @@
+{% extends "base_app.html" %}
+{% block title %}Financeiro — {{ site.name }}{% endblock %}
+{% block topbar_title %}Financeiro{% endblock %}
+{% block content %}
+<div class="finance-page">
+  <header class="page-head-app">
+    <div><p class="eyebrow">Gestão da escolinha</p><h1>Seu caixa, organizado.</h1><p class="page-head-app__lead">Entradas, despesas e mensalidades no mesmo lugar.</p></div>
+    <div class="page-head-app__actions"><a class="btn btn--primary" href="{% url 'dashboard:finance_create' %}?tipo=income">Nova entrada</a><a class="btn btn--ghost" href="{% url 'dashboard:finance_create' %}?tipo=expense">Nova despesa</a></div>
+  </header>
+  {% include 'partials/finance_nav.html' %}
+  {% if summary %}
+  <section class="finance-overview" aria-labelledby="finance-overview-title">
+    <div class="finance-section-head"><div><h2 id="finance-overview-title">Resumo do período</h2><p>{{ filter_form.cleaned_data.start|date:"d/m/Y" }} a {{ filter_form.cleaned_data.end|date:"d/m/Y" }}</p></div></div>
+    <div class="finance-summary">
+      <article class="finance-metric finance-metric--income"><span>Entradas confirmadas</span><strong>R$ {{ summary.income|floatformat:"2g" }}</strong><dl class="finance-income-breakdown"><div><dt>Mensalidades</dt><dd>R$ {{ summary.tuition_income|floatformat:"2g" }}</dd></div><div><dt>Outras entradas</dt><dd>R$ {{ summary.other_income|floatformat:"2g" }}</dd></div></dl></article>
+      <article class="finance-metric finance-metric--expense"><span>Saídas confirmadas</span><strong>R$ {{ summary.expenses|floatformat:"2g" }}</strong><p>Despesas efetivamente pagas</p></article>
+      <article class="finance-metric finance-metric--balance"><span>Saldo registrado</span><strong>R$ {{ summary.closing_balance|floatformat:"2g" }}</strong><p>Saldo anterior + resultado do período</p></article>
+    </div>
+    <dl class="finance-balance-line"><div><dt>Saldo anterior ao período</dt><dd>R$ {{ summary.opening_balance|floatformat:"2g" }}</dd></div><div><dt>Resultado do período</dt><dd>R$ {{ summary.net|floatformat:"2g" }}</dd></div></dl>
+    <div class="finance-forecast">
+      <article><h3>A receber</h3><strong>R$ {{ summary.pending_income|floatformat:"2g" }}</strong><p>Vencimentos do período</p></article>
+      <article><h3>A pagar</h3><strong>R$ {{ summary.pending_expenses|floatformat:"2g" }}</strong><p>Vencimentos do período</p></article>
+      <article><h3>Recebimentos atrasados</h3><strong>R$ {{ summary.overdue_income|floatformat:"2g" }}</strong><p>Vencidos dentro do período</p></article>
+      <article><h3>Despesas atrasadas</h3><strong>R$ {{ summary.overdue_expenses|floatformat:"2g" }}</strong><p>Vencidas dentro do período</p></article>
+    </div>
+    {% if summary.expense_categories %}<details class="finance-breakdown"><summary>Despesas pagas por categoria</summary><dl>{% for category in summary.expense_categories %}<div><dt>{{ category.category__name }}</dt><dd>R$ {{ category.total|floatformat:"2g" }}</dd></div>{% endfor %}</dl></details>{% endif %}
+    <p class="finance-note">Valores pendentes não entram no saldo. O caixa reflete os lançamentos cadastrados, sem conexão automática com bancos.</p>
+  </section>
+  {% else %}<p class="form-errors" role="alert">Confira o período e os filtros abaixo para consultar o financeiro.</p>{% endif %}
+  <section class="finance-ledger" aria-labelledby="finance-ledger-title">
+    <div class="finance-section-head"><div><h2 id="finance-ledger-title">Movimentações</h2><p>Os filtros de tipo, situação, categoria e busca afetam esta lista.</p></div>{% if summary %}<a class="btn btn--ghost btn--sm" href="{{ export_url }}" hx-boost="false" download><svg class="icon" aria-hidden="true"><use href="#i-download"></use></svg> Exportar CSV</a>{% endif %}</div>
+    <details class="finance-filters" {% if filter_form.errors %}open{% endif %}>
+      <summary><span>Período e filtros</span><svg class="icon" aria-hidden="true"><use href="#i-chevron-down"></use></svg></summary>
+      <form method="get" class="management-form" novalidate>
+        {% if filter_form.non_field_errors %}<div class="form-errors" role="alert">{% for error in filter_form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+        <div class="form-grid">{% for field in filter_form %}{% include 'partials/field.html' with field=field %}{% endfor %}</div>
+        <div class="form-actions"><button class="btn btn--primary" type="submit">Aplicar filtros</button><a class="btn btn--ghost" href="{% url 'dashboard:finance' %}">Limpar</a></div>
+      </form>
+    </details>
+    {% if summary %}<p class="finance-count">{{ page_obj.paginator.count }} {% if page_obj.paginator.count == 1 %}movimentação encontrada{% else %}movimentações encontradas{% endif %}. Confirmadas pela data de pagamento; pendentes pelo vencimento.</p>
+    <div class="finance-movements">
+      {% for movement in page_obj %}
+      <article class="finance-movement">
+        <div class="finance-movement__main"><span class="finance-origin">{% if movement.source == 'entry' %}{{ movement.category }}{% else %}Mensalidade{% endif %} · {% if movement.kind == 'income' %}Entrada{% else %}Saída{% endif %}</span><h3>{% if movement.source == 'entry' %}<a href="{% url 'dashboard:finance_detail' movement.id %}">{{ movement.description }}</a>{% else %}<a href="{% url 'dashboard:billing' %}?competencia={{ movement.invoice.reference_month }}">{{ movement.description }}</a>{% endif %}</h3>{% if movement.counterparty %}<p>{{ movement.counterparty }}</p>{% endif %}</div>
+        <div class="finance-movement__date"><span>{% if movement.status == 'settled' %}Confirmado em{% else %}Vencimento{% endif %}</span><strong>{{ movement.date|date:"d/m/Y" }}</strong>{% if movement.method_key %}<small>{{ movement.method }}</small>{% endif %}</div>
+        <div class="finance-movement__value"><strong class="{% if movement.kind == 'income' %}finance-income{% else %}finance-expense{% endif %}">{% if movement.kind == 'income' %}+{% else %}−{% endif %} R$ {{ movement.amount|floatformat:"2g" }}</strong><span class="badge badge--{% if movement.status == 'settled' %}green{% elif movement.status == 'cancelled' %}outline{% elif movement.is_overdue %}red{% else %}amber{% endif %}">{{ movement.status_label }}</span></div>
+        {% if movement.source == 'entry' %}<a class="btn btn--ghost btn--sm finance-movement__open" href="{% url 'dashboard:finance_detail' movement.id %}" aria-label="Abrir lançamento: {{ movement.description }}">Abrir</a>{% else %}<a class="btn btn--ghost btn--sm finance-movement__open" href="{% url 'dashboard:billing' %}?competencia={{ movement.invoice.reference_month }}" aria-label="Abrir mensalidade: {{ movement.description }}">Mensalidade</a>{% endif %}
+      </article>
+      {% empty %}<div class="empty-state finance-empty"><svg class="icon" aria-hidden="true"><use href="#i-wallet"></use></svg><h3>Nenhuma movimentação por aqui.</h3><p>Ajuste os filtros ou registre a primeira entrada ou despesa.</p><a class="btn btn--ghost" href="{% url 'dashboard:finance_create' %}">Criar lançamento</a></div>{% endfor %}
+    </div>
+    {% if page_obj.has_other_pages %}<nav class="finance-pagination" aria-label="Páginas de movimentações">{% if page_obj.has_previous %}<a class="btn btn--ghost" href="?{{ query_string }}&page={{ page_obj.previous_page_number }}">Anterior</a>{% endif %}<span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a class="btn btn--ghost" href="?{{ query_string }}&page={{ page_obj.next_page_number }}">Próxima</a>{% endif %}</nav>{% endif %}
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base_app.html" %}
+{% block title %}{% if entry %}Editar lançamento{% else %}Novo lançamento{% endif %} — {{ site.name }}{% endblock %}
+{% block topbar_title %}Financeiro{% endblock %}
+{% block content %}
+<div class="finance-page">
+  <a class="back-link" href="{% if entry %}{% url 'dashboard:finance_detail' entry.pk %}{% else %}{% url 'dashboard:finance' %}{% endif %}">← Voltar ao financeiro</a>
+  <header class="page-head-app"><div><p class="eyebrow">Entradas e despesas</p><h1>{% if entry %}Editar lançamento{% else %}Novo lançamento{% endif %}</h1><p class="page-head-app__lead">Registre o que a escolinha recebe ou paga. Mensalidades já aparecem automaticamente no caixa.</p></div></header>
+  <form method="post" class="panel form-panel management-form finance-entry-form" data-finance-form novalidate>
+    {% csrf_token %}{% for field in form.hidden_fields %}{{ field }}{% for error in field.errors %}<div class="form-errors" role="alert"><p>{{ error }}</p></div>{% endfor %}{% endfor %}
+    {% if form.non_field_errors %}<div class="form-errors" role="alert">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+    <div class="form-grid">
+      {% include 'partials/field.html' with field=form.kind %}
+      {% include 'partials/field.html' with field=form.category %}
+      {% include 'partials/field.html' with field=form.description wide=True %}
+      {% include 'partials/field.html' with field=form.counterparty wide=True %}
+      {% include 'partials/field.html' with field=form.amount %}
+      {% include 'partials/field.html' with field=form.due_date %}
+      {% include 'partials/field.html' with field=form.status wide=True %}
+      <div class="finance-settlement-fields span-2" data-finance-settlement><div class="form-grid">{% include 'partials/field.html' with field=form.settled_at %}{% include 'partials/field.html' with field=form.method %}</div><p class="finance-note">Informe a data em que o dinheiro realmente entrou ou saiu.</p></div>
+      {% include 'partials/field.html' with field=form.notes wide=True %}
+    </div>
+    <div class="form-actions"><button class="btn btn--primary" type="submit">Salvar lançamento</button><a class="btn btn--ghost" href="{% if entry %}{% url 'dashboard:finance_detail' entry.pk %}{% else %}{% url 'dashboard:finance' %}{% endif %}">Cancelar</a></div>
+  </form>
+</div>
+{% endblock %}
